@@ -5,8 +5,9 @@ import grpc
 import yaml
 
 from eu.softfire.tub.entities.entities import ManagerEndpoint, AnswerMessage, save
-from eu.softfire.tub.messaging import messages_pb2_grpc, messages_pb2
-from eu.softfire.tub.utils.utils import get_logger
+from eu.softfire.tub.messaging.grpc import messages_pb2
+from eu.softfire.tub.messaging.grpc import messages_pb2_grpc
+from eu.softfire.tub.utils.utils import get_logger, get_config
 
 logger = get_logger('eu.softfire.tub.messaging')
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
@@ -23,10 +24,11 @@ class ManagerAgent(messages_pb2_grpc.RegistrationServiceServicer):
 
     def __init__(self):
         self.stop = False
+        self.config = get_config()
         # self.manager_endpoint_repository = BaseRepository(ManagerEndpoint)
 
     def receive_forever(self):
-        server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+        server = grpc.server(futures.ThreadPoolExecutor(max_workers=self.config.getint('messaging','bind_port')))
         messages_pb2_grpc.add_RegistrationServiceServicer_to_server(ManagerAgent(), server)
         server.add_insecure_port('[::]:50051')
         server.start()
