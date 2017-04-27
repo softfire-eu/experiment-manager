@@ -14,6 +14,8 @@ def start():
     logger = get_logger(__name__)
     logger.info("Starting Experiment Manager.")
 
+    import eu.softfire.tub.entities.repositories
+
     executor = ProcessPoolExecutor(2)
     loop = asyncio.get_event_loop()
     asyncio.ensure_future(loop.run_in_executor(executor, receive_forever))
