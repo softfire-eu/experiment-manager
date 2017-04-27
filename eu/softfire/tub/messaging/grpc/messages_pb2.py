@@ -2,51 +2,51 @@
 # source: messages.proto
 
 import sys
-
-_b = sys.version_info[0] < 3 and (lambda x: x) or (lambda x: x.encode('latin1'))
+_b=sys.version_info[0]<3 and (lambda x:x) or (lambda x:x.encode('latin1'))
 from google.protobuf.internal import enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf import descriptor_pb2
-
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
+
+
+
 DESCRIPTOR = _descriptor.FileDescriptor(
-    name='messages.proto',
-    package='eu.softfire.tub',
-    syntax='proto3',
-    serialized_pb=_b(
-        '\n\x0emessages.proto\x12\x0f\x65u.softfire.tub\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"J\n\x0eRequestMessage\x12\'\n\x06method\x18\x01 \x01(\x0e\x32\x17.eu.softfire.tub.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\"\xb0\x01\n\x0fResponseMessage\x12\x0e\n\x06result\x18\x01 \x01(\x05\x12=\n\x0clistResource\x18\x02 \x01(\x0b\x32%.eu.softfire.tub.ListResourceResponseH\x00\x12\x43\n\x0fprovideResource\x18\x03 \x01(\x0b\x32(.eu.softfire.tub.ProvideResourceResponseH\x00\x42\t\n\x07message\"L\n\x14ListResourceResponse\x12\x34\n\tresources\x18\x01 \x03(\x0b\x32!.eu.softfire.tub.ResourceMetadata\",\n\x17ProvideResourceResponse\x12\x11\n\tresources\x18\x01 \x03(\t\"J\n\x10ResourceMetadata\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05*J\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02\x32\xbd\x01\n\x13RegistrationService\x12P\n\x08register\x12 .eu.softfire.tub.RegisterMessage\x1a .eu.softfire.tub.ResponseMessage\"\x00\x12T\n\nunregister\x12\".eu.softfire.tub.UnregisterMessage\x1a .eu.softfire.tub.ResponseMessage\"\x00\x42\x02H\x03\x62\x06proto3')
+  name='messages.proto',
+  package='eu.softfire.tub.messaging.grpc',
+  syntax='proto3',
+  serialized_pb=_b('\n\x0emessages.proto\x12\x1e\x65u.softfire.tub.messaging.grpc\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"Y\n\x0eRequestMessage\x12\x36\n\x06method\x18\x01 \x01(\x0e\x32&.eu.softfire.tub.messaging.grpc.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\"\xe7\x01\n\x0fResponseMessage\x12\x0e\n\x06result\x18\x01 \x01(\x05\x12M\n\rlist_resource\x18\x02 \x01(\x0b\x32\x34.eu.softfire.tub.messaging.grpc.ListResourceResponseH\x00\x12S\n\x10provide_resource\x18\x03 \x01(\x0b\x32\x37.eu.softfire.tub.messaging.grpc.ProvideResourceResponseH\x00\x12\x15\n\rerror_message\x18\x04 \x01(\tB\t\n\x07message\"[\n\x14ListResourceResponse\x12\x43\n\tresources\x18\x01 \x03(\x0b\x32\x30.eu.softfire.tub.messaging.grpc.ResourceMetadata\",\n\x17ProvideResourceResponse\x12\x11\n\tresources\x18\x01 \x03(\t\"J\n\x10ResourceMetadata\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05*J\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02\x32\xf9\x01\n\x13RegistrationService\x12n\n\x08register\x12/.eu.softfire.tub.messaging.grpc.RegisterMessage\x1a/.eu.softfire.tub.messaging.grpc.ResponseMessage\"\x00\x12r\n\nunregister\x12\x31.eu.softfire.tub.messaging.grpc.UnregisterMessage\x1a/.eu.softfire.tub.messaging.grpc.ResponseMessage\"\x00\x32|\n\x0cManagerAgent\x12l\n\x07\x65xecute\x12..eu.softfire.tub.messaging.grpc.RequestMessage\x1a/.eu.softfire.tub.messaging.grpc.ResponseMessage\"\x00\x42\x02H\x03\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 _METHOD = _descriptor.EnumDescriptor(
-    name='Method',
-    full_name='eu.softfire.tub.Method',
-    filename=None,
-    file=DESCRIPTOR,
-    values=[
-        _descriptor.EnumValueDescriptor(
-            name='LIST_RESOURCES', index=0, number=0,
-            options=None,
-            type=None),
-        _descriptor.EnumValueDescriptor(
-            name='PROVIDE_RESOURCES', index=1, number=1,
-            options=None,
-            type=None),
-        _descriptor.EnumValueDescriptor(
-            name='RELEASE_RESOURCES', index=2, number=2,
-            options=None,
-            type=None),
-    ],
-    containing_type=None,
-    options=None,
-    serialized_start=615,
-    serialized_end=689,
+  name='Method',
+  full_name='eu.softfire.tub.messaging.grpc.Method',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='LIST_RESOURCES', index=0, number=0,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='PROVIDE_RESOURCES', index=1, number=1,
+      options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='RELEASE_RESOURCES', index=2, number=2,
+      options=None,
+      type=None),
+  ],
+  containing_type=None,
+  options=None,
+  serialized_start=715,
+  serialized_end=789,
 )
 _sym_db.RegisterEnumDescriptor(_METHOD)
 
@@ -55,284 +55,299 @@ LIST_RESOURCES = 0
 PROVIDE_RESOURCES = 1
 RELEASE_RESOURCES = 2
 
+
+
 _REGISTERMESSAGE = _descriptor.Descriptor(
-    name='RegisterMessage',
-    full_name='eu.softfire.tub.RegisterMessage',
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name='name', full_name='eu.softfire.tub.RegisterMessage.name', index=0,
-            number=1, type=9, cpp_type=9, label=1,
-            has_default_value=False, default_value=_b("").decode('utf-8'),
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-        _descriptor.FieldDescriptor(
-            name='endpoint', full_name='eu.softfire.tub.RegisterMessage.endpoint', index=1,
-            number=2, type=9, cpp_type=9, label=1,
-            has_default_value=False, default_value=_b("").decode('utf-8'),
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-        _descriptor.FieldDescriptor(
-            name='description', full_name='eu.softfire.tub.RegisterMessage.description', index=2,
-            number=3, type=9, cpp_type=9, label=1,
-            has_default_value=False, default_value=_b("").decode('utf-8'),
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-    ],
-    extensions=[
-    ],
-    nested_types=[],
-    enum_types=[
-    ],
-    options=None,
-    is_extendable=False,
-    syntax='proto3',
-    extension_ranges=[],
-    oneofs=[
-    ],
-    serialized_start=35,
-    serialized_end=105,
+  name='RegisterMessage',
+  full_name='eu.softfire.tub.messaging.grpc.RegisterMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='eu.softfire.tub.messaging.grpc.RegisterMessage.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='endpoint', full_name='eu.softfire.tub.messaging.grpc.RegisterMessage.endpoint', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='description', full_name='eu.softfire.tub.messaging.grpc.RegisterMessage.description', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=50,
+  serialized_end=120,
 )
+
 
 _UNREGISTERMESSAGE = _descriptor.Descriptor(
-    name='UnregisterMessage',
-    full_name='eu.softfire.tub.UnregisterMessage',
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name='name', full_name='eu.softfire.tub.UnregisterMessage.name', index=0,
-            number=1, type=9, cpp_type=9, label=1,
-            has_default_value=False, default_value=_b("").decode('utf-8'),
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-        _descriptor.FieldDescriptor(
-            name='endpoint', full_name='eu.softfire.tub.UnregisterMessage.endpoint', index=1,
-            number=2, type=9, cpp_type=9, label=1,
-            has_default_value=False, default_value=_b("").decode('utf-8'),
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-    ],
-    extensions=[
-    ],
-    nested_types=[],
-    enum_types=[
-    ],
-    options=None,
-    is_extendable=False,
-    syntax='proto3',
-    extension_ranges=[],
-    oneofs=[
-    ],
-    serialized_start=107,
-    serialized_end=158,
+  name='UnregisterMessage',
+  full_name='eu.softfire.tub.messaging.grpc.UnregisterMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='eu.softfire.tub.messaging.grpc.UnregisterMessage.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='endpoint', full_name='eu.softfire.tub.messaging.grpc.UnregisterMessage.endpoint', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=122,
+  serialized_end=173,
 )
+
 
 _REQUESTMESSAGE = _descriptor.Descriptor(
-    name='RequestMessage',
-    full_name='eu.softfire.tub.RequestMessage',
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name='method', full_name='eu.softfire.tub.RequestMessage.method', index=0,
-            number=1, type=14, cpp_type=8, label=1,
-            has_default_value=False, default_value=0,
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-        _descriptor.FieldDescriptor(
-            name='payload', full_name='eu.softfire.tub.RequestMessage.payload', index=1,
-            number=2, type=9, cpp_type=9, label=1,
-            has_default_value=False, default_value=_b("").decode('utf-8'),
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-    ],
-    extensions=[
-    ],
-    nested_types=[],
-    enum_types=[
-    ],
-    options=None,
-    is_extendable=False,
-    syntax='proto3',
-    extension_ranges=[],
-    oneofs=[
-    ],
-    serialized_start=160,
-    serialized_end=234,
+  name='RequestMessage',
+  full_name='eu.softfire.tub.messaging.grpc.RequestMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='method', full_name='eu.softfire.tub.messaging.grpc.RequestMessage.method', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='payload', full_name='eu.softfire.tub.messaging.grpc.RequestMessage.payload', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=175,
+  serialized_end=264,
 )
+
 
 _RESPONSEMESSAGE = _descriptor.Descriptor(
-    name='ResponseMessage',
-    full_name='eu.softfire.tub.ResponseMessage',
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name='result', full_name='eu.softfire.tub.ResponseMessage.result', index=0,
-            number=1, type=5, cpp_type=1, label=1,
-            has_default_value=False, default_value=0,
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-        _descriptor.FieldDescriptor(
-            name='listResource', full_name='eu.softfire.tub.ResponseMessage.listResource', index=1,
-            number=2, type=11, cpp_type=10, label=1,
-            has_default_value=False, default_value=None,
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-        _descriptor.FieldDescriptor(
-            name='provideResource', full_name='eu.softfire.tub.ResponseMessage.provideResource', index=2,
-            number=3, type=11, cpp_type=10, label=1,
-            has_default_value=False, default_value=None,
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-    ],
-    extensions=[
-    ],
-    nested_types=[],
-    enum_types=[
-    ],
-    options=None,
-    is_extendable=False,
-    syntax='proto3',
-    extension_ranges=[],
-    oneofs=[
-        _descriptor.OneofDescriptor(
-            name='message', full_name='eu.softfire.tub.ResponseMessage.message',
-            index=0, containing_type=None, fields=[]),
-    ],
-    serialized_start=237,
-    serialized_end=413,
+  name='ResponseMessage',
+  full_name='eu.softfire.tub.messaging.grpc.ResponseMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='result', full_name='eu.softfire.tub.messaging.grpc.ResponseMessage.result', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='list_resource', full_name='eu.softfire.tub.messaging.grpc.ResponseMessage.list_resource', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='provide_resource', full_name='eu.softfire.tub.messaging.grpc.ResponseMessage.provide_resource', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='error_message', full_name='eu.softfire.tub.messaging.grpc.ResponseMessage.error_message', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+    _descriptor.OneofDescriptor(
+      name='message', full_name='eu.softfire.tub.messaging.grpc.ResponseMessage.message',
+      index=0, containing_type=None, fields=[]),
+  ],
+  serialized_start=267,
+  serialized_end=498,
 )
+
 
 _LISTRESOURCERESPONSE = _descriptor.Descriptor(
-    name='ListResourceResponse',
-    full_name='eu.softfire.tub.ListResourceResponse',
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name='resources', full_name='eu.softfire.tub.ListResourceResponse.resources', index=0,
-            number=1, type=11, cpp_type=10, label=3,
-            has_default_value=False, default_value=[],
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-    ],
-    extensions=[
-    ],
-    nested_types=[],
-    enum_types=[
-    ],
-    options=None,
-    is_extendable=False,
-    syntax='proto3',
-    extension_ranges=[],
-    oneofs=[
-    ],
-    serialized_start=415,
-    serialized_end=491,
+  name='ListResourceResponse',
+  full_name='eu.softfire.tub.messaging.grpc.ListResourceResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='resources', full_name='eu.softfire.tub.messaging.grpc.ListResourceResponse.resources', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=500,
+  serialized_end=591,
 )
+
 
 _PROVIDERESOURCERESPONSE = _descriptor.Descriptor(
-    name='ProvideResourceResponse',
-    full_name='eu.softfire.tub.ProvideResourceResponse',
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name='resources', full_name='eu.softfire.tub.ProvideResourceResponse.resources', index=0,
-            number=1, type=9, cpp_type=9, label=3,
-            has_default_value=False, default_value=[],
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-    ],
-    extensions=[
-    ],
-    nested_types=[],
-    enum_types=[
-    ],
-    options=None,
-    is_extendable=False,
-    syntax='proto3',
-    extension_ranges=[],
-    oneofs=[
-    ],
-    serialized_start=493,
-    serialized_end=537,
+  name='ProvideResourceResponse',
+  full_name='eu.softfire.tub.messaging.grpc.ProvideResourceResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='resources', full_name='eu.softfire.tub.messaging.grpc.ProvideResourceResponse.resources', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=593,
+  serialized_end=637,
 )
 
+
 _RESOURCEMETADATA = _descriptor.Descriptor(
-    name='ResourceMetadata',
-    full_name='eu.softfire.tub.ResourceMetadata',
-    filename=None,
-    file=DESCRIPTOR,
-    containing_type=None,
-    fields=[
-        _descriptor.FieldDescriptor(
-            name='name', full_name='eu.softfire.tub.ResourceMetadata.name', index=0,
-            number=1, type=9, cpp_type=9, label=1,
-            has_default_value=False, default_value=_b("").decode('utf-8'),
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-        _descriptor.FieldDescriptor(
-            name='description', full_name='eu.softfire.tub.ResourceMetadata.description', index=1,
-            number=2, type=9, cpp_type=9, label=1,
-            has_default_value=False, default_value=_b("").decode('utf-8'),
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-        _descriptor.FieldDescriptor(
-            name='cardinality', full_name='eu.softfire.tub.ResourceMetadata.cardinality', index=2,
-            number=3, type=5, cpp_type=1, label=1,
-            has_default_value=False, default_value=0,
-            message_type=None, enum_type=None, containing_type=None,
-            is_extension=False, extension_scope=None,
-            options=None),
-    ],
-    extensions=[
-    ],
-    nested_types=[],
-    enum_types=[
-    ],
-    options=None,
-    is_extendable=False,
-    syntax='proto3',
-    extension_ranges=[],
-    oneofs=[
-    ],
-    serialized_start=539,
-    serialized_end=613,
+  name='ResourceMetadata',
+  full_name='eu.softfire.tub.messaging.grpc.ResourceMetadata',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='eu.softfire.tub.messaging.grpc.ResourceMetadata.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='description', full_name='eu.softfire.tub.messaging.grpc.ResourceMetadata.description', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='cardinality', full_name='eu.softfire.tub.messaging.grpc.ResourceMetadata.cardinality', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=639,
+  serialized_end=713,
 )
 
 _REQUESTMESSAGE.fields_by_name['method'].enum_type = _METHOD
-_RESPONSEMESSAGE.fields_by_name['listResource'].message_type = _LISTRESOURCERESPONSE
-_RESPONSEMESSAGE.fields_by_name['provideResource'].message_type = _PROVIDERESOURCERESPONSE
+_RESPONSEMESSAGE.fields_by_name['list_resource'].message_type = _LISTRESOURCERESPONSE
+_RESPONSEMESSAGE.fields_by_name['provide_resource'].message_type = _PROVIDERESOURCERESPONSE
 _RESPONSEMESSAGE.oneofs_by_name['message'].fields.append(
-    _RESPONSEMESSAGE.fields_by_name['listResource'])
-_RESPONSEMESSAGE.fields_by_name['listResource'].containing_oneof = _RESPONSEMESSAGE.oneofs_by_name['message']
+  _RESPONSEMESSAGE.fields_by_name['list_resource'])
+_RESPONSEMESSAGE.fields_by_name['list_resource'].containing_oneof = _RESPONSEMESSAGE.oneofs_by_name['message']
 _RESPONSEMESSAGE.oneofs_by_name['message'].fields.append(
-    _RESPONSEMESSAGE.fields_by_name['provideResource'])
-_RESPONSEMESSAGE.fields_by_name['provideResource'].containing_oneof = _RESPONSEMESSAGE.oneofs_by_name['message']
+  _RESPONSEMESSAGE.fields_by_name['provide_resource'])
+_RESPONSEMESSAGE.fields_by_name['provide_resource'].containing_oneof = _RESPONSEMESSAGE.oneofs_by_name['message']
 _LISTRESOURCERESPONSE.fields_by_name['resources'].message_type = _RESOURCEMETADATA
 DESCRIPTOR.message_types_by_name['RegisterMessage'] = _REGISTERMESSAGE
 DESCRIPTOR.message_types_by_name['UnregisterMessage'] = _UNREGISTERMESSAGE
@@ -344,201 +359,281 @@ DESCRIPTOR.message_types_by_name['ResourceMetadata'] = _RESOURCEMETADATA
 DESCRIPTOR.enum_types_by_name['Method'] = _METHOD
 
 RegisterMessage = _reflection.GeneratedProtocolMessageType('RegisterMessage', (_message.Message,), dict(
-    DESCRIPTOR=_REGISTERMESSAGE,
-    __module__='messages_pb2'
-    # @@protoc_insertion_point(class_scope:eu.softfire.tub.RegisterMessage)
-))
+  DESCRIPTOR = _REGISTERMESSAGE,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:eu.softfire.tub.messaging.grpc.RegisterMessage)
+  ))
 _sym_db.RegisterMessage(RegisterMessage)
 
 UnregisterMessage = _reflection.GeneratedProtocolMessageType('UnregisterMessage', (_message.Message,), dict(
-    DESCRIPTOR=_UNREGISTERMESSAGE,
-    __module__='messages_pb2'
-    # @@protoc_insertion_point(class_scope:eu.softfire.tub.UnregisterMessage)
-))
+  DESCRIPTOR = _UNREGISTERMESSAGE,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:eu.softfire.tub.messaging.grpc.UnregisterMessage)
+  ))
 _sym_db.RegisterMessage(UnregisterMessage)
 
 RequestMessage = _reflection.GeneratedProtocolMessageType('RequestMessage', (_message.Message,), dict(
-    DESCRIPTOR=_REQUESTMESSAGE,
-    __module__='messages_pb2'
-    # @@protoc_insertion_point(class_scope:eu.softfire.tub.RequestMessage)
-))
+  DESCRIPTOR = _REQUESTMESSAGE,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:eu.softfire.tub.messaging.grpc.RequestMessage)
+  ))
 _sym_db.RegisterMessage(RequestMessage)
 
 ResponseMessage = _reflection.GeneratedProtocolMessageType('ResponseMessage', (_message.Message,), dict(
-    DESCRIPTOR=_RESPONSEMESSAGE,
-    __module__='messages_pb2'
-    # @@protoc_insertion_point(class_scope:eu.softfire.tub.ResponseMessage)
-))
+  DESCRIPTOR = _RESPONSEMESSAGE,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:eu.softfire.tub.messaging.grpc.ResponseMessage)
+  ))
 _sym_db.RegisterMessage(ResponseMessage)
 
 ListResourceResponse = _reflection.GeneratedProtocolMessageType('ListResourceResponse', (_message.Message,), dict(
-    DESCRIPTOR=_LISTRESOURCERESPONSE,
-    __module__='messages_pb2'
-    # @@protoc_insertion_point(class_scope:eu.softfire.tub.ListResourceResponse)
-))
+  DESCRIPTOR = _LISTRESOURCERESPONSE,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:eu.softfire.tub.messaging.grpc.ListResourceResponse)
+  ))
 _sym_db.RegisterMessage(ListResourceResponse)
 
 ProvideResourceResponse = _reflection.GeneratedProtocolMessageType('ProvideResourceResponse', (_message.Message,), dict(
-    DESCRIPTOR=_PROVIDERESOURCERESPONSE,
-    __module__='messages_pb2'
-    # @@protoc_insertion_point(class_scope:eu.softfire.tub.ProvideResourceResponse)
-))
+  DESCRIPTOR = _PROVIDERESOURCERESPONSE,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:eu.softfire.tub.messaging.grpc.ProvideResourceResponse)
+  ))
 _sym_db.RegisterMessage(ProvideResourceResponse)
 
 ResourceMetadata = _reflection.GeneratedProtocolMessageType('ResourceMetadata', (_message.Message,), dict(
-    DESCRIPTOR=_RESOURCEMETADATA,
-    __module__='messages_pb2'
-    # @@protoc_insertion_point(class_scope:eu.softfire.tub.ResourceMetadata)
-))
+  DESCRIPTOR = _RESOURCEMETADATA,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:eu.softfire.tub.messaging.grpc.ResourceMetadata)
+  ))
 _sym_db.RegisterMessage(ResourceMetadata)
+
 
 DESCRIPTOR.has_options = True
 DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('H\003'))
 try:
-    # THESE ELEMENTS WILL BE DEPRECATED.
-    # Please use the generated *_pb2_grpc.py files instead.
-    import grpc
-    from grpc.framework.common import cardinality
-    from grpc.framework.interfaces.face import utilities as face_utilities
-    from grpc.beta import implementations as beta_implementations
-    from grpc.beta import interfaces as beta_interfaces
+  # THESE ELEMENTS WILL BE DEPRECATED.
+  # Please use the generated *_pb2_grpc.py files instead.
+  import grpc
+  from grpc.framework.common import cardinality
+  from grpc.framework.interfaces.face import utilities as face_utilities
+  from grpc.beta import implementations as beta_implementations
+  from grpc.beta import interfaces as beta_interfaces
 
 
-    class RegistrationServiceStub(object):
+  class RegistrationServiceStub(object):
 
-        def __init__(self, channel):
-            """Constructor.
+    def __init__(self, channel):
+      """Constructor.
 
       Args:
         channel: A grpc.Channel.
       """
-            self.register = channel.unary_unary(
-                '/eu.softfire.tub.RegistrationService/register',
-                request_serializer=RegisterMessage.SerializeToString,
-                response_deserializer=ResponseMessage.FromString,
-            )
-            self.unregister = channel.unary_unary(
-                '/eu.softfire.tub.RegistrationService/unregister',
-                request_serializer=UnregisterMessage.SerializeToString,
-                response_deserializer=ResponseMessage.FromString,
-            )
+      self.register = channel.unary_unary(
+          '/eu.softfire.tub.messaging.grpc.RegistrationService/register',
+          request_serializer=RegisterMessage.SerializeToString,
+          response_deserializer=ResponseMessage.FromString,
+          )
+      self.unregister = channel.unary_unary(
+          '/eu.softfire.tub.messaging.grpc.RegistrationService/unregister',
+          request_serializer=UnregisterMessage.SerializeToString,
+          response_deserializer=ResponseMessage.FromString,
+          )
 
 
-    class RegistrationServiceServicer(object):
+  class RegistrationServiceServicer(object):
 
-        def register(self, request, context):
-            context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-            context.set_details('Method not implemented!')
-            raise NotImplementedError('Method not implemented!')
+    def register(self, request, context):
+      context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+      context.set_details('Method not implemented!')
+      raise NotImplementedError('Method not implemented!')
 
-        def unregister(self, request, context):
-            context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-            context.set_details('Method not implemented!')
-            raise NotImplementedError('Method not implemented!')
-
-
-    def add_RegistrationServiceServicer_to_server(servicer, server):
-        rpc_method_handlers = {
-            'register': grpc.unary_unary_rpc_method_handler(
-                servicer.register,
-                request_deserializer=RegisterMessage.FromString,
-                response_serializer=ResponseMessage.SerializeToString,
-            ),
-            'unregister': grpc.unary_unary_rpc_method_handler(
-                servicer.unregister,
-                request_deserializer=UnregisterMessage.FromString,
-                response_serializer=ResponseMessage.SerializeToString,
-            ),
-        }
-        generic_handler = grpc.method_handlers_generic_handler(
-            'eu.softfire.tub.RegistrationService', rpc_method_handlers)
-        server.add_generic_rpc_handlers((generic_handler,))
+    def unregister(self, request, context):
+      context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+      context.set_details('Method not implemented!')
+      raise NotImplementedError('Method not implemented!')
 
 
-    class BetaRegistrationServiceServicer(object):
-        """The Beta API is deprecated for 0.15.0 and later.
+  def add_RegistrationServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+        'register': grpc.unary_unary_rpc_method_handler(
+            servicer.register,
+            request_deserializer=RegisterMessage.FromString,
+            response_serializer=ResponseMessage.SerializeToString,
+        ),
+        'unregister': grpc.unary_unary_rpc_method_handler(
+            servicer.unregister,
+            request_deserializer=UnregisterMessage.FromString,
+            response_serializer=ResponseMessage.SerializeToString,
+        ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+        'eu.softfire.tub.messaging.grpc.RegistrationService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+  class ManagerAgentStub(object):
+
+    def __init__(self, channel):
+      """Constructor.
+
+      Args:
+        channel: A grpc.Channel.
+      """
+      self.execute = channel.unary_unary(
+          '/eu.softfire.tub.messaging.grpc.ManagerAgent/execute',
+          request_serializer=RequestMessage.SerializeToString,
+          response_deserializer=ResponseMessage.FromString,
+          )
+
+
+  class ManagerAgentServicer(object):
+
+    def execute(self, request, context):
+      context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+      context.set_details('Method not implemented!')
+      raise NotImplementedError('Method not implemented!')
+
+
+  def add_ManagerAgentServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+        'execute': grpc.unary_unary_rpc_method_handler(
+            servicer.execute,
+            request_deserializer=RequestMessage.FromString,
+            response_serializer=ResponseMessage.SerializeToString,
+        ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+        'eu.softfire.tub.messaging.grpc.ManagerAgent', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+  class BetaRegistrationServiceServicer(object):
+    """The Beta API is deprecated for 0.15.0 and later.
 
     It is recommended to use the GA API (classes and functions in this
     file not marked beta) for all further purposes. This class was generated
     only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
-
-        def register(self, request, context):
-            context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
-
-        def unregister(self, request, context):
-            context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
+    def register(self, request, context):
+      context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
+    def unregister(self, request, context):
+      context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
 
 
-    class BetaRegistrationServiceStub(object):
-        """The Beta API is deprecated for 0.15.0 and later.
+  class BetaRegistrationServiceStub(object):
+    """The Beta API is deprecated for 0.15.0 and later.
 
     It is recommended to use the GA API (classes and functions in this
     file not marked beta) for all further purposes. This class was generated
     only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
-
-        def register(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
-            raise NotImplementedError()
-
-        register.future = None
-
-        def unregister(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
-            raise NotImplementedError()
-
-        unregister.future = None
+    def register(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      raise NotImplementedError()
+    register.future = None
+    def unregister(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      raise NotImplementedError()
+    unregister.future = None
 
 
-    def beta_create_RegistrationService_server(servicer, pool=None, pool_size=None, default_timeout=None,
-                                               maximum_timeout=None):
-        """The Beta API is deprecated for 0.15.0 and later.
+  def beta_create_RegistrationService_server(servicer, pool=None, pool_size=None, default_timeout=None, maximum_timeout=None):
+    """The Beta API is deprecated for 0.15.0 and later.
 
     It is recommended to use the GA API (classes and functions in this
     file not marked beta) for all further purposes. This function was
     generated only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0"""
-        request_deserializers = {
-            ('eu.softfire.tub.RegistrationService', 'register'): RegisterMessage.FromString,
-            ('eu.softfire.tub.RegistrationService', 'unregister'): UnregisterMessage.FromString,
-        }
-        response_serializers = {
-            ('eu.softfire.tub.RegistrationService', 'register'): ResponseMessage.SerializeToString,
-            ('eu.softfire.tub.RegistrationService', 'unregister'): ResponseMessage.SerializeToString,
-        }
-        method_implementations = {
-            ('eu.softfire.tub.RegistrationService', 'register'): face_utilities.unary_unary_inline(servicer.register),
-            ('eu.softfire.tub.RegistrationService', 'unregister'): face_utilities.unary_unary_inline(
-                servicer.unregister),
-        }
-        server_options = beta_implementations.server_options(request_deserializers=request_deserializers,
-                                                             response_serializers=response_serializers,
-                                                             thread_pool=pool, thread_pool_size=pool_size,
-                                                             default_timeout=default_timeout,
-                                                             maximum_timeout=maximum_timeout)
-        return beta_implementations.server(method_implementations, options=server_options)
+    request_deserializers = {
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'register'): RegisterMessage.FromString,
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'unregister'): UnregisterMessage.FromString,
+    }
+    response_serializers = {
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'register'): ResponseMessage.SerializeToString,
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'unregister'): ResponseMessage.SerializeToString,
+    }
+    method_implementations = {
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'register'): face_utilities.unary_unary_inline(servicer.register),
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'unregister'): face_utilities.unary_unary_inline(servicer.unregister),
+    }
+    server_options = beta_implementations.server_options(request_deserializers=request_deserializers, response_serializers=response_serializers, thread_pool=pool, thread_pool_size=pool_size, default_timeout=default_timeout, maximum_timeout=maximum_timeout)
+    return beta_implementations.server(method_implementations, options=server_options)
 
 
-    def beta_create_RegistrationService_stub(channel, host=None, metadata_transformer=None, pool=None, pool_size=None):
-        """The Beta API is deprecated for 0.15.0 and later.
+  def beta_create_RegistrationService_stub(channel, host=None, metadata_transformer=None, pool=None, pool_size=None):
+    """The Beta API is deprecated for 0.15.0 and later.
 
     It is recommended to use the GA API (classes and functions in this
     file not marked beta) for all further purposes. This function was
     generated only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0"""
-        request_serializers = {
-            ('eu.softfire.tub.RegistrationService', 'register'): RegisterMessage.SerializeToString,
-            ('eu.softfire.tub.RegistrationService', 'unregister'): UnregisterMessage.SerializeToString,
-        }
-        response_deserializers = {
-            ('eu.softfire.tub.RegistrationService', 'register'): ResponseMessage.FromString,
-            ('eu.softfire.tub.RegistrationService', 'unregister'): ResponseMessage.FromString,
-        }
-        cardinalities = {
-            'register': cardinality.Cardinality.UNARY_UNARY,
-            'unregister': cardinality.Cardinality.UNARY_UNARY,
-        }
-        stub_options = beta_implementations.stub_options(host=host, metadata_transformer=metadata_transformer,
-                                                         request_serializers=request_serializers,
-                                                         response_deserializers=response_deserializers,
-                                                         thread_pool=pool, thread_pool_size=pool_size)
-        return beta_implementations.dynamic_stub(channel, 'eu.softfire.tub.RegistrationService', cardinalities,
-                                                 options=stub_options)
+    request_serializers = {
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'register'): RegisterMessage.SerializeToString,
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'unregister'): UnregisterMessage.SerializeToString,
+    }
+    response_deserializers = {
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'register'): ResponseMessage.FromString,
+      ('eu.softfire.tub.messaging.grpc.RegistrationService', 'unregister'): ResponseMessage.FromString,
+    }
+    cardinalities = {
+      'register': cardinality.Cardinality.UNARY_UNARY,
+      'unregister': cardinality.Cardinality.UNARY_UNARY,
+    }
+    stub_options = beta_implementations.stub_options(host=host, metadata_transformer=metadata_transformer, request_serializers=request_serializers, response_deserializers=response_deserializers, thread_pool=pool, thread_pool_size=pool_size)
+    return beta_implementations.dynamic_stub(channel, 'eu.softfire.tub.messaging.grpc.RegistrationService', cardinalities, options=stub_options)
+
+
+  class BetaManagerAgentServicer(object):
+    """The Beta API is deprecated for 0.15.0 and later.
+
+    It is recommended to use the GA API (classes and functions in this
+    file not marked beta) for all further purposes. This class was generated
+    only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
+    def execute(self, request, context):
+      context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
+
+
+  class BetaManagerAgentStub(object):
+    """The Beta API is deprecated for 0.15.0 and later.
+
+    It is recommended to use the GA API (classes and functions in this
+    file not marked beta) for all further purposes. This class was generated
+    only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
+    def execute(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      raise NotImplementedError()
+    execute.future = None
+
+
+  def beta_create_ManagerAgent_server(servicer, pool=None, pool_size=None, default_timeout=None, maximum_timeout=None):
+    """The Beta API is deprecated for 0.15.0 and later.
+
+    It is recommended to use the GA API (classes and functions in this
+    file not marked beta) for all further purposes. This function was
+    generated only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0"""
+    request_deserializers = {
+      ('eu.softfire.tub.messaging.grpc.ManagerAgent', 'execute'): RequestMessage.FromString,
+    }
+    response_serializers = {
+      ('eu.softfire.tub.messaging.grpc.ManagerAgent', 'execute'): ResponseMessage.SerializeToString,
+    }
+    method_implementations = {
+      ('eu.softfire.tub.messaging.grpc.ManagerAgent', 'execute'): face_utilities.unary_unary_inline(servicer.execute),
+    }
+    server_options = beta_implementations.server_options(request_deserializers=request_deserializers, response_serializers=response_serializers, thread_pool=pool, thread_pool_size=pool_size, default_timeout=default_timeout, maximum_timeout=maximum_timeout)
+    return beta_implementations.server(method_implementations, options=server_options)
+
+
+  def beta_create_ManagerAgent_stub(channel, host=None, metadata_transformer=None, pool=None, pool_size=None):
+    """The Beta API is deprecated for 0.15.0 and later.
+
+    It is recommended to use the GA API (classes and functions in this
+    file not marked beta) for all further purposes. This function was
+    generated only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0"""
+    request_serializers = {
+      ('eu.softfire.tub.messaging.grpc.ManagerAgent', 'execute'): RequestMessage.SerializeToString,
+    }
+    response_deserializers = {
+      ('eu.softfire.tub.messaging.grpc.ManagerAgent', 'execute'): ResponseMessage.FromString,
+    }
+    cardinalities = {
+      'execute': cardinality.Cardinality.UNARY_UNARY,
+    }
+    stub_options = beta_implementations.stub_options(host=host, metadata_transformer=metadata_transformer, request_serializers=request_serializers, response_deserializers=response_deserializers, thread_pool=pool, thread_pool_size=pool_size)
+    return beta_implementations.dynamic_stub(channel, 'eu.softfire.tub.messaging.grpc.ManagerAgent', cardinalities, options=stub_options)
 except ImportError:
-    pass
+  pass
 # @@protoc_insertion_point(module_scope)

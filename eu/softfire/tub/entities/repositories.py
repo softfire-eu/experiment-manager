@@ -41,3 +41,7 @@ def find(_clazz, _id=None):
             res = se.query(_clazz).filter(_clazz.id == _id).one()
         se.commit()
     return res
+
+
+def drop_tables():
+    Base.metadata.drop_all(engine)
