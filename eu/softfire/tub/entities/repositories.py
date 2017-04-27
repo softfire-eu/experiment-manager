@@ -33,9 +33,15 @@ def save(entity):
         se.commit()
 
 
+def delete(entity):
+    with get_db_session() as se:
+        se.delete(entity)
+        se.commit()
+
+
 def find(_clazz, _id=None):
     with get_db_session() as se:
-        if _id:
+        if _id is None:
             res = se.query(_clazz).all()
         else:
             res = se.query(_clazz).filter(_clazz.id == _id).one()

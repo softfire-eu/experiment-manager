@@ -21,7 +21,7 @@ setup(
     description="The SoftFIRE Experimenter Manager",
     license="Apache 2",
     keywords="python vnfm nfvo open baton openbaton sdk experiment manager softfire tosca openstack rest",
-    url="http://openbaton.github.io/",
+    url="http://softfire.eu/",
     packages=find_packages(),
     scripts=["experiment-manager"],
     install_requires=[

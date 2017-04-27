@@ -4,7 +4,7 @@ from concurrent import futures
 import grpc
 
 from eu.softfire.tub.entities.entities import ManagerEndpoint
-from eu.softfire.tub.entities.repositories import save, find
+from eu.softfire.tub.entities.repositories import save, find, delete
 from eu.softfire.tub.messaging.grpc import messages_pb2
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc
 from eu.softfire.tub.utils.utils import get_logger, get_config
@@ -14,9 +14,12 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 def receive_forever():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=get_config().getint('messaging', 'bind_port')))
+    config = get_config()
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=config.getint('system', 'server_threads')))
     messages_pb2_grpc.add_RegistrationServiceServicer_to_server(RegistrationAgent(), server)
-    server.add_insecure_port('[::]:50051')
+    binding = '[::]:%s' % config.get('messaging', 'bind_port')
+    logger.info("Binding rpc registration server to: %s" % binding)
+    server.add_insecure_port(binding)
     server.start()
     try:
         while True:
@@ -29,7 +32,11 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
 
     def unregister(self, request, context):
         logger.info("unregistering %s" % request)
-        return messages_pb2.ResponseMessage(result=0)
+        for manager_endpoint in find(ManagerEndpoint):
+            if manager_endpoint.name == request.name:
+                delete(manager_endpoint)
+                return messages_pb2.ResponseMessage(result=0)
+        return messages_pb2.ResponseMessage(result=1, error_message="manager endpoint not found")
 
     def register(self, request, context):
         logger.info("registering %s" % request)
