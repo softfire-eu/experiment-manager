@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option optimize_for = LITE_RUNTIME;
+
+package eu.softfire.tub;
+
+service RegistrationService {
+    rpc register (RegisterMessage) returns (ResponseMessage) { }
+    rpc unregister (UnregisterMessage) returns (ResponseMessage) { }
+}
+
+message RegisterMessage {
+    string name = 1;
+    string endpoint = 2;
+    string description = 3;
+}
+
+message UnregisterMessage {
+    string name = 1;
+    string endpoint = 2;
+}
+
+enum Method {
+    LIST_RESOURCES = 0;
+    PROVIDE_RESOURCES = 1;
+    RELEASE_RESOURCES = 2;
+}
+
+message RequestMessage {
+    Method method = 1;
+    string payload = 2; // maybe not needed
+}
+
+message ResponseMessage {
+    int32 result = 1;
+    oneof message {
+        ListResourceResponse listResource = 2;
+        ProvideResourceResponse provideResource = 3;
+    }
+}
+
+message ListResourceResponse {
+    repeated ResourceMetadata resources = 1;
+}
+
+message ProvideResourceResponse {
+    repeated string resources = 1; // maybe to be changed
+}
+
+message ResourceMetadata {
+    string name = 1;
+    string description = 2;
+    int32 cardinality = 3;
+}
