@@ -28,6 +28,8 @@ setup(
         'asyncio',
         'tosca-parser',
         'bottle',
+        'beaker',
+        'bottle-cork',
         'pyaml',
         'sqlalchemy',
         'grpcio',

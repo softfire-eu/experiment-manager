@@ -86,6 +86,7 @@ class ManagerAgent(object):
 
     def provide_resources(self, manager_name, resource_ids):
         stub = self.get_stub(manager_name)
+        # TODO add user information in the payload of the request
         response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
                                                             payload=json.dumps({'ids': resource_ids})))
         if response.result != 0:
