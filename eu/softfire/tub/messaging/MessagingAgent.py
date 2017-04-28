@@ -1,3 +1,4 @@
+import json
 import time
 from concurrent import futures
 
@@ -5,6 +6,7 @@ import grpc
 
 from eu.softfire.tub.entities.entities import ManagerEndpoint
 from eu.softfire.tub.entities.repositories import save, find, delete
+from eu.softfire.tub.exceptions.exceptions import ManagerNotFound, RpcFailedCall
 from eu.softfire.tub.messaging.grpc import messages_pb2
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc
 from eu.softfire.tub.utils.utils import get_logger, get_config
@@ -29,7 +31,6 @@ def receive_forever():
 
 
 class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
-
     def unregister(self, request, context):
         logger.info("unregistering %s" % request)
         for manager_endpoint in find(ManagerEndpoint):
@@ -55,14 +56,35 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
 
 
 class ManagerAgent(object):
-
-    def list_resources(self, manager_name):
+    def get_stub(self, manager_name):
         for manager_endpoint in find(ManagerEndpoint):
             if manager_endpoint.name == manager_name:
                 channel = grpc.insecure_channel(manager_endpoint.endpoint)
-                stub = messages_pb2_grpc.ManagerAgentStub(channel)
-                response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.LIST_RESOURCES, payload=''))
-                if response.result != 0:
-                    logger.error("list resources returned %d: %s" % (response.result, response.error_message))
-                    return
-                return response.list_resource.resources
+                return messages_pb2_grpc.ManagerAgentStub(channel)
+        raise ManagerNotFound("No manager found for name %s" % manager_name)
+
+    def list_resources(self, manager_name):
+        stub = self.get_stub(manager_name)
+        response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.LIST_RESOURCES, payload=''))
+        if response.result != 0:
+            logger.error("list resources returned %d: %s" % (response.result, response.error_message))
+            raise RpcFailedCall("list resources returned %d: %s" % (response.result, response.error_message))
+        return response.list_resource.resources
+
+    def provide_resources(self, manager_name, resource_ids):
+        stub = self.get_stub(manager_name)
+        response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
+                                                            payload=json.dumps({'ids': resource_ids})))
+        if response.result != 0:
+            logger.error("provide resources returned %d: %s" % (response.result, response.error_message))
+            raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
+        return response.provide_resource.resources
+
+    def release_resources(self, manager_name, resource_ids):
+        stub = self.get_stub(manager_name)
+        response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
+                                                            payload=json.dumps({'ids': resource_ids})))
+        if response.result != 0:
+            logger.error("release resources returned %d: %s" % (response.result, response.error_message))
+            raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
+        return response.result
