@@ -63,13 +63,26 @@ class ManagerAgent(object):
                 return messages_pb2_grpc.ManagerAgentStub(channel)
         raise ManagerNotFound("No manager found for name %s" % manager_name)
 
-    def list_resources(self, manager_name):
-        stub = self.get_stub(manager_name)
-        response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.LIST_RESOURCES, payload=''))
-        if response.result != 0:
-            logger.error("list resources returned %d: %s" % (response.result, response.error_message))
-            raise RpcFailedCall("list resources returned %d: %s" % (response.result, response.error_message))
-        return response.list_resource.resources
+    def list_resources(self, manager_name=None):
+        managers = []
+        if manager_name is None:
+            for man in find(ManagerEndpoint):
+                managers.append(man.name)
+        else:
+            managers.append(manager_name)
+
+        result = []
+        for manager in managers:
+            stub = self.get_stub(manager)
+            response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.LIST_RESOURCES, payload=''))
+            if response.result != 0:
+                logger.error("list resources returned %d: %s" % (response.result, response.error_message))
+                raise RpcFailedCall("list resources returned %d: %s" % (response.result, response.error_message))
+            result.append(response.list_resource.resources)
+
+        if len(result) == 1:
+            return result[0]
+        return result
 
     def provide_resources(self, manager_name, resource_ids):
         stub = self.get_stub(manager_name)

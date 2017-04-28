@@ -1,7 +1,6 @@
-import yaml
-from bottle import run, request, post
-from toscaparser.tosca_template import ToscaTemplate
+from bottle import run, request, post, get, HTTPError, HTTPResponse
 
+from eu.softfire.tub.exceptions.exceptions import ManagerNotFound
 from eu.softfire.tub.messaging.MessagingAgent import ManagerAgent
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -10,18 +9,26 @@ logger = get_logger('eu.softfire.tub.api')
 manager_agent = ManagerAgent()
 
 
-@post('/api/v1/resources')
+@get('/api/v1/resources')
 def list_resources():
-    logger.debug("got body: %s" % request.body.read())
-    request_body = ToscaTemplate(yaml_dict_tpl=request.body.read())
-    result = []
-    for name, node_template in request_body.topology_template.nodetemplates.items():
-        resources = manager_agent.list_resources(node_template.get("type"))
-        if type(resources) is not dict:
-            resources = yaml.load(resources)
-        result.append(resources)
+    try:
+        return manager_agent.list_resources()
+    except ManagerNotFound as e:
+        raise HTTPError(status=404, exception=e)
 
-    return result
+
+@get('/api/v1/resources/<manager_name>')
+def list_resources(manager_name):
+    try:
+        return manager_agent.list_resources(manager_name)
+    except ManagerNotFound as e:
+        raise HTTPError(status=404, exception=e)
+
+
+@post('/api/v1/resources')
+def provide_resources():
+    logger.debug("got body: %s" % request.body.read())
+    return HTTPResponse(status=201)
 
 
 def start():
