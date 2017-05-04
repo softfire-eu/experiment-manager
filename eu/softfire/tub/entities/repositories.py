@@ -10,11 +10,10 @@ from eu.softfire.tub.utils.utils import get_config, get_logger
 
 logger = get_logger('eu.softfire.tub.repository')
 
-config = get_config()
 lock = threading.RLock()
 
-engine = create_engine(config.get('database', 'url'))
-engine.echo = (logger.getEffectiveLevel() == logging.DEBUG) and config.getboolean('database', 'show_sql')
+engine = create_engine(get_config('database', 'url', "sqlite:////tmp/experiment-manager.db"))
+engine.echo = (logger.getEffectiveLevel() == logging.DEBUG) and bool(get_config('database', 'show_sql', False))
 Base.metadata.create_all(engine)
 session_factory = sessionmaker(bind=engine)
 _session = scoped_session(session_factory)

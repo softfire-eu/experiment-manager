@@ -16,10 +16,9 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 
 def receive_forever():
-    config = get_config()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=config.getint('system', 'server_threads')))
     messages_pb2_grpc.add_RegistrationServiceServicer_to_server(RegistrationAgent(), server)
-    binding = '[::]:%s' % config.get('messaging', 'bind_port')
+    binding = '[::]:%s' % get_config('messaging', 'bind_port', 50051)
     logger.info("Binding rpc registration server to: %s" % binding)
     server.add_insecure_port(binding)
     server.start()
@@ -49,7 +48,6 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
 
     def __init__(self):
         self.stop = False
-        self.config = get_config()
 
     def stop(self):
         self.stop = True

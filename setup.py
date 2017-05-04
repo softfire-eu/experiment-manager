@@ -15,7 +15,7 @@ def read(fname):
 
 setup(
     name="experiment-manager",
-    version="0.0.1",
+    version="0.1.0",
     author="Lorenzo Tomasini",
     author_email="lorenzo.tomasini@gmail.com",
     description="The SoftFIRE Experimenter Manager",

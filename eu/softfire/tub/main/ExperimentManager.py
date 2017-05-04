@@ -11,8 +11,7 @@ def start():
     """
     Start the ExperimentManager
     """
-    config = get_config()
-    logger = get_logger(__name__)
+    logger = get_logger("eu.softfire.tub.main")
     logger.info("Starting Experiment Manager.")
 
     import eu.softfire.tub.entities.repositories
@@ -25,7 +24,7 @@ def start():
         loop.run_forever()
     except KeyboardInterrupt:
         logger.info("received ctrl-c, shutting down...")
-        if config.getboolean('database', 'drop_on_exit'):
+        if bool(get_config('database', 'drop_on_exit', False)):
             drop_tables()
         loop.close()
 

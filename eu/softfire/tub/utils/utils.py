@@ -12,7 +12,7 @@ def get_logger(name):
     return logging.getLogger(name)
 
 
-def get_config():
+def get_config_parser():
     """
     Get the ConfigParser object containing the system configurations
 
@@ -25,3 +25,13 @@ def get_config():
     else:
         logging.error("Config file not found, create %s" % CONFIG_FILE_PATH)
         exit(1)
+
+
+def get_config(section, key, default=None):
+    config = get_config_parser()
+    if default is None:
+        return config.get(section=section, option=key)
+    try:
+        return config.get(section=section, option=key)
+    except configparser.NoOptionError:
+        return default

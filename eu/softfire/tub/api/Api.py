@@ -14,7 +14,7 @@ from eu.softfire.tub.utils.utils import get_config, get_logger
 logger = get_logger('eu.softfire.tub.api')
 
 manager_agent = ManagerAgent()
-aaa = Cork(get_config().get("api", "cork-files-path"))
+aaa = Cork(get_config("api", "cork-files-path","/etc/softfire/users"))
 authorize = aaa.make_auth_decorator(fail_redirect="/login")
 
 
@@ -53,10 +53,7 @@ def book_resources():
 
 def start():
     bottle.debug(True)
-    config = get_config()
-    port = config.getint(section='api', option='port')
-    if not port:
-        port = 8080
+    port = get_config(section='api', key='port', default=8080)
     app = bottle.app()
     session_opts = {
         'session.cookie_expires': True,
@@ -95,7 +92,7 @@ def logout():
 
 
 def check_if_authorized(username):
-    authorized_experimenter_file = get_config().get('api', 'authorized-experimenters')
+    authorized_experimenter_file = get_config('api', 'authorized-experimenters', '/etc/softfire/authorized-experimenters.json')
     if os.path.exists(authorized_experimenter_file) and os.path.isfile(authorized_experimenter_file):
         with open(authorized_experimenter_file, "r") as f:
             authorized_exp = json.loads(f.read().encode("utf-8"))
@@ -118,7 +115,7 @@ def register():
 def add_authorized_experimenter(username):
     if not os.path.exists(CONFIGURATION_FOLDER):
         os.makedirs(CONFIGURATION_FOLDER)
-    authorized_experimenter_file = get_config().get('api', 'authorized-experimenters')
+    authorized_experimenter_file = get_config('api', 'authorized-experimenters', '/etc/softfire/authorized-experimenters.json')
     with open(authorized_experimenter_file, 'w') as f:
         authorized_exp = json.loads(f.read().encode("utf-8"))
         authorized_exp[username] = True
