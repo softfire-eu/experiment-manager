@@ -14,15 +14,17 @@ from eu.softfire.tub.utils.utils import get_config, get_logger
 logger = get_logger('eu.softfire.tub.api')
 
 manager_agent = ManagerAgent()
-aaa = Cork(get_config("api", "cork-files-path","/etc/softfire/users"))
+aaa = Cork(get_config("api", "cork-files-path", "/etc/softfire/users"))
 authorize = aaa.make_auth_decorator(fail_redirect="/login")
 
 
-@get('/api/v1/resources')
+@get('/list_resources')
 @authorize(role="experimenter")
 def list_resources():
     try:
-        return manager_agent.list_resources()
+        return dict(
+            resources=manager_agent.list_resources()
+        )
     except ManagerNotFound as e:
         raise HTTPError(status=404, exception=e)
 
@@ -92,7 +94,8 @@ def logout():
 
 
 def check_if_authorized(username):
-    authorized_experimenter_file = get_config('api', 'authorized-experimenters', '/etc/softfire/authorized-experimenters.json')
+    authorized_experimenter_file = get_config('api', 'authorized-experimenters',
+                                              '/etc/softfire/authorized-experimenters.json')
     if os.path.exists(authorized_experimenter_file) and os.path.isfile(authorized_experimenter_file):
         with open(authorized_experimenter_file, "r") as f:
             authorized_exp = json.loads(f.read().encode("utf-8"))
@@ -115,7 +118,8 @@ def register():
 def add_authorized_experimenter(username):
     if not os.path.exists(CONFIGURATION_FOLDER):
         os.makedirs(CONFIGURATION_FOLDER)
-    authorized_experimenter_file = get_config('api', 'authorized-experimenters', '/etc/softfire/authorized-experimenters.json')
+    authorized_experimenter_file = get_config('api', 'authorized-experimenters',
+                                              '/etc/softfire/authorized-experimenters.json')
     with open(authorized_experimenter_file, 'w') as f:
         authorized_exp = json.loads(f.read().encode("utf-8"))
         authorized_exp[username] = True
@@ -160,7 +164,7 @@ def index():
     """Only authenticated users can see this"""
     # session = bottle.request.environ.get('beaker.session')
     # aaa.require(fail_redirect='/login')
-    return 'Welcome! <\\br> <a href="/admin">Admin page</a><\\br> <a href="/logout">Logout</a> <\\br> <a href="/experimenter">Experimenter</a>'
+    return 'Welcome! <br /> <a href="/admin">Admin page</a><br /> <a href="/logout">Logout</a> <br /> <a href="/experimenter">Experimenter</a>'
 
 
 @bottle.route('/my_role')
@@ -231,6 +235,18 @@ def delete_role():
 def login_form():
     """Serve login form"""
     return {}
+
+
+@bottle.route('/experimenter')
+@bottle.view('experimenter')
+def login_form():
+    """Serve experimenter form"""
+    return dict(
+        current_user=aaa.current_user,
+        users=aaa.list_users(),
+        roles=aaa.list_roles(),
+        resources=[manager_agent.list_resources()]
+    )
 
 
 @bottle.route('/sorry_page')

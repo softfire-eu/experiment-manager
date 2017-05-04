@@ -80,6 +80,8 @@ class ManagerAgent(object):
 
         if len(result) == 1:
             return result[0]
+        if len(result) == 0:
+            return {"id": "id", "name": "name", "description": "description"}
         return result
 
     def provide_resources(self, manager_name, resource_ids):

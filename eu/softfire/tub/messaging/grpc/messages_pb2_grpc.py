@@ -70,11 +70,21 @@ class ManagerAgentStub(object):
         request_serializer=messages__pb2.RequestMessage.SerializeToString,
         response_deserializer=messages__pb2.ResponseMessage.FromString,
         )
+    self.create_user = channel.unary_unary(
+        '/ManagerAgent/create_user',
+        request_serializer=messages__pb2.UserInfo.SerializeToString,
+        response_deserializer=messages__pb2.UserInfo.FromString,
+        )
 
 
 class ManagerAgentServicer(object):
 
   def execute(self, request, context):
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def create_user(self, request, context):
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
@@ -86,6 +96,11 @@ def add_ManagerAgentServicer_to_server(servicer, server):
           servicer.execute,
           request_deserializer=messages__pb2.RequestMessage.FromString,
           response_serializer=messages__pb2.ResponseMessage.SerializeToString,
+      ),
+      'create_user': grpc.unary_unary_rpc_method_handler(
+          servicer.create_user,
+          request_deserializer=messages__pb2.UserInfo.FromString,
+          response_serializer=messages__pb2.UserInfo.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(
