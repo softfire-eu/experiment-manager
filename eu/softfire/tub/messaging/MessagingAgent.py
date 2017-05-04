@@ -63,7 +63,7 @@ class ManagerAgent(object):
                 return messages_pb2_grpc.ManagerAgentStub(channel)
         raise ManagerNotFound("No manager found for name %s" % manager_name)
 
-    def list_resources(self, manager_name=None):
+    def list_resources(self, manager_name=None, _id=None):
         managers = []
         if manager_name is None:
             for man in find(ManagerEndpoint):

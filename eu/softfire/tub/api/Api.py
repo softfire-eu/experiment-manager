@@ -1,23 +1,25 @@
 import json
+import os
 
 import bottle
 from beaker.middleware import SessionMiddleware
-from bottle import run, request, post, get, HTTPError, HTTPResponse
+from bottle import request, post, get, HTTPError, HTTPResponse
 from cork import Cork
 
 from eu.softfire.tub.exceptions.exceptions import ManagerNotFound
 from eu.softfire.tub.messaging.MessagingAgent import ManagerAgent
+from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
 logger = get_logger('eu.softfire.tub.api')
 
 manager_agent = ManagerAgent()
-aaa = Cork('/etc/softfire/users')
-# alias the authorization decorator with defaults
-authorize = aaa.make_auth_decorator(fail_redirect="/login", role="user")
+aaa = Cork(get_config().get("api", "cork-files-path"))
+authorize = aaa.make_auth_decorator(fail_redirect="/login")
 
 
 @get('/api/v1/resources')
+@authorize(role="experimenter")
 def list_resources():
     try:
         return manager_agent.list_resources()
@@ -25,7 +27,17 @@ def list_resources():
         raise HTTPError(status=404, exception=e)
 
 
+@get('/api/v1/resources/<id>')
+@authorize(role="experimenter")
+def list_resources(_id):
+    try:
+        return manager_agent.list_resources(_id=_id)
+    except ManagerNotFound as e:
+        raise HTTPError(status=404, exception=e)
+
+
 @get('/api/v1/resources/<manager_name>')
+@authorize(role="experimenter")
 def list_resources(manager_name):
     try:
         return manager_agent.list_resources(manager_name)
@@ -34,7 +46,7 @@ def list_resources(manager_name):
 
 
 @post('/api/v1/resources')
-def provide_resources():
+def book_resources():
     logger.debug(("got body: %s" % request.body.read()))
     return HTTPResponse(status=201)
 
@@ -77,32 +89,48 @@ def login():
     aaa.login(username, password, success_redirect='/', fail_redirect='/login')
 
 
-@bottle.route('/user_is_anonymous')
-def user_is_anonymous():
-    if aaa.user_is_anonymous:
-        return 'True'
-
-    return 'False'
-
-
 @bottle.route('/logout')
 def logout():
     aaa.logout(success_redirect='/login')
+
+
+def check_if_authorized(username):
+    authorized_experimenter_file = get_config().get('api', 'authorized-experimenters')
+    if os.path.exists(authorized_experimenter_file) and os.path.isfile(authorized_experimenter_file):
+        with open(authorized_experimenter_file, "r") as f:
+            authorized_exp = json.loads(f.read().encode("utf-8"))
+            return authorized_exp.get(username) and bool(authorized_exp[username])
+    else:
+        return False
 
 
 @bottle.post('/register')
 def register():
     """Send out registration email"""
     logger.debug(("got body: %s" % request.body.read().decode("utf-8")))
-    aaa.create_user(post_get('username'), 'user', post_get('password'))
+    if check_if_authorized(post_get('username')):
+        aaa.create_user(post_get('username'), 'user', post_get('password'))
+    else:
+        return HTTPError(status=401)
     return 'User created'
 
 
-@bottle.route('/validate_registration/:registration_code')
-def validate_registration(registration_code):
-    """Validate registration, create user account"""
-    aaa.validate_registration(registration_code)
-    return 'Thanks. <a href="/login">Go to login</a>'
+def add_authorized_experimenter(username):
+    if not os.path.exists(CONFIGURATION_FOLDER):
+        os.makedirs(CONFIGURATION_FOLDER)
+    authorized_experimenter_file = get_config().get('api', 'authorized-experimenters')
+    with open(authorized_experimenter_file, 'w') as f:
+        authorized_exp = json.loads(f.read().encode("utf-8"))
+        authorized_exp[username] = True
+        f.write(json.dumps(authorized_exp))
+
+
+@bottle.post('/add-authorized-experimenter')
+def register():
+    """Send out registration email"""
+    logger.debug(("got body: %s" % request.body.read().decode("utf-8")))
+    add_authorized_experimenter(post_get('username'))
+    return 'User created'
 
 
 @bottle.post('/reset_password')
@@ -136,47 +164,6 @@ def index():
     # session = bottle.request.environ.get('beaker.session')
     # aaa.require(fail_redirect='/login')
     return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
-
-
-# Resources used by tests designed to test decorators specifically
-
-@bottle.route('/for_kings_only')
-@authorize(role="king")
-def page_for_kings():
-    """
-    This resource is used to test a non-existing role.
-    Only kings or higher (e.g. gods) can see this
-    """
-    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
-
-
-@bottle.route('/page_for_specific_user_admin')
-@authorize(username="admin")
-def page_for_username_admin():
-    """Only a user named 'admin' can see this"""
-    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
-
-
-@bottle.route('/page_for_specific_user_fred_who_doesnt_exist')
-@authorize(username="fred")
-def page_for_user_fred():
-    """Only authenticated users by the name of 'fred' can see this"""
-    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
-
-
-@bottle.route('/page_for_admins')
-@authorize(role="admin")
-def page_for_role_admin():
-    """Only authenticated users (role=user or role=admin) can see this"""
-    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
-
-
-@bottle.route('/restricted_download')
-@authorize()
-def restricted_download():
-    """Only authenticated users can download this file"""
-    # aaa.require(fail_redirect='/login')
-    return bottle.static_file('static_file', root='.')
 
 
 @bottle.route('/my_role')
@@ -253,3 +240,10 @@ def login_form():
 def sorry_page():
     """Serve sorry page"""
     return '<p>Sorry, you are not authorized to perform this action</p>'
+
+
+@bottle.route('/static/<filename>')
+def server_static(filename):
+    if ".." in filename:
+        return HTTPError(status=403)
+    return bottle.static_file(filename, root='%s/../../../../static' % os.path.dirname(os.path.realpath(__file__)))

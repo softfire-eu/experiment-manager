@@ -2,11 +2,6 @@
 <html>
 <head>
 <meta content="text/html; charset=utf-8" http-equiv="content-type">
-<!-- Bootstrap Core CSS -->
-<link href="css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Custom CSS -->
-<link href="css/simple-sidebar.css" rel="stylesheet">
 <div id="hbox">
   <div class="box">
       <h2>Login</h2>
@@ -50,6 +45,13 @@
   </div>
   <br style="clear: left;" />
 </div>
+
+<!-- Bootstrap Core CSS -->
+<link href="static/bootstrap.min.css" rel="stylesheet">
+
+<!-- Custom CSS -->
+<link href="static/simple-sidebar.css" rel="stylesheet">
+
 <style>
 div {
     color: #777;
