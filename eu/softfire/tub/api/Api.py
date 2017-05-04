@@ -160,7 +160,7 @@ def index():
     """Only authenticated users can see this"""
     # session = bottle.request.environ.get('beaker.session')
     # aaa.require(fail_redirect='/login')
-    return 'Welcome! <a href="/admin">Admin page</a> <a href="/logout">Logout</a>'
+    return 'Welcome! <\\br> <a href="/admin">Admin page</a><\\br> <a href="/logout">Logout</a> <\\br> <a href="/experimenter">Experimenter</a>'
 
 
 @bottle.route('/my_role')
