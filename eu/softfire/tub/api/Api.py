@@ -6,6 +6,7 @@ from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError, HTTPResponse
 from cork import Cork
 
+from eu.softfire.tub.core.CoreManagers import CsarManager
 from eu.softfire.tub.exceptions.exceptions import ManagerNotFound
 from eu.softfire.tub.messaging.MessagingAgent import ManagerAgent
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
@@ -47,8 +48,19 @@ def list_resources(manager_name):
         raise HTTPError(status=404, exception=e)
 
 
-@post('/api/v1/resources')
+@post('/reserve_resources')
 def book_resources():
+    data = request.files.data
+    logger.debug("files: %s" % list(request.files.keys()))
+    for file in request.files:
+        logger.debug("file %s" % file)
+    logger.debug("Data: '%s'" % data)
+    # logger.debug("Data.file: %s" % data.file)
+    if data and data.file:
+        filename = data.filename
+        CsarManager(data.file).get_main_definition()
+        raw = data.file.read()  # This is dangerous for big files
+        return "Hello %s! You uploaded %s (%d bytes)." % (aaa.current_user.username, filename, len(raw))
     logger.debug(("got body: %s" % request.body.read()))
     return HTTPResponse(status=201)
 

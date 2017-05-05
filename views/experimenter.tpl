@@ -28,14 +28,12 @@
       <br />
 
       <p>Reserve Resources:</p>
-      <form action="reserve_resources" method="post">
-        <p>
-            <input type="file" name="experiment" value="experiment" id="experiment">
-            <label for="fileupload"> Select a file to upload</label>
-        </p>
-          <button type="submit" > OK </button>
+      <form action="/reserve_resources" method="post" enctype="multipart/form-data">
+        <label> Select a file to upload</label>
+        <input type="file" name="data" />
+        <br />
+        <button type="submit" > Send </button>
       </form>
-
       <br />
       <p>Delete Resources:</p>
       <form action="delete_resources" method="post">
