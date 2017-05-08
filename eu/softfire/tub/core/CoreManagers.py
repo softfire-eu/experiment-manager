@@ -11,8 +11,8 @@ from eu.softfire.tub.messaging.gen_grpc import messages_pb2_grpc, messages_pb2
 from toscaparser.tosca_template import ToscaTemplate
 
 from eu.softfire.tub.entities import entities
-from eu.softfire.tub.entities.entities import UsedResource, ManagerEndpoint, ResourceMetadata
-from eu.softfire.tub.entities.repositories import save, find
+from eu.softfire.tub.entities.entities import UsedResource, ManagerEndpoint, ResourceMetadata, Experimenter
+from eu.softfire.tub.entities.repositories import save, find, delete
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall
 from eu.softfire.tub.utils.utils import get_logger
 
@@ -189,3 +189,41 @@ def run_list_resources():
 
 def get_resources():
     return find(ResourceMetadata)
+
+
+class UserAgent(object):
+    def __init__(self):
+        pass
+
+    def create_user(self, username, password, role='experimenter'):
+        experimenter = Experimenter()
+        experimenter.username = username
+        experimenter.password = password
+        experimenter.role = role
+
+        managers = []
+        for man in find(ManagerEndpoint):
+            managers.append(man.name)
+
+        managers.remove('nfv-manager')
+
+        user_info = get_stub('nfv-manager').create_user(messages_pb2.UserInfo(name=username, password=password))
+        logger.info("Created user, project and tenant on the NFV Resource Manager")
+
+        for man in managers:
+            get_stub(man).create_user(user_info)
+            logger.debug("informed manager %s of created user" % man)
+
+        experimenter.testbed_tenants = {}
+
+        for k, v in user_info.testbed_tenants.items():
+            experimenter.testbed_tenants[k] = v
+
+        save(experimenter)
+        logger.info("Stored new experimenter: " % experimenter.name)
+
+    def delete_user(self, username):
+        for experimenter in find(Experimenter):
+            if experimenter.name == username:
+                delete(experimenter)
+                return

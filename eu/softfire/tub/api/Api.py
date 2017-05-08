@@ -6,14 +6,14 @@ from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError, HTTPResponse
 from cork import Cork
 
-from eu.softfire.tub.core.CoreManagers import Experiment, ManagerAgent, get_resources
+from eu.softfire.tub.core.CoreManagers import Experiment, get_resources
 from eu.softfire.tub.exceptions.exceptions import ManagerNotFound
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
 logger = get_logger('eu.softfire.tub.api')
 
-manager_agent = ManagerAgent()
+user_manager = UserAgent()
 aaa = Cork(get_config("api", "cork-files-path", "/etc/softfire/users"))
 authorize = aaa.make_auth_decorator(fail_redirect="/login")
 
@@ -107,13 +107,6 @@ def send_password_reset_email():
     return 'Please check your mailbox.'
 
 
-@bottle.route('/change_password/:reset_code')
-@bottle.view('password_change_form')
-def change_password(reset_code):
-    """Show password change form"""
-    return dict(reset_code=reset_code)
-
-
 @bottle.post('/change_password')
 def change_password():
     """Change password"""
@@ -152,24 +145,15 @@ def register():
     return 'User created'
 
 
-@bottle.route('/admin')
-@authorize(role="admin", fail_redirect='/sorry_page')
-@bottle.view('admin_page')
-def admin():
-    """Only admin users can see this"""
-    # aaa.require(role='admin', fail_redirect='/sorry_page')
-    return dict(
-        current_user=aaa.current_user,
-        users=aaa.list_users(),
-        roles=aaa.list_roles()
-    )
-
-
 @bottle.post('/create_user')
 @authorize(role='admin')
 def create_user():
     try:
-        aaa.create_user(postd().username, postd().role, postd().password)
+        password = postd().password
+        role = postd().role
+        username = postd().username
+        user_manager.create_user_info(username=username, password=password, role=role)
+        aaa.create_user(username, role, password)
         return dict(ok=True, msg='')
     except Exception as e:
         return dict(ok=False, msg=e.message)
@@ -210,6 +194,20 @@ def delete_role():
 # Static pages #
 ################
 
+
+@bottle.route('/admin')
+@authorize(role="admin", fail_redirect='/sorry_page')
+@bottle.view('admin_page')
+def admin():
+    """Only admin users can see this"""
+    # aaa.require(role='admin', fail_redirect='/sorry_page')
+    return dict(
+        current_user=aaa.current_user,
+        users=aaa.list_users(),
+        roles=aaa.list_roles()
+    )
+
+
 @bottle.route('/login')
 @bottle.view('login_form')
 def login_form():
@@ -227,6 +225,13 @@ def login_form():
         roles=aaa.list_roles(),
         resources=get_resources()
     )
+
+
+@bottle.route('/change_password/:reset_code')
+@bottle.view('password_change_form')
+def change_password(reset_code):
+    """Show password change form"""
+    return dict(reset_code=reset_code)
 
 
 @bottle.route('/sorry_page')
