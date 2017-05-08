@@ -7,7 +7,7 @@ from eu.softfire.tub.messaging.MessagingAgent import receive_forever
 from eu.softfire.tub.utils.utils import get_logger, get_config
 
 
-def start():
+def start(argv):
     """
     Start the ExperimentManager
     """

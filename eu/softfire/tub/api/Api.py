@@ -2,6 +2,7 @@ import json
 import os
 
 import bottle
+import logging
 from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError, HTTPResponse
 from cork import Cork
@@ -259,14 +260,14 @@ def start():
     app = bottle.app()
     session_opts = {
         'session.cookie_expires': True,
-        'session.encrypt_key': 'softfire',
+        'session.encrypt_key': get_config('api', 'encrypt_key', 'softfire'),
         'session.httponly': True,
         'session.timeout': 3600 * 24,  # 1 day
         'session.type': 'cookie',
         'session.validate_key': True,
     }
     app = SessionMiddleware(app, session_opts)
-    bottle.run(app=app, quiet=True, port=port)
+    bottle.run(app=app, quiet=logger.getEffectiveLevel() < logging.DEBUG, port=port)
 
 
 def postd():
