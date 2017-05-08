@@ -7,14 +7,14 @@ import dateparser
 import grpc
 import yaml
 import time
-from eu.softfire.tub.messaging.gen_grpc import messages_pb2_grpc, messages_pb2
 from toscaparser.tosca_template import ToscaTemplate
 
 from eu.softfire.tub.entities import entities
+from eu.softfire.tub.utils.utils import get_logger
 from eu.softfire.tub.entities.entities import UsedResource, ManagerEndpoint, ResourceMetadata, Experimenter
+from eu.softfire.tub.messaging.gen_grpc import messages_pb2_grpc, messages_pb2
 from eu.softfire.tub.entities.repositories import save, find, delete
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall
-from eu.softfire.tub.utils.utils import get_logger
 
 logger = get_logger('eu.softfire.tub.core')
 
@@ -127,7 +127,9 @@ class Experiment(object):
 def get_stub(manager_name):
     for manager_endpoint in find(ManagerEndpoint):
         if manager_endpoint.name == manager_name:
-            channel = grpc.insecure_channel(manager_endpoint.endpoint)
+            endpoint = manager_endpoint.endpoint
+            logger.debug("looking for endpoint %s" % endpoint)
+            channel = grpc.insecure_channel(endpoint)
             return messages_pb2_grpc.ManagerAgentStub(channel)
     raise ManagerNotFound("No manager found for name %s" % manager_name)
 
@@ -143,7 +145,11 @@ def list_resources(manager_name=None, _id=None):
     result = []
     for manager in managers:
         stub = get_stub(manager)
-        response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.LIST_RESOURCES, payload=''))
+        request_message = messages_pb2.RequestMessage
+        request_message.method = messages_pb2.LIST_RESOURCES
+        request_message.payload = ""
+        request_message.user_info = messages_pb2.UserInfo()
+        response = stub.execute(request_message)
         if response.result != 0:
             logger.error("list resources returned %d: %s" % (response.result, response.error_message))
             raise RpcFailedCall("list resources returned %d: %s" % (response.result, response.error_message))

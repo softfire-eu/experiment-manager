@@ -43,8 +43,11 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
         manager_endpoint.name = request.name
         manager_endpoint.endpoint = request.endpoint
         save(manager_endpoint)
-        list_resources()
-        return messages_pb2.ResponseMessage(result=0)
+        # list_resources()
+        response_message = messages_pb2.ResponseMessage()
+        response_message.result = 1
+        response_message.error_message = "manager endpoint not found"
+        return response_message
 
     def __init__(self):
         self.stop = False
