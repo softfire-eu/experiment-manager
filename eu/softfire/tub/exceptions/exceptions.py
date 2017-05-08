@@ -4,3 +4,7 @@ class ManagerNotFound(Exception):
 
 class RpcFailedCall(Exception):
     pass
+
+
+class ExperimentValidationError(Exception):
+    pass

@@ -6,9 +6,8 @@ from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError, HTTPResponse
 from cork import Cork
 
-from eu.softfire.tub.core.CoreManagers import CsarManager
+from eu.softfire.tub.core.CoreManagers import Experiment, ManagerAgent, get_resources
 from eu.softfire.tub.exceptions.exceptions import ManagerNotFound
-from eu.softfire.tub.messaging.MessagingAgent import ManagerAgent
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -19,12 +18,16 @@ aaa = Cork(get_config("api", "cork-files-path", "/etc/softfire/users"))
 authorize = aaa.make_auth_decorator(fail_redirect="/login")
 
 
+#######################
+# Experimenters pages #
+#######################
+
 @get('/list_resources')
 @authorize(role="experimenter")
 def list_resources():
     try:
         return dict(
-            resources=manager_agent.list_resources()
+            resources=get_resources()
         )
     except ManagerNotFound as e:
         raise HTTPError(status=404, exception=e)
@@ -34,7 +37,7 @@ def list_resources():
 @authorize(role="experimenter")
 def list_resources(_id):
     try:
-        return manager_agent.list_resources(_id=_id)
+        return get_resources(_id=_id)
     except ManagerNotFound as e:
         raise HTTPError(status=404, exception=e)
 
@@ -43,12 +46,13 @@ def list_resources(_id):
 @authorize(role="experimenter")
 def list_resources(manager_name):
     try:
-        return manager_agent.list_resources(manager_name)
+        return get_resources(manager_name)
     except ManagerNotFound as e:
         raise HTTPError(status=404, exception=e)
 
 
 @post('/reserve_resources')
+@authorize(role='experimenter')
 def book_resources():
     data = request.files.data
     logger.debug("files: %s" % list(request.files.keys()))
@@ -58,39 +62,16 @@ def book_resources():
     # logger.debug("Data.file: %s" % data.file)
     if data and data.file:
         filename = data.filename
-        CsarManager(data.file).get_main_definition()
+        Experiment(data.file).get_topology()
         raw = data.file.read()  # This is dangerous for big files
         return "Hello %s! You uploaded %s (%d bytes)." % (aaa.current_user.username, filename, len(raw))
     logger.debug(("got body: %s" % request.body.read()))
     return HTTPResponse(status=201)
 
 
-def start():
-    bottle.debug(True)
-    port = get_config(section='api', key='port', default=8080)
-    app = bottle.app()
-    session_opts = {
-        'session.cookie_expires': True,
-        'session.encrypt_key': 'softfire',
-        'session.httponly': True,
-        'session.timeout': 3600 * 24,  # 1 day
-        'session.type': 'cookie',
-        'session.validate_key': True,
-    }
-    app = SessionMiddleware(app, session_opts)
-    bottle.run(app=app, quiet=False, reloader=True, port=port)
-
-
-def postd():
-    return bottle.request.forms
-
-
-def post_get(name, default=''):
-    try:
-        return json.loads(request.body.read().decode("utf-8")).get(name, default)
-    except:
-        return bottle.request.POST.get(name, default).strip()
-
+#################
+# General pages #
+#################
 
 @bottle.post('/login')
 def login():
@@ -105,17 +86,6 @@ def logout():
     aaa.logout(success_redirect='/login')
 
 
-def check_if_authorized(username):
-    authorized_experimenter_file = get_config('api', 'authorized-experimenters',
-                                              '/etc/softfire/authorized-experimenters.json')
-    if os.path.exists(authorized_experimenter_file) and os.path.isfile(authorized_experimenter_file):
-        with open(authorized_experimenter_file, "r") as f:
-            authorized_exp = json.loads(f.read().encode("utf-8"))
-            return authorized_exp.get(username) and bool(authorized_exp[username])
-    else:
-        return False
-
-
 @bottle.post('/register')
 def register():
     """Send out registration email"""
@@ -124,25 +94,6 @@ def register():
         aaa.create_user(post_get('username'), 'user', post_get('password'))
     else:
         return HTTPError(status=401)
-    return 'User created'
-
-
-def add_authorized_experimenter(username):
-    if not os.path.exists(CONFIGURATION_FOLDER):
-        os.makedirs(CONFIGURATION_FOLDER)
-    authorized_experimenter_file = get_config('api', 'authorized-experimenters',
-                                              '/etc/softfire/authorized-experimenters.json')
-    with open(authorized_experimenter_file, 'w') as f:
-        authorized_exp = json.loads(f.read().encode("utf-8"))
-        authorized_exp[username] = True
-        f.write(json.dumps(authorized_exp))
-
-
-@bottle.post('/add-authorized-experimenter')
-def register():
-    """Send out registration email"""
-    logger.debug(("got body: %s" % request.body.read().decode("utf-8")))
-    add_authorized_experimenter(post_get('username'))
     return 'User created'
 
 
@@ -188,7 +139,18 @@ def show_current_user_role():
     return aaa.current_user.role
 
 
-# Admin-only pages
+###############
+# Admin pages #
+###############
+
+@bottle.post('/add-authorized-experimenter')
+@authorize(role='admin')
+def register():
+    """Send out registration email"""
+    logger.debug(("got body: %s" % request.body.read().decode("utf-8")))
+    add_authorized_experimenter(post_get('username'))
+    return 'User created'
+
 
 @bottle.route('/admin')
 @authorize(role="admin", fail_redirect='/sorry_page')
@@ -204,6 +166,7 @@ def admin():
 
 
 @bottle.post('/create_user')
+@authorize(role='admin')
 def create_user():
     try:
         aaa.create_user(postd().username, postd().role, postd().password)
@@ -213,6 +176,7 @@ def create_user():
 
 
 @bottle.post('/delete_user')
+@authorize(role='admin')
 def delete_user():
     try:
         aaa.delete_user(post_get('username'))
@@ -223,6 +187,7 @@ def delete_user():
 
 
 @bottle.post('/create_role')
+@authorize(role='admin')
 def create_role():
     try:
         aaa.create_role(post_get('role'), post_get('level'))
@@ -232,6 +197,7 @@ def create_role():
 
 
 @bottle.post('/delete_role')
+@authorize(role='admin')
 def delete_role():
     try:
         aaa.delete_role(post_get('role'))
@@ -240,7 +206,9 @@ def delete_role():
         return dict(ok=False, msg=e.message)
 
 
-# Static pages
+################
+# Static pages #
+################
 
 @bottle.route('/login')
 @bottle.view('login_form')
@@ -257,7 +225,7 @@ def login_form():
         current_user=aaa.current_user,
         users=aaa.list_users(),
         roles=aaa.list_roles(),
-        resources=[manager_agent.list_resources()]
+        resources=get_resources()
     )
 
 
@@ -269,6 +237,61 @@ def sorry_page():
 
 @bottle.route('/static/<filename>')
 def server_static(filename):
+    """ route to the css and static files"""
     if ".." in filename:
         return HTTPError(status=403)
     return bottle.static_file(filename, root='%s/../../../../static' % os.path.dirname(os.path.realpath(__file__)))
+
+
+#########
+# Utils #
+#########
+
+
+def start():
+    bottle.debug(True)
+    port = get_config(section='api', key='port', default=8080)
+    app = bottle.app()
+    session_opts = {
+        'session.cookie_expires': True,
+        'session.encrypt_key': 'softfire',
+        'session.httponly': True,
+        'session.timeout': 3600 * 24,  # 1 day
+        'session.type': 'cookie',
+        'session.validate_key': True,
+    }
+    app = SessionMiddleware(app, session_opts)
+    bottle.run(app=app, quiet=True, port=port)
+
+
+def postd():
+    return bottle.request.forms
+
+
+def post_get(name, default=''):
+    try:
+        return json.loads(request.body.read().decode("utf-8")).get(name, default)
+    except:
+        return bottle.request.POST.get(name, default).strip()
+
+
+def check_if_authorized(username):
+    authorized_experimenter_file = get_config('api', 'authorized-experimenters',
+                                              '/etc/softfire/authorized-experimenters.json')
+    if os.path.exists(authorized_experimenter_file) and os.path.isfile(authorized_experimenter_file):
+        with open(authorized_experimenter_file, "r") as f:
+            authorized_exp = json.loads(f.read().encode("utf-8"))
+            return authorized_exp.get(username) and bool(authorized_exp[username])
+    else:
+        return False
+
+
+def add_authorized_experimenter(username):
+    if not os.path.exists(CONFIGURATION_FOLDER):
+        os.makedirs(CONFIGURATION_FOLDER)
+    authorized_experimenter_file = get_config('api', 'authorized-experimenters',
+                                              '/etc/softfire/authorized-experimenters.json')
+    with open(authorized_experimenter_file, 'w') as f:
+        authorized_exp = json.loads(f.read().encode("utf-8"))
+        authorized_exp[username] = True
+        f.write(json.dumps(authorized_exp))

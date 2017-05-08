@@ -3,7 +3,7 @@ import grpc
 from grpc.framework.common import cardinality
 from grpc.framework.interfaces.face import utilities as face_utilities
 
-import eu.softfire.tub.messaging.grpc.messages_pb2 as messages__pb2
+import eu.softfire.tub.messaging.gen_grpc.messages_pb2 as messages__pb2
 
 
 class RegistrationServiceStub(object):

@@ -30,20 +30,20 @@ setup(
         'bottle',
         'beaker',
         'bottle-cork',
-        'pyaml',
         'sqlalchemy',
         'grpcio',
+        'grpcio-tools',
+        'dateparser',
     ],
     long_description=read('README.rst'),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "Programming Language :: Python :: 3.5",
         "License :: OSI Approved :: Apache Software License",
+        "Framework :: Bottle",
+        "Framework :: AsyncIO",
 
-    ],
-    entry_points={
-        'console_scripts': [
-            'experiment-manager = eu.softfire.tub.main.ExperimentManager:start',
-        ]
-    }
+    ]
 )

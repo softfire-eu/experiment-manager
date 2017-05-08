@@ -13,7 +13,10 @@ logger = get_logger('eu.softfire.tub.repository')
 lock = threading.RLock()
 
 engine = create_engine(get_config('database', 'url', "sqlite:////tmp/experiment-manager.db"))
-engine.echo = (logger.getEffectiveLevel() == logging.DEBUG) and bool(get_config('database', 'show_sql', False))
+debug_echo = (logger.getEffectiveLevel() == logging.DEBUG) and get_config('database', 'show_sql',
+                                                                          False).lower() == 'true'
+logger.debug("Echo is %s" % debug_echo)
+engine.echo = debug_echo
 Base.metadata.create_all(engine)
 session_factory = sessionmaker(bind=engine)
 _session = scoped_session(session_factory)
