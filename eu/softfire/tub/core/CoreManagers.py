@@ -233,3 +233,6 @@ class UserAgent(object):
             if experimenter.name == username:
                 delete(experimenter)
                 return
+
+    def create_user_info(self, username, password, role):
+        self.create_user(username,password,role)
