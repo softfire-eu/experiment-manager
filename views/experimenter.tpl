@@ -2,6 +2,9 @@
 <html>
 <head>
 <meta content="text/html; charset=utf-8" http-equiv="content-type">
+<link rel="shortcut icon" type="image/png" href="static/favicon.ico"/>
+</head>
+<body>
 <div id='main'>
     <h2>Experimenter page</h2>
     <p>Welcome {{current_user.username}},
@@ -112,4 +115,5 @@ div#urls {
   right:1em;
 }
 </style>
-
+</body>
+</html>

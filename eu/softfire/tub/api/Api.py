@@ -98,6 +98,17 @@ def register():
     return 'User created'
 
 
+@bottle.post('/signup')
+def signup():
+    """Send out registration email"""
+    logger.debug(("got body: %s" % request.body.read().decode("utf-8")))
+    if check_if_authorized(post_get('username')):
+        aaa.create_user(post_get('username'), 'user', post_get('password'))
+    else:
+        return HTTPError(status=401)
+    return 'User created'
+
+
 @bottle.post('/reset_password')
 def send_password_reset_email():
     """Send out password reset email"""
@@ -254,22 +265,6 @@ def server_static(filename):
 #########
 
 
-def start():
-    bottle.debug(True)
-    port = get_config(section='api', key='port', default=8080)
-    app = bottle.app()
-    session_opts = {
-        'session.cookie_expires': True,
-        'session.encrypt_key': get_config('api', 'encrypt_key', 'softfire'),
-        'session.httponly': True,
-        'session.timeout': 3600 * 24,  # 1 day
-        'session.type': 'cookie',
-        'session.validate_key': True,
-    }
-    app = SessionMiddleware(app, session_opts)
-    bottle.run(app=app, quiet=logger.getEffectiveLevel() < logging.DEBUG, port=port)
-
-
 def postd():
     return bottle.request.forms
 
@@ -301,3 +296,21 @@ def add_authorized_experimenter(username):
         authorized_exp = json.loads(f.read().encode("utf-8"))
         authorized_exp[username] = True
         f.write(json.dumps(authorized_exp))
+
+
+def start():
+    bottle.debug(True)
+    port = get_config(section='api', key='port', default=8080)
+    app = bottle.app()
+    session_opts = {
+        'session.cookie_expires': True,
+        'session.encrypt_key': get_config('api', 'encrypt_key', 'softfire'),
+        'session.httponly': True,
+        'session.timeout': 3600 * 24,  # 1 day
+        'session.type': 'cookie',
+        'session.validate_key': True,
+    }
+    app = SessionMiddleware(app, session_opts)
+    quiet_bottle = logger.getEffectiveLevel() < logging.DEBUG
+    logger.debug("Bootlepy quiet mode: %s" % quiet_bottle)
+    bottle.run(app=app, quiet=quiet_bottle, port=port)

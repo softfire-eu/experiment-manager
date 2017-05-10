@@ -2,6 +2,9 @@
 <html>
 <head>
 <meta content="text/html; charset=utf-8" http-equiv="content-type">
+<link rel="shortcut icon" type="image/png" href="static/favicon.ico"/>
+</head>
+<body>
 <div class="box">
     <h2>Password change</h2>
     <p>Please insert your new password:</p>
@@ -29,3 +32,5 @@ input {
 }
 input:hover { background: #fefefe}
 </style>
+</body>
+</html>
