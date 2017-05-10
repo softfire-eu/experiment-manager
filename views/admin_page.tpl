@@ -6,7 +6,7 @@
 </head>
 <body>
 <div id='main'>
-    <h2>Cork - Administration page</h2>
+    <h1>Experimenter Manger - Administration page</h1>
     <p>Welcome {{current_user.username}}, your role is: {{current_user.role}},
     access time: {{current_user.session_accessed_time}}</p>
     <div id='commands'>
@@ -85,6 +85,15 @@
     </script>
 </div>
 <style>
+h1 {
+  color: #111;
+  font-family: 'Helvetica Neue', sans-serif;
+  font-size: xx-large;
+  font-weight: bold;
+  letter-spacing: -1px;
+  line-height: 1;
+  text-align: center;
+}
 div#commands { width: 45%%; float: left}
 div#users { width: 45%; float: right}
 div#main {

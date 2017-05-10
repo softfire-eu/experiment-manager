@@ -47,13 +47,15 @@ def populate_conf_directory(out_dir):
         if choice.lower() == 'y' or choice.lower() == 'yes' or not choice:
 
             username, password, role = get_username_and_password()
-            cork._store.users[username] = {
+            user_cork = {
                 'role': role,
                 'hash': cork._hash(username, password),
                 'email_addr': username + '@localhost.local',
                 'desc': username + ' test user',
                 'creation_date': tstamp
             }
+            cork._store.users[username] = user_cork
+            print("Cork user is: %s, password is %s" % (username,password))
         else:
             stop = True
 
