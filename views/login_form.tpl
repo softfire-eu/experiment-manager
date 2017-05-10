@@ -28,6 +28,9 @@
         <br />
       </div>
     </div>
+    <div id="box" >
+      <div id='status' align="center" class="divMiddle">Ready...</div>
+    </div>
     <div id="box">
       <br />
       <div class="box">
@@ -79,6 +82,18 @@
       <link href="static/simple-sidebar.css" rel="stylesheet">
       -->
     <style>
+
+    div#status {
+        border: 1px solid #999;
+        padding: .5em;
+        margin: 2em;
+        width: 15em;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        font-size: medium;
+        align: middle;
+    }
+
       img {
       display: block;
       margin: 0 auto;
@@ -103,7 +118,12 @@
       width: 20em;
       text-align: center;
       }
+      .clear { clear: both;}
       .centerTable { margin: 0px auto; }
+      .divMiddle {
+        width: 50%;
+        margin: 0 auto;
+      }
       .loginLabel {
       font-size: large;
       }
@@ -111,5 +131,30 @@
       max-height: 300px;
       }
     </style>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script>
+        // Prevent form submission, send POST asynchronously and parse returned JSON
+        $("div#status").delay(2800).fadeOut(700);
+        $('form').submit(function() {
+            $("div#status").fadeIn(100);
+            z = $(this);
+            $.post($(this).attr('action'), $(this).serialize(), function(j){
+              console.log('here')
+              console.log(j)
+              console.log('j: ' + j)
+              if (j.ok) {
+                $("div#status").css("background-color", "#f0fff0");
+                $("div#status").text('Ok.');
+                window.location = j.redirect;
+              } else {
+                $("div#status").css("background-color", "#fff0f0");
+                $("div#status").text(j.msg);
+              }
+              $("div#status").delay(1800).fadeOut(700);
+            }, "json");
+            return false;
+        });
+    </script>
   </body>
 </html>

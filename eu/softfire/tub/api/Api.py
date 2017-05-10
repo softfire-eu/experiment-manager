@@ -1,8 +1,8 @@
 import json
+import logging
 import os
 
 import bottle
-import logging
 from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError, HTTPResponse
 from cork import Cork
@@ -79,7 +79,18 @@ def login():
     """Authenticate users"""
     username = post_get('username')
     password = post_get('password')
-    aaa.login(username, password, success_redirect='/', fail_redirect='/login')
+    if not aaa.login(username, password):
+        return dict(ok=False, msg="Username or password invalid")
+    if aaa.current_user.role == 'admin':
+        return dict(
+            ok=True,
+            redirect="/admin"
+        )
+    else:
+        return dict(
+            ok=True,
+            redirect="/experimenter"
+        )
 
 
 @bottle.route('/logout')
@@ -94,19 +105,27 @@ def register():
     if check_if_authorized(post_get('username')):
         aaa.create_user(post_get('username'), 'user', post_get('password'))
     else:
-        return HTTPError(status=401)
+        return dict(
+            ok=False,
+            msg="username not pre authorized"
+        )
     return 'User created'
 
 
 @bottle.post('/signup')
+@authorize("experimenter")
 def signup():
-    """Send out registration email"""
-    logger.debug(("got body: %s" % request.body.read().decode("utf-8")))
-    if check_if_authorized(post_get('username')):
-        aaa.create_user(post_get('username'), 'user', post_get('password'))
-    else:
-        return HTTPError(status=401)
-    return 'User created'
+    try:
+        password = postd().password
+        username = postd().username
+        role = 'experimenter'
+
+        user_manager.create_user_info(username=username, password=password, role=role)
+        aaa.create_user(username, role, password)
+        aaa.login(username=username, password=password, success_redirect="/experimenter")
+        # return dict(ok=True, msg='User created correctly')
+    except Exception as e:
+        return dict(ok=False, msg=e.message)
 
 
 @bottle.post('/reset_password')
