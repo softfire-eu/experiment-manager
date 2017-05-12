@@ -38,6 +38,8 @@ class UsedResource(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False, unique=True)
     parent_id = Column(Integer, ForeignKey('experiment.id'))
+    status = Column(Integer, nullable=False)
+    value = Column(String(5000), nullable=True)
 
 
 class ResourceMetadata(Base):
@@ -45,5 +47,6 @@ class ResourceMetadata(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(250), unique=True, nullable=False)
+    node_type = Column(String(250), unique=True, nullable=False)
     cardinality = Column(Integer, nullable=False)
     description = Column(String(2500), nullable=False)

@@ -254,7 +254,9 @@ def login_form():
         current_user=aaa.current_user,
         users=aaa.list_users(),
         roles=aaa.list_roles(),
-        resources=get_resources()
+        resources=get_resources(),
+        experiment_id="",
+        experiment_resources=[],
     )
 
 

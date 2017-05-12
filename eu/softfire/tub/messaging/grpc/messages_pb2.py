@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='messages.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0emessages.proto\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"X\n\x0eRequestMessage\x12\x17\n\x06method\x18\x01 \x01(\x0e\x32\x07.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\x12\x1c\n\tuser_info\x18\x03 \x01(\x0b\x32\t.UserInfo\"\xa9\x01\n\x0fResponseMessage\x12\x0e\n\x06result\x18\x01 \x01(\x05\x12.\n\rlist_resource\x18\x02 \x01(\x0b\x32\x15.ListResourceResponseH\x00\x12\x34\n\x10provide_resource\x18\x03 \x01(\x0b\x32\x18.ProvideResourceResponseH\x00\x12\x15\n\rerror_message\x18\x04 \x01(\tB\t\n\x07message\"<\n\x14ListResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"7\n\x17ProvideResourceResponse\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\"l\n\x10ResourceMetadata\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05\x12\x19\n\x07testbed\x18\x04 \x01(\x0e\x32\x08.Testbed\"\xbc\x01\n\x08UserInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\x12\x15\n\rob_project_id\x18\x04 \x01(\t\x12\x36\n\x0ftestbed_tenants\x18\x05 \x03(\x0b\x32\x1d.UserInfo.TestbedTenantsEntry\x1a\x35\n\x13TestbedTenantsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\'\n\x08Resource\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t*J\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02*\x89\x01\n\x07Testbed\x12\n\n\x06SURREY\x10\x00\x12\t\n\x05\x46OKUS\x10\x01\x12\x06\n\x02\x44T\x10\x02\x12\x07\n\x03\x41\x44S\x10\x03\x12\x0c\n\x08\x45RICSSON\x10\x04\x12\x0e\n\nSURREY_DEV\x10\x05\x12\r\n\tFOKUS_DEV\x10\x06\x12\n\n\x06\x44T_DEV\x10\x07\x12\x0b\n\x07\x41\x44S_DEV\x10\x08\x12\x10\n\x0c\x45RICSSON_DEV\x10\t2}\n\x13RegistrationService\x12\x30\n\x08register\x12\x10.RegisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x34\n\nunregister\x12\x12.UnregisterMessage\x1a\x10.ResponseMessage\"\x00\x32\x65\n\x0cManagerAgent\x12.\n\x07\x65xecute\x12\x0f.RequestMessage\x1a\x10.ResponseMessage\"\x00\x12%\n\x0b\x63reate_user\x12\t.UserInfo\x1a\t.UserInfo\"\x00\x42\x02H\x03\x62\x06proto3')
+  serialized_pb=_b('\n\x0emessages.proto\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"X\n\x0eRequestMessage\x12\x17\n\x06method\x18\x01 \x01(\x0e\x32\x07.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\x12\x1c\n\tuser_info\x18\x03 \x01(\x0b\x32\t.UserInfo\"\xa9\x01\n\x0fResponseMessage\x12\x0e\n\x06result\x18\x01 \x01(\x05\x12.\n\rlist_resource\x18\x02 \x01(\x0b\x32\x15.ListResourceResponseH\x00\x12\x34\n\x10provide_resource\x18\x03 \x01(\x0b\x32\x18.ProvideResourceResponseH\x00\x12\x15\n\rerror_message\x18\x04 \x01(\tB\t\n\x07message\"<\n\x14ListResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"7\n\x17ProvideResourceResponse\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\"\x7f\n\x10ResourceMetadata\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05\x12\x19\n\x07testbed\x18\x04 \x01(\x0e\x32\x08.Testbed\x12\x11\n\tnode_type\x18\x05 \x01(\t\"\xbc\x01\n\x08UserInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\x12\x15\n\rob_project_id\x18\x04 \x01(\t\x12\x36\n\x0ftestbed_tenants\x18\x05 \x03(\x0b\x32\x1d.UserInfo.TestbedTenantsEntry\x1a\x35\n\x13TestbedTenantsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\'\n\x08Resource\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t*J\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02*\x92\x01\n\x07Testbed\x12\n\n\x06SURREY\x10\x00\x12\t\n\x05\x46OKUS\x10\x01\x12\x06\n\x02\x44T\x10\x02\x12\x07\n\x03\x41\x44S\x10\x03\x12\x0c\n\x08\x45RICSSON\x10\x04\x12\x0e\n\nSURREY_DEV\x10\x05\x12\r\n\tFOKUS_DEV\x10\x06\x12\n\n\x06\x44T_DEV\x10\x07\x12\x0b\n\x07\x41\x44S_DEV\x10\x08\x12\x10\n\x0c\x45RICSSON_DEV\x10\t\x12\x07\n\x03\x41NY\x10\n2}\n\x13RegistrationService\x12\x30\n\x08register\x12\x10.RegisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x34\n\nunregister\x12\x12.UnregisterMessage\x1a\x10.ResponseMessage\"\x00\x32\x65\n\x0cManagerAgent\x12.\n\x07\x65xecute\x12\x0f.RequestMessage\x1a\x10.ResponseMessage\"\x00\x12%\n\x0b\x63reate_user\x12\t.UserInfo\x1a\t.UserInfo\"\x00\x42\x02H\x03\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -45,8 +45,8 @@ _METHOD = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=866,
-  serialized_end=940,
+  serialized_start=885,
+  serialized_end=959,
 )
 _sym_db.RegisterEnumDescriptor(_METHOD)
 
@@ -97,11 +97,15 @@ _TESTBED = _descriptor.EnumDescriptor(
       name='ERICSSON_DEV', index=9, number=9,
       options=None,
       type=None),
+    _descriptor.EnumValueDescriptor(
+      name='ANY', index=10, number=10,
+      options=None,
+      type=None),
   ],
   containing_type=None,
   options=None,
-  serialized_start=943,
-  serialized_end=1080,
+  serialized_start=962,
+  serialized_end=1108,
 )
 _sym_db.RegisterEnumDescriptor(_TESTBED)
 
@@ -119,6 +123,7 @@ FOKUS_DEV = 6
 DT_DEV = 7
 ADS_DEV = 8
 ERICSSON_DEV = 9
+ANY = 10
 
 
 
@@ -402,6 +407,13 @@ _RESOURCEMETADATA = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='node_type', full_name='ResourceMetadata.node_type', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -415,7 +427,7 @@ _RESOURCEMETADATA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=524,
-  serialized_end=632,
+  serialized_end=651,
 )
 
 
@@ -452,8 +464,8 @@ _USERINFO_TESTBEDTENANTSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=770,
-  serialized_end=823,
+  serialized_start=789,
+  serialized_end=842,
 )
 
 _USERINFO = _descriptor.Descriptor(
@@ -510,8 +522,8 @@ _USERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=635,
-  serialized_end=823,
+  serialized_start=654,
+  serialized_end=842,
 )
 
 
@@ -548,8 +560,8 @@ _RESOURCE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=825,
-  serialized_end=864,
+  serialized_start=844,
+  serialized_end=883,
 )
 
 _REQUESTMESSAGE.fields_by_name['method'].enum_type = _METHOD

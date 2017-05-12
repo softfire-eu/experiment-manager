@@ -1,20 +1,19 @@
 import json
+import time
 import zipfile
 from datetime import timedelta
-from threading import Thread
 
 import dateparser
 import grpc
 import yaml
-import time
 from toscaparser.tosca_template import ToscaTemplate
 
 from eu.softfire.tub.entities import entities
-from eu.softfire.tub.utils.utils import get_logger
 from eu.softfire.tub.entities.entities import UsedResource, ManagerEndpoint, ResourceMetadata, Experimenter
-from eu.softfire.tub.messaging.gen_grpc import messages_pb2_grpc, messages_pb2
 from eu.softfire.tub.entities.repositories import save, find, delete
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall
+from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
+from eu.softfire.tub.utils.utils import get_logger
 
 logger = get_logger('eu.softfire.tub.core')
 
@@ -145,10 +144,7 @@ def list_resources(manager_name=None, _id=None):
     result = []
     for manager in managers:
         stub = get_stub(manager)
-        request_message = messages_pb2.RequestMessage
-        request_message.method = messages_pb2.LIST_RESOURCES
-        request_message.payload = ""
-        request_message.user_info = messages_pb2.UserInfo()
+        request_message = messages_pb2.RequestMessage(method=messages_pb2.LIST_RESOURCES, payload='', user_info=None)
         response = stub.execute(request_message)
         if response.result != 0:
             logger.error("list resources returned %d: %s" % (response.result, response.error_message))
@@ -194,7 +190,17 @@ def run_list_resources():
 
 
 def get_resources():
+    # return list_resources()
     return find(ResourceMetadata)
+
+
+def get_used_resources_by_experimenter(exp_name):
+    res = []
+    for ur in find(UsedResource):
+        experimenter = find(Experimenter, ur.parent_id)
+        if experimenter is not None and experimenter.name == exp_name:
+            res.append(ur)
+    return res
 
 
 class UserAgent(object):
@@ -235,4 +241,4 @@ class UserAgent(object):
                 return
 
     def create_user_info(self, username, password, role):
-        self.create_user(username,password,role)
+        self.create_user(username, password, role)

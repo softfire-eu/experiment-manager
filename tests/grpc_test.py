@@ -1,7 +1,7 @@
 import grpc
 
-from eu.softfire.tub.messaging.gen_grpc import messages_pb2
-from eu.softfire.tub.messaging.gen_grpc import messages_pb2_grpc
+from eu.softfire.tub.messaging.grpc import messages_pb2
+from eu.softfire.tub.messaging.grpc import messages_pb2_grpc
 
 
 def run():

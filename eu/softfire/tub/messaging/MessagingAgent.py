@@ -6,8 +6,8 @@ import grpc
 from eu.softfire.tub.core.CoreManagers import list_resources
 from eu.softfire.tub.entities.entities import ManagerEndpoint
 from eu.softfire.tub.entities.repositories import save, find, delete
-from eu.softfire.tub.messaging.gen_grpc import messages_pb2
-from eu.softfire.tub.messaging.gen_grpc import messages_pb2_grpc
+from eu.softfire.tub.messaging.grpc import messages_pb2
+from eu.softfire.tub.messaging.grpc import messages_pb2_grpc
 from eu.softfire.tub.utils.utils import get_logger, get_config
 
 logger = get_logger('eu.softfire.tub.messaging')
@@ -43,10 +43,9 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
         manager_endpoint.name = request.name
         manager_endpoint.endpoint = request.endpoint
         save(manager_endpoint)
-        # list_resources()
+        list_resources()
         response_message = messages_pb2.ResponseMessage()
-        response_message.result = 1
-        response_message.error_message = "manager endpoint not found"
+        response_message.result = 0
         return response_message
 
     def __init__(self):
