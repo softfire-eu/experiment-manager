@@ -32,22 +32,23 @@
                                 <div id='commands'>
                                     <form action="list_resources" method="get">
                                         <table class="listResTable" cellpadding="10px">
+                                          <colgroup>
+                                             <col span="1" style="width: 10%;">
+                                             <col span="1" style="width: 10%;">
+                                             <col span="1" style="width: 5%;">
+                                             <col span="1" style="width: 30%;">
+                                          </colgroup>
                                             <tr>
-                                                <th>Id</th>
-                                                <th>Name</th>
+                                                <th>Resource Id</th>
+                                                <th>NodeType</th>
+                                                <th>Cardinality</th>
                                                 <th>Description</th>
-                                            </tr>
-                                            <tr>
-                                                <td>123456</td>
-                                                <td>fake_resource</td>
-                                                <td>This is simply a fake resource with a fake desciption: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus id sem in libero ullamcorper tempus. Sed euismod sapien nibh, non pharetra mauris rutrum sed. Vivamus vel purus lacus. Cras vitae viverra ex. Mauris vehicula varius ligula, non laoreet risus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ac lacus nulla. Nulla egestas arcu in nulla iaculis luctus. Integer id tincidunt ligula. Cras vehicula ligula sed nisl commodo, ac pharetra velit bibendum. Curabitur congue, mi ac ultrices aliquam, magna ipsum tempus odio, eu varius sapien tellus et augue. Curabitur id blandit felis, vitae tincidunt velit. Cras sapien nisl, cursus eu nunc eu, viverra tempus libero.
-
-                                                </td>
                                             </tr>
                                             %for r in resources:
                                             <tr>
-                                                <td>{{r['id']}}</td>
-                                                <td>{{r['name']}}</td>
+                                                <td>{{r['resource_id']}}</td>
+                                                <td>{{r['node_type']}}</td>
+                                                <td>{{r['cardinality']}}</td>
                                                 <td>{{r['description']}}</td>
                                             </tr>
                                             %end
@@ -98,11 +99,6 @@
                         <th>Resource Id</th>
                         <th>Status</th>
                         <th>Value</th>
-                    </tr>
-                    <tr>
-                        <td>id_test</td>
-                        <td>status_fake</td>
-                        <td>{key: value}</td>
                     </tr>
                     %for er in experiment_resources:
                     <tr>
@@ -156,6 +152,15 @@
             color: #111;
             font-family: 'Helvetica Neue', sans-serif;
             font-size: 45pt;
+            font-weight: bold;
+            letter-spacing: -1px;
+            line-height: 1;
+            text-align: center;
+        }
+        h5 {
+            color: #111;
+            font-family: 'Helvetica Neue', sans-serif;
+            font-size: 25pt;
             font-weight: bold;
             letter-spacing: -1px;
             line-height: 1;

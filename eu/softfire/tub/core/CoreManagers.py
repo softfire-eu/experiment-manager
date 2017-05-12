@@ -153,7 +153,12 @@ def list_resources(manager_name=None, _id=None):
 
     logger.debug("Saving %d resources" % len(result))
     for rm in result:
-        save(ResourceMetadata(name=rm.name, description=rm.description, cardinality=rm.cardinality))
+        resource_metadata = ResourceMetadata()
+        resource_metadata.name = rm.resource_id
+        resource_metadata.description = rm.description
+        resource_metadata.cardinality = rm.cardinality
+        resource_metadata.node_type = rm.node_type
+        save(resource_metadata)
 
     return result
 
@@ -191,7 +196,21 @@ def run_list_resources():
 
 def get_resources():
     # return list_resources()
-    return find(ResourceMetadata)
+    res = []
+    for rm in find(ResourceMetadata):
+        tmp = {
+            'resource_id': rm.name,
+            'node_type': rm.node_type,
+            'description': rm.description
+        }
+        if rm.cardinality < 0:
+            tmp['cardinality'] = 'infinite'
+        else:
+            tmp['cardinality'] = rm.cardinality
+
+        res.append(tmp)
+
+    return res
 
 
 def get_used_resources_by_experimenter(exp_name):
