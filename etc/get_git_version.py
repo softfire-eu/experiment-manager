@@ -51,7 +51,7 @@ def is_release(version):
     return "b" not in version
 
 
-def get_version(file='RELEASE_VERSION'):
+def get_version(file='RELEASE-VERSION'):
     version = read_release_version(file)
 
     if version is None:
