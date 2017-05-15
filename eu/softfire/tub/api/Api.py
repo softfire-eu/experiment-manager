@@ -13,7 +13,7 @@ from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
 logger = get_logger('eu.softfire.tub.api')
-
+bottle.TEMPLATE_PATH = [get_config('api','view-path','/etc/softfire/views')]
 user_manager = UserAgent()
 aaa = Cork(get_config("api", "cork-files-path", "/etc/softfire/users"))
 authorize = aaa.make_auth_decorator(fail_redirect="/login")
