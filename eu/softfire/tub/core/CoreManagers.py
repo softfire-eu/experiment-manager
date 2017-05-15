@@ -34,6 +34,18 @@ MAPPING_MANAGERS = {
     ],
 }
 
+TESTBED_MAPPING = {
+    'fokus': messages_pb2.FOKUS,
+    'fokus-dev': messages_pb2.FOKUS_DEV,
+    'ericsson': messages_pb2.ERICSSON,
+    'ericsson-dev': messages_pb2.ERICSSON_DEV,
+    'surrey': messages_pb2.SURREY,
+    'surrey-dev': messages_pb2.SURREY_DEV,
+    'ads': messages_pb2.ADS,
+    'ads-dev': messages_pb2.ADS_DEV,
+    'dt': messages_pb2.DT,
+    'dt-dev': messages_pb2.DT_DEV,
+}
 
 def _repr_date(date):
     return "%d/%d/%d %d:%d" % (
@@ -158,6 +170,8 @@ def list_resources(manager_name=None, _id=None):
         resource_metadata.description = rm.description
         resource_metadata.cardinality = rm.cardinality
         resource_metadata.node_type = rm.node_type
+        if rm.testbed:
+            resource_metadata.testbed = list(TESTBED_MAPPING.keys())[list(TESTBED_MAPPING.values()).index(rm.testbed)]
         save(resource_metadata)
 
     return result
@@ -194,21 +208,42 @@ def run_list_resources():
         time.sleep(10)
 
 
-def get_resources():
-    # return list_resources()
+def get_images():
     res = []
     for rm in find(ResourceMetadata):
-        tmp = {
-            'resource_id': rm.name,
-            'node_type': rm.node_type,
-            'description': rm.description
-        }
-        if rm.cardinality < 0:
-            tmp['cardinality'] = 'infinite'
-        else:
-            tmp['cardinality'] = rm.cardinality
+        if rm.node_type == 'NfvImage':
+            tmp = {
+                'resource_id': rm.name,
+                'node_type': rm.node_type,
+                'testbed': rm.testbed,
+                'description': rm.description
+            }
+            if rm.cardinality < 0:
+                tmp['cardinality'] = 'infinite'
+            else:
+                tmp['cardinality'] = rm.cardinality
 
-        res.append(tmp)
+            res.append(tmp)
+
+    return res
+
+
+def get_resources():
+    res = []
+    for rm in find(ResourceMetadata):
+        if rm.node_type != 'NfvImage':
+            tmp = {
+                'resource_id': rm.name,
+                'node_type': rm.node_type,
+                'description': rm.description,
+                'testbed': rm.testbed,
+            }
+            if rm.cardinality < 0:
+                tmp['cardinality'] = 'infinite'
+            else:
+                tmp['cardinality'] = rm.cardinality
+
+            res.append(tmp)
 
     return res
 

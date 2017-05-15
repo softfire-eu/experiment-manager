@@ -7,7 +7,7 @@ from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError, HTTPResponse
 from cork import Cork
 
-from eu.softfire.tub.core.CoreManagers import Experiment, get_resources, UserAgent
+from eu.softfire.tub.core.CoreManagers import Experiment, get_resources, UserAgent, get_images
 from eu.softfire.tub.exceptions.exceptions import ManagerNotFound
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
@@ -255,6 +255,7 @@ def login_form():
         users=aaa.list_users(),
         roles=aaa.list_roles(),
         resources=get_resources(),
+        images=get_images(),
         experiment_id="",
         experiment_resources=[],
     )
