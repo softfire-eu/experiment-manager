@@ -2,6 +2,8 @@ import os
 
 from setuptools import setup, find_packages
 
+from etc.get_git_version import get_version
+
 
 def read(fname):
     readme_file_path = os.path.join(os.path.dirname(__file__), fname)
@@ -17,7 +19,7 @@ packages = find_packages()
 
 setup(
     name="experiment-manager",
-    version="0.1.1b",
+    version=get_version(),
     author="Lorenzo Tomasini",
     author_email="lorenzo.tomasini@gmail.com",
     description="The SoftFIRE Experimenter Manager",

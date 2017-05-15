@@ -51,7 +51,7 @@ def is_release(version):
     return "b" not in version
 
 
-def get_git_version():
+def get_version():
     version = read_release_version()
 
     if version is None:
@@ -64,4 +64,4 @@ def get_git_version():
 
 
 if __name__ == "__main__":
-    print(get_git_version())
+    print(get_version())
