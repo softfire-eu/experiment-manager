@@ -334,4 +334,4 @@ def start():
     app = SessionMiddleware(app, session_opts)
     quiet_bottle = logger.getEffectiveLevel() < logging.DEBUG
     logger.debug("Bootlepy quiet mode: %s" % quiet_bottle)
-    bottle.run(app=app, quiet=quiet_bottle, port=port)
+    bottle.run(app=app, quiet=quiet_bottle, port=port, host='0.0.0.0')

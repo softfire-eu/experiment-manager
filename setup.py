@@ -13,16 +13,18 @@ def read(fname):
         return "The SoftFIRE Experimenter Manager"
 
 
+packages = find_packages()
+
 setup(
     name="experiment-manager",
-    version="0.1.0",
+    version="0.1.1b",
     author="Lorenzo Tomasini",
     author_email="lorenzo.tomasini@gmail.com",
     description="The SoftFIRE Experimenter Manager",
     license="Apache 2",
     keywords="python vnfm nfvo open baton openbaton sdk experiment manager softfire tosca openstack rest",
     url="http://softfire.eu/",
-    packages=find_packages(),
+    packages=packages,
     scripts=["experiment-manager"],
     install_requires=[
         'asyncio',
@@ -45,5 +47,6 @@ setup(
         "Framework :: Bottle",
         "Framework :: AsyncIO",
 
-    ]
+    ],
+    package_data={'': ['*.tpl', '*.ico', '*.jpg']}
 )

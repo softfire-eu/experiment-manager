@@ -150,7 +150,7 @@
     <style>
         h1 {
             color: #111;
-            font-family: 'Helvetica Neue', sans-serif;
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
             font-size: 45pt;
             font-weight: bold;
             letter-spacing: -1px;
@@ -159,7 +159,7 @@
         }
         h5 {
             color: #111;
-            font-family: 'Helvetica Neue', sans-serif;
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
             font-size: 25pt;
             font-weight: bold;
             letter-spacing: -1px;
@@ -176,11 +176,13 @@
         div#commands {
             width: 100%;
             float: left;
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
         }
 
         div#users {
             width: 45%;
             float: right
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
         }
 
         div#main {
@@ -191,6 +193,7 @@
             width: 20em;
             text-align: left;
             vertical-align: top;
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
         }
 
         input:hover {
@@ -198,6 +201,7 @@
         }
 
         label {
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
             width: 8em;
             float: left;
             text-align: right;
@@ -214,6 +218,7 @@
             position: fixed;
             -moz-border-radius: 10px;
             border-radius: 10px;
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
         }
 
         div#urls {
@@ -223,17 +228,20 @@
             font-size: large;
             box-shadow: inset 0 1px 1px darkgray, 0 0 8px darkgray;
             padding: 3px 3px 3px 3px;
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
         }
 
         table {
             width: 90%;
             border: 1px solid #ddd;
             margin: 0px auto;
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
         }
 
         td,
         th {
             border: 1px solid #ddd;
+            font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
         }
 
         td#formUpload,

@@ -33,6 +33,7 @@
     </div>
     <div id="box">
       <br />
+      <!--
       <div class="box">
         <h2>Signup</h2>
         <p>Please insert your credentials:</p>
@@ -57,6 +58,7 @@
         </form>
         <br />
       </div>
+    -->
       <!--
         <div class="box">
             <h2>Password reset</h2>
