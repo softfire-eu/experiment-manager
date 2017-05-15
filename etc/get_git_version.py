@@ -34,43 +34,31 @@ def read_release_version():
 
         finally:
             f.close()
-
     except:
         return None
 
 
 def increase_version(version):
     f = open("../RELEASE-VERSION", "w")
-    ver_int = [int(x) for x in version.split(' ')]
+    ver_int = [int(x) for x in version.split('.')]
     ver_int[2] = ver_int[2] + 1
-    f.write("%s\n" % '.'.join(version))
+    ver_str = [str(x) for x in ver_int]
+    f.write("%sb0\n" % '.'.join(ver_str))
     f.close()
 
 
-def get_rev():
-    p = Popen(['git', 'log', '--oneline', '-n', '1'], stdout=PIPE, stderr=PIPE)
-    p.stderr.close()
-    lines = p.stdout.readlines()
-    return lines[0].decode('utf-8').split(' ')[0]
+def is_release(version):
+    return "b" not in version
 
 
-def is_release():
-    p = Popen(['git', 'log', '-n', '1', '--pretty=%d', 'HEAD'], stdout=PIPE, stderr=PIPE)
-    p.stderr.close()
-    lines = p.stdout.readlines()
-    return "tag" in lines[0].decode('utf-8')
-
-
-def get_git_version(abbrev=7):
+def get_git_version():
     version = read_release_version()
-
-    if not is_release():
-        version += ".b.r" + get_rev()
-    else:
-        increase_version(version)
 
     if version is None:
         raise ValueError("Cannot find the version number!")
+
+    if is_release(version):
+        increase_version(version)
 
     return version
 
