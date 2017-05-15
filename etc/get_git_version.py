@@ -24,9 +24,9 @@ def is_dirty():
         return False
 
 
-def read_release_version():
+def read_release_version(file):
     try:
-        f = open("../RELEASE-VERSION", "r")
+        f = open(file, "r")
 
         try:
             version = f.readlines()[0]
@@ -38,8 +38,8 @@ def read_release_version():
         return None
 
 
-def increase_version(version):
-    f = open("../RELEASE-VERSION", "w")
+def increase_version(version, file):
+    f = open(file, "w")
     ver_int = [int(x) for x in version.split('.')]
     ver_int[2] = ver_int[2] + 1
     ver_str = [str(x) for x in ver_int]
@@ -51,17 +51,17 @@ def is_release(version):
     return "b" not in version
 
 
-def get_version():
-    version = read_release_version()
+def get_version(file='RELEASE_VERSION'):
+    version = read_release_version(file)
 
     if version is None:
         raise ValueError("Cannot find the version number!")
 
     if is_release(version):
-        increase_version(version)
+        increase_version(version, file)
 
     return version
 
 
 if __name__ == "__main__":
-    print(get_version())
+    print(get_version('../RELEASE-VERSION'))
