@@ -1,8 +1,7 @@
 import configparser
-import os
-
 import logging
 import logging.config
+import os
 
 from eu.softfire.tub.utils.static_config import CONFIG_FILE_PATH
 

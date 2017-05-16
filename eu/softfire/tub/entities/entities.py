@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, PickleType, ForeignKey
+from enum import Enum
+
+from sqlalchemy import Column, Integer, String, PickleType, ForeignKey, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -27,10 +29,9 @@ class Experimenter(Base):
 class Experiment(Base):
     __tablename__ = "experiment"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(String(250), primary_key=True)
     name = Column(String(250), nullable=False)
-    start_date = Column(String(250), nullable=False)
-    end_date = Column(String(250), nullable=False)
+    username = Column(String(250), nullable=False)
     resources = relationship("UsedResource")
 
 
@@ -38,9 +39,13 @@ class UsedResource(Base):
     __tablename__ = "used_resource"
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False, unique=True)
+    resource_id = Column(String(250), nullable=False, unique=False)
     parent_id = Column(Integer, ForeignKey('experiment.id'))
     status = Column(Integer, nullable=False)
     value = Column(String(5000), nullable=True)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    node_type = Column(String(250), unique=False, nullable=False)
 
 
 class ResourceMetadata(Base):
@@ -52,3 +57,11 @@ class ResourceMetadata(Base):
     cardinality = Column(Integer, nullable=False)
     description = Column(String(2500), nullable=False)
     testbed = Column(String(250), unique=False, nullable=True)
+
+
+class ResourceStatus(Enum):
+    VALIDATING = 0
+    RESERVED = 1
+    DEPLOYED = 2
+    TERMINATED = 3
+    ERROR = 4

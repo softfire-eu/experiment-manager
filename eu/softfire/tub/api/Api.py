@@ -10,6 +10,7 @@ from cork import Cork
 
 from eu.softfire.tub.core import CoreManagers
 from eu.softfire.tub.core.CoreManagers import Experiment, get_resources, UserAgent, get_images
+from eu.softfire.tub.exceptions.exceptions import ResourceAlreadyBooked
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -42,11 +43,14 @@ def book_resources():
     # logger.debug("Data.file: %s" % data.file)
     if data and data.file:
         filename = data.filename
-        Experiment(data.file).get_topology()
-        raw = data.file.read()  # This is dangerous for big files
+        try:
+            Experiment(data.file).reserve()
+        except ResourceAlreadyBooked as e:
+            return dict(ok=False, msg=e.args)
+        # raw = data.file.read()  # This is dangerous for big files
         return "Hello %s! You uploaded %s (%d bytes)." % (aaa.current_user.username, filename, len(raw))
     logger.debug(("got body: %s" % request.body.read()))
-    return HTTPResponse(status=201)
+    return dict(ok=False, msg="no file was found in your request")
 
 
 #################

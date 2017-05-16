@@ -8,3 +8,11 @@ class RpcFailedCall(Exception):
 
 class ExperimentValidationError(Exception):
     pass
+
+
+class ResourceNotFound(Exception):
+    pass
+
+
+class ResourceAlreadyBooked(Exception):
+    pass

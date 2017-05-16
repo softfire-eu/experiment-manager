@@ -6,7 +6,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm.exc import NoResultFound
 
+from eu.softfire.tub.entities import entities
 from eu.softfire.tub.entities.entities import Base
+from eu.softfire.tub.messaging.grpc import messages_pb2
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
 logger = get_logger('eu.softfire.tub.repository')
@@ -69,3 +71,16 @@ def find(_clazz, _id=None):
 
 def drop_tables():
     Base.metadata.drop_all(engine)
+
+
+def get_user_info(username):
+    for ex in find(entities.Experimenter):
+        if ex.username == username:
+            result = messages_pb2.UserInfo()
+            # result.id = ex.id
+            result.name = ex.username
+            result.password = ex.password
+            result.ob_project_id = ex.ob_project_id
+            for k, v in ex.testbed_tenants.items():
+                result.testbed_tenants[k] = v
+            return result

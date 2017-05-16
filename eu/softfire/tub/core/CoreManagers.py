@@ -9,9 +9,11 @@ import yaml
 from toscaparser.tosca_template import ToscaTemplate
 
 from eu.softfire.tub.entities import entities
-from eu.softfire.tub.entities.entities import UsedResource, ManagerEndpoint, ResourceMetadata, Experimenter
-from eu.softfire.tub.entities.repositories import save, find, delete
-from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall
+from eu.softfire.tub.entities.entities import UsedResource, ManagerEndpoint, ResourceMetadata, Experimenter, \
+    ResourceStatus
+from eu.softfire.tub.entities.repositories import save, find, delete, get_user_info
+from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall, \
+    ResourceNotFound, ResourceAlreadyBooked
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
 from eu.softfire.tub.utils.utils import get_logger
 
@@ -48,17 +50,54 @@ TESTBED_MAPPING = {
 }
 
 
-def _repr_date(date):
-    return "%d/%d/%d %d:%d" % (
-        date.day, date.month, date.year, date.hour,
-        date.minute)
+class UserAgent(object):
+    def __init__(self):
+        pass
+
+    def create_user(self, username, password, role='experimenter'):
+        experimenter = Experimenter()
+        experimenter.username = username
+        experimenter.password = password
+        experimenter.role = role
+
+        managers = []
+        for man in find(ManagerEndpoint):
+            managers.append(man.name)
+
+        managers.remove('nfv-manager')
+
+        user_info = get_stub('nfv-manager').create_user(messages_pb2.UserInfo(name=username, password=password))
+        logger.info("Created user, project and tenant on the NFV Resource Manager")
+
+        for man in managers:
+            get_stub(man).create_user(user_info)
+            logger.debug("informed manager %s of created user" % man)
+
+        experimenter.testbed_tenants = {}
+        experimenter.ob_project_id = user_info.ob_project_id
+
+        for k, v in user_info.testbed_tenants.items():
+            experimenter.testbed_tenants[k] = v
+
+        save(experimenter)
+        logger.info("Stored new experimenter: %s" % experimenter.username)
+
+    def delete_user(self, username):
+        for experimenter in find(Experimenter):
+            if experimenter.name == username:
+                delete(experimenter)
+                return
+
+    def create_user_info(self, username, password, role):
+        self.create_user(username, password, role)
 
 
 class Experiment(object):
     END_DATE = 'end-date'
     START_DATE = 'start-date'
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, username):
+        self.username = username
         self.file_path = file_path
         zf = zipfile.ZipFile(self.file_path)
         for info in zf.infolist():
@@ -72,7 +111,7 @@ class Experiment(object):
                 for node in tpl.nodetemplates:
                     logger.debug("Found node: %s of type %s with properties: %s" % (
                         node.name, node.type, list(node.get_properties().keys())))
-                self.tpl = tpl
+                self.topology_template = tpl
             if filename == 'TOSCA-Metadata/Metadata.yaml':
                 metadata = yaml.load(zf.read(filename))
                 self.name = metadata.get('name')
@@ -83,38 +122,41 @@ class Experiment(object):
                 self.duration = self.end_date - self.start_date
                 logger.debug("Experiment duration %s" % self.duration)
             self._validate()
-            self._book_resources()
+
             exp = entities.Experiment()
+            exp.id = "%s_%s" % (self.username, self.name)
+            exp.username = self.username
             exp.name = self.name
-            exp.start_date = _repr_date(self.start_date)
-            exp.end_date = _repr_date(self.end_date)
+            exp.start_date = self.start_date
+            exp.end_date = self.end_date
             exp.resources = []
-            for node in self.tpl.nodetemplates:
+            for node in self.topology_template.nodetemplates:
                 exp.resources.append(self._get_used_resource_by_node(node))
 
             logger.info("Saving experiment %s" % exp.name)
             save(exp)
+            self.experiment = exp
 
     @classmethod
     def get_end_date(cls, metadata):
         try:
-            return dateparser.parse(metadata.get(cls.END_DATE))
+            return dateparser.parse(metadata.get(cls.END_DATE), settings={'DATE_ORDER': 'YMD'})
         except ValueError:
-            raise ExperimentValidationError("Unknown language for end date")
+            raise ExperimentValidationError("Unknown end date format")
 
     @classmethod
     def get_start_date(cls, metadata):
         try:
-            return dateparser.parse(metadata.get(cls.START_DATE))
+            return dateparser.parse(metadata.get(cls.START_DATE), settings={'DATE_ORDER': 'YMD'})
         except ValueError:
-            raise ExperimentValidationError("Unknown language for start date")
+            raise ExperimentValidationError("Unknown start date format")
 
     def get_topology(self):
-        return self.tpl
+        return self.topology_template
 
     def get_nodes(self, manager_name):
         nodes = []
-        for node in self.tpl.nodetemplates:
+        for node in self.topology_template.nodetemplates:
             if node.type in MAPPING_MANAGERS[manager_name]:
                 nodes.append(node)
         return nodes
@@ -127,13 +169,78 @@ class Experiment(object):
         if self.duration <= timedelta(0, 1, 0):
             raise ExperimentValidationError("Duration too short, modify start and end date")
 
-    def _book_resources(self):
-        pass
+    def reserve(self):
+        for node in self.topology_template.nodetemplates:
+            used_resource = _get_used_resource_from_node(node, get_user_info(self.username))
+            CalendarManager.check_availability_for_node(used_resource)
+        # all node have been granted
+
+        for us in self.experiment.resources:
+            us.status = ResourceStatus.RESERVED.value
+
+        save(self.experiment)
 
     def _get_used_resource_by_node(self, node):
         resource = UsedResource()
         resource.name = node.name
+        resource.value = yaml.dump(node)
+        resource.resource_id = node.get_properties().get('resource_id')
+        resource.status = ResourceStatus.VALIDATING.value
+        resource.start_date = self.start_date
+        resource.end_date = self.end_date
         return resource
+
+
+def _get_used_resource_from_node(node, username):
+    for e in find(Experiment):
+        if e.username == username:
+            for ur in find(UsedResource):
+                if ur.parent_id == e.id and ur.name == node.name:
+                    return ur
+
+    raise ResourceNotFound('Resource with name %s  for user %s was not found' % (node.name, username))
+
+
+class CalendarManager(object):
+    def __init__(self):
+        pass
+
+    @classmethod
+    def check_availability_for_node(cls, used_resource):
+        if not cls.check_overlapping_booking(used_resource):
+            raise ResourceAlreadyBooked('Some resources where already booked, please check the calendar')
+
+    @classmethod
+    def check_overlapping_booking(cls, used_resource):
+        """
+        Check calendar availability of this resource
+        
+        :param used_resource: the used resource to book
+         :type used_resource: UsedResource
+        :return: True when availability is granted False otherwise
+         :rtype: bool
+        """
+        resource_metadata = cls.get_metadata_from_usedresource(used_resource)
+        # if the resource metadata associated has infinite cardinality return true
+        if resource_metadata.cardinality <= 0:
+            return True
+        max_concurrent = resource_metadata.cardinality
+        counter = 0
+        # if not then i need to calculate the number of resource already booked for that period
+        for ur in find(UsedResource):
+            if ur.status == ResourceStatus.RESERVED.value():
+                if ur.start_date <= used_resource.start_date <= ur.end_date:
+                    counter += 1
+                elif ur.start_date <= used_resource.end_date <= ur.end_date:
+                    counter += 1
+        if counter < max_concurrent:
+            return True
+
+        return False
+
+    @classmethod
+    def get_metadata_from_usedresource(cls, used_resource):
+        return find(ResourceMetadata, _id=used_resource.resource_id)
 
 
 def get_stub(manager_name):
@@ -249,70 +356,6 @@ def get_resources():
     return res
 
 
-def get_used_resources_by_experimenter(exp_name):
-    res = []
-    for ur in find(UsedResource):
-        experimenter = find(Experimenter, ur.parent_id)
-        if experimenter is not None and experimenter.name == exp_name:
-            res.append(ur)
-    return res
-
-
-class UserAgent(object):
-    def __init__(self):
-        pass
-
-    def create_user(self, username, password, role='experimenter'):
-        experimenter = Experimenter()
-        experimenter.username = username
-        experimenter.password = password
-        experimenter.role = role
-
-        managers = []
-        for man in find(ManagerEndpoint):
-            managers.append(man.name)
-
-        managers.remove('nfv-manager')
-
-        user_info = get_stub('nfv-manager').create_user(messages_pb2.UserInfo(name=username, password=password))
-        logger.info("Created user, project and tenant on the NFV Resource Manager")
-
-        for man in managers:
-            get_stub(man).create_user(user_info)
-            logger.debug("informed manager %s of created user" % man)
-
-        experimenter.testbed_tenants = {}
-        experimenter.ob_project_id = user_info.ob_project_id
-
-        for k, v in user_info.testbed_tenants.items():
-            experimenter.testbed_tenants[k] = v
-
-        save(experimenter)
-        logger.info("Stored new experimenter: %s" % experimenter.username)
-
-    def delete_user(self, username):
-        for experimenter in find(Experimenter):
-            if experimenter.name == username:
-                delete(experimenter)
-                return
-
-    def create_user_info(self, username, password, role):
-        self.create_user(username, password, role)
-
-
-def get_user_info(username):
-    for ex in find(entities.Experimenter):
-        if ex.username == username:
-            result = messages_pb2.UserInfo()
-            # result.id = ex.id
-            result.name = ex.username
-            result.password = ex.password
-            result.ob_project_id = ex.ob_project_id
-            for k, v in ex.testbed_tenants.items():
-                result.testbed_tenants[k] = v
-            return result
-
-
 def refresh_resources(username, manager_name=None):
     managers = []
     if manager_name is None:
@@ -345,3 +388,12 @@ def refresh_resources(username, manager_name=None):
         save(resource_metadata, ResourceMetadata)
 
     return result
+
+
+def get_used_resources_by_experimenter(exp_name):
+    res = []
+    for ur in find(UsedResource):
+        experimenter = find(Experimenter, ur.parent_id)
+        if experimenter is not None and experimenter.name == exp_name:
+            res.append(ur)
+    return res
