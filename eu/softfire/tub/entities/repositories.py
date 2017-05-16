@@ -4,6 +4,7 @@ from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm.exc import NoResultFound
 
 from eu.softfire.tub.entities.entities import Base
 from eu.softfire.tub.utils.utils import get_config, get_logger
@@ -28,7 +29,23 @@ def get_db_session():
         yield session
 
 
-def save(entity):
+def save(entity, _clazz=None):
+    if _clazz:
+        if hasattr(entity, 'id'):  # usually id is None so this method acs as normal save
+            _id = entity.id
+        else:
+            _id = entity.name
+        try:
+            found = find(_clazz, _id)
+            if isinstance(found, list):
+                for e in found:
+                    delete(e)
+            else:
+                if found:
+                    delete(found)
+        except NoResultFound as nrf:
+            pass
+
     with get_db_session() as se:
         se.add(entity)
         se.commit()

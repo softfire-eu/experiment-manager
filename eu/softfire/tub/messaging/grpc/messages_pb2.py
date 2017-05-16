@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='messages.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0emessages.proto\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"X\n\x0eRequestMessage\x12\x17\n\x06method\x18\x01 \x01(\x0e\x32\x07.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\x12\x1c\n\tuser_info\x18\x03 \x01(\x0b\x32\t.UserInfo\"\xa9\x01\n\x0fResponseMessage\x12\x0e\n\x06result\x18\x01 \x01(\x05\x12.\n\rlist_resource\x18\x02 \x01(\x0b\x32\x15.ListResourceResponseH\x00\x12\x34\n\x10provide_resource\x18\x03 \x01(\x0b\x32\x18.ProvideResourceResponseH\x00\x12\x15\n\rerror_message\x18\x04 \x01(\tB\t\n\x07message\"<\n\x14ListResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"7\n\x17ProvideResourceResponse\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\"\x7f\n\x10ResourceMetadata\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05\x12\x19\n\x07testbed\x18\x04 \x01(\x0e\x32\x08.Testbed\x12\x11\n\tnode_type\x18\x05 \x01(\t\"\xbc\x01\n\x08UserInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\x12\x15\n\rob_project_id\x18\x04 \x01(\t\x12\x36\n\x0ftestbed_tenants\x18\x05 \x03(\x0b\x32\x1d.UserInfo.TestbedTenantsEntry\x1a\x35\n\x13TestbedTenantsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\'\n\x08Resource\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t*J\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02*\x92\x01\n\x07Testbed\x12\n\n\x06SURREY\x10\x00\x12\t\n\x05\x46OKUS\x10\x01\x12\x06\n\x02\x44T\x10\x02\x12\x07\n\x03\x41\x44S\x10\x03\x12\x0c\n\x08\x45RICSSON\x10\x04\x12\x0e\n\nSURREY_DEV\x10\x05\x12\r\n\tFOKUS_DEV\x10\x06\x12\n\n\x06\x44T_DEV\x10\x07\x12\x0b\n\x07\x41\x44S_DEV\x10\x08\x12\x10\n\x0c\x45RICSSON_DEV\x10\t\x12\x07\n\x03\x41NY\x10\n2}\n\x13RegistrationService\x12\x30\n\x08register\x12\x10.RegisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x34\n\nunregister\x12\x12.UnregisterMessage\x1a\x10.ResponseMessage\"\x00\x32\x65\n\x0cManagerAgent\x12.\n\x07\x65xecute\x12\x0f.RequestMessage\x1a\x10.ResponseMessage\"\x00\x12%\n\x0b\x63reate_user\x12\t.UserInfo\x1a\t.UserInfo\"\x00\x42\x02H\x03\x62\x06proto3')
+  serialized_pb=_b('\n\x0emessages.proto\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"X\n\x0eRequestMessage\x12\x17\n\x06method\x18\x01 \x01(\x0e\x32\x07.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\x12\x1c\n\tuser_info\x18\x03 \x01(\x0b\x32\t.UserInfo\"\xdf\x01\n\x0fResponseMessage\x12\x0e\n\x06result\x18\x01 \x01(\x05\x12.\n\rlist_resource\x18\x02 \x01(\x0b\x32\x15.ListResourceResponseH\x00\x12\x34\n\x10provide_resource\x18\x03 \x01(\x0b\x32\x18.ProvideResourceResponseH\x00\x12\x34\n\x10refresh_resource\x18\x04 \x01(\x0b\x32\x18.RefreshResourceResponseH\x00\x12\x15\n\rerror_message\x18\x05 \x01(\tB\t\n\x07message\"<\n\x14ListResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"7\n\x17ProvideResourceResponse\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\"?\n\x17RefreshResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"\x7f\n\x10ResourceMetadata\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05\x12\x19\n\x07testbed\x18\x04 \x01(\x0e\x32\x08.Testbed\x12\x11\n\tnode_type\x18\x05 \x01(\t\"\xbc\x01\n\x08UserInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\x12\x15\n\rob_project_id\x18\x04 \x01(\t\x12\x36\n\x0ftestbed_tenants\x18\x05 \x03(\x0b\x32\x1d.UserInfo.TestbedTenantsEntry\x1a\x35\n\x13TestbedTenantsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\'\n\x08Resource\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t*J\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02*\x92\x01\n\x07Testbed\x12\n\n\x06SURREY\x10\x00\x12\t\n\x05\x46OKUS\x10\x01\x12\x06\n\x02\x44T\x10\x02\x12\x07\n\x03\x41\x44S\x10\x03\x12\x0c\n\x08\x45RICSSON\x10\x04\x12\x0e\n\nSURREY_DEV\x10\x05\x12\r\n\tFOKUS_DEV\x10\x06\x12\n\n\x06\x44T_DEV\x10\x07\x12\x0b\n\x07\x41\x44S_DEV\x10\x08\x12\x10\n\x0c\x45RICSSON_DEV\x10\t\x12\x07\n\x03\x41NY\x10\n2}\n\x13RegistrationService\x12\x30\n\x08register\x12\x10.RegisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x34\n\nunregister\x12\x12.UnregisterMessage\x1a\x10.ResponseMessage\"\x00\x32\x99\x01\n\x0cManagerAgent\x12.\n\x07\x65xecute\x12\x0f.RequestMessage\x1a\x10.ResponseMessage\"\x00\x12\x32\n\x11refresh_resources\x12\t.UserInfo\x1a\x10.ResponseMessage\"\x00\x12%\n\x0b\x63reate_user\x12\t.UserInfo\x1a\t.UserInfo\"\x00\x42\x02H\x03\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -45,8 +45,8 @@ _METHOD = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=885,
-  serialized_end=959,
+  serialized_start=1004,
+  serialized_end=1078,
 )
 _sym_db.RegisterEnumDescriptor(_METHOD)
 
@@ -104,8 +104,8 @@ _TESTBED = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=962,
-  serialized_end=1108,
+  serialized_start=1081,
+  serialized_end=1227,
 )
 _sym_db.RegisterEnumDescriptor(_TESTBED)
 
@@ -284,8 +284,15 @@ _RESPONSEMESSAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='error_message', full_name='ResponseMessage.error_message', index=3,
-      number=4, type=9, cpp_type=9, label=1,
+      name='refresh_resource', full_name='ResponseMessage.refresh_resource', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='error_message', full_name='ResponseMessage.error_message', index=4,
+      number=5, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -306,7 +313,7 @@ _RESPONSEMESSAGE = _descriptor.Descriptor(
       index=0, containing_type=None, fields=[]),
   ],
   serialized_start=234,
-  serialized_end=403,
+  serialized_end=457,
 )
 
 
@@ -336,8 +343,8 @@ _LISTRESOURCERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=405,
-  serialized_end=465,
+  serialized_start=459,
+  serialized_end=519,
 )
 
 
@@ -367,8 +374,39 @@ _PROVIDERESOURCERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=467,
-  serialized_end=522,
+  serialized_start=521,
+  serialized_end=576,
+)
+
+
+_REFRESHRESOURCERESPONSE = _descriptor.Descriptor(
+  name='RefreshResourceResponse',
+  full_name='RefreshResourceResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='resources', full_name='RefreshResourceResponse.resources', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=578,
+  serialized_end=641,
 )
 
 
@@ -426,8 +464,8 @@ _RESOURCEMETADATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=524,
-  serialized_end=651,
+  serialized_start=643,
+  serialized_end=770,
 )
 
 
@@ -464,8 +502,8 @@ _USERINFO_TESTBEDTENANTSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=789,
-  serialized_end=842,
+  serialized_start=908,
+  serialized_end=961,
 )
 
 _USERINFO = _descriptor.Descriptor(
@@ -522,8 +560,8 @@ _USERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=654,
-  serialized_end=842,
+  serialized_start=773,
+  serialized_end=961,
 )
 
 
@@ -560,22 +598,27 @@ _RESOURCE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=844,
-  serialized_end=883,
+  serialized_start=963,
+  serialized_end=1002,
 )
 
 _REQUESTMESSAGE.fields_by_name['method'].enum_type = _METHOD
 _REQUESTMESSAGE.fields_by_name['user_info'].message_type = _USERINFO
 _RESPONSEMESSAGE.fields_by_name['list_resource'].message_type = _LISTRESOURCERESPONSE
 _RESPONSEMESSAGE.fields_by_name['provide_resource'].message_type = _PROVIDERESOURCERESPONSE
+_RESPONSEMESSAGE.fields_by_name['refresh_resource'].message_type = _REFRESHRESOURCERESPONSE
 _RESPONSEMESSAGE.oneofs_by_name['message'].fields.append(
   _RESPONSEMESSAGE.fields_by_name['list_resource'])
 _RESPONSEMESSAGE.fields_by_name['list_resource'].containing_oneof = _RESPONSEMESSAGE.oneofs_by_name['message']
 _RESPONSEMESSAGE.oneofs_by_name['message'].fields.append(
   _RESPONSEMESSAGE.fields_by_name['provide_resource'])
 _RESPONSEMESSAGE.fields_by_name['provide_resource'].containing_oneof = _RESPONSEMESSAGE.oneofs_by_name['message']
+_RESPONSEMESSAGE.oneofs_by_name['message'].fields.append(
+  _RESPONSEMESSAGE.fields_by_name['refresh_resource'])
+_RESPONSEMESSAGE.fields_by_name['refresh_resource'].containing_oneof = _RESPONSEMESSAGE.oneofs_by_name['message']
 _LISTRESOURCERESPONSE.fields_by_name['resources'].message_type = _RESOURCEMETADATA
 _PROVIDERESOURCERESPONSE.fields_by_name['resources'].message_type = _RESOURCE
+_REFRESHRESOURCERESPONSE.fields_by_name['resources'].message_type = _RESOURCEMETADATA
 _RESOURCEMETADATA.fields_by_name['testbed'].enum_type = _TESTBED
 _USERINFO_TESTBEDTENANTSENTRY.containing_type = _USERINFO
 _USERINFO.fields_by_name['testbed_tenants'].message_type = _USERINFO_TESTBEDTENANTSENTRY
@@ -585,6 +628,7 @@ DESCRIPTOR.message_types_by_name['RequestMessage'] = _REQUESTMESSAGE
 DESCRIPTOR.message_types_by_name['ResponseMessage'] = _RESPONSEMESSAGE
 DESCRIPTOR.message_types_by_name['ListResourceResponse'] = _LISTRESOURCERESPONSE
 DESCRIPTOR.message_types_by_name['ProvideResourceResponse'] = _PROVIDERESOURCERESPONSE
+DESCRIPTOR.message_types_by_name['RefreshResourceResponse'] = _REFRESHRESOURCERESPONSE
 DESCRIPTOR.message_types_by_name['ResourceMetadata'] = _RESOURCEMETADATA
 DESCRIPTOR.message_types_by_name['UserInfo'] = _USERINFO
 DESCRIPTOR.message_types_by_name['Resource'] = _RESOURCE
@@ -632,6 +676,13 @@ ProvideResourceResponse = _reflection.GeneratedProtocolMessageType('ProvideResou
   # @@protoc_insertion_point(class_scope:ProvideResourceResponse)
   ))
 _sym_db.RegisterMessage(ProvideResourceResponse)
+
+RefreshResourceResponse = _reflection.GeneratedProtocolMessageType('RefreshResourceResponse', (_message.Message,), dict(
+  DESCRIPTOR = _REFRESHRESOURCERESPONSE,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:RefreshResourceResponse)
+  ))
+_sym_db.RegisterMessage(RefreshResourceResponse)
 
 ResourceMetadata = _reflection.GeneratedProtocolMessageType('ResourceMetadata', (_message.Message,), dict(
   DESCRIPTOR = _RESOURCEMETADATA,
@@ -741,6 +792,11 @@ try:
           request_serializer=RequestMessage.SerializeToString,
           response_deserializer=ResponseMessage.FromString,
           )
+      self.refresh_resources = channel.unary_unary(
+          '/ManagerAgent/refresh_resources',
+          request_serializer=UserInfo.SerializeToString,
+          response_deserializer=ResponseMessage.FromString,
+          )
       self.create_user = channel.unary_unary(
           '/ManagerAgent/create_user',
           request_serializer=UserInfo.SerializeToString,
@@ -751,6 +807,11 @@ try:
   class ManagerAgentServicer(object):
 
     def execute(self, request, context):
+      context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+      context.set_details('Method not implemented!')
+      raise NotImplementedError('Method not implemented!')
+
+    def refresh_resources(self, request, context):
       context.set_code(grpc.StatusCode.UNIMPLEMENTED)
       context.set_details('Method not implemented!')
       raise NotImplementedError('Method not implemented!')
@@ -766,6 +827,11 @@ try:
         'execute': grpc.unary_unary_rpc_method_handler(
             servicer.execute,
             request_deserializer=RequestMessage.FromString,
+            response_serializer=ResponseMessage.SerializeToString,
+        ),
+        'refresh_resources': grpc.unary_unary_rpc_method_handler(
+            servicer.refresh_resources,
+            request_deserializer=UserInfo.FromString,
             response_serializer=ResponseMessage.SerializeToString,
         ),
         'create_user': grpc.unary_unary_rpc_method_handler(
@@ -857,6 +923,8 @@ try:
     only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
     def execute(self, request, context):
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
+    def refresh_resources(self, request, context):
+      context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
     def create_user(self, request, context):
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
 
@@ -870,6 +938,9 @@ try:
     def execute(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
       raise NotImplementedError()
     execute.future = None
+    def refresh_resources(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      raise NotImplementedError()
+    refresh_resources.future = None
     def create_user(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
       raise NotImplementedError()
     create_user.future = None
@@ -884,14 +955,17 @@ try:
     request_deserializers = {
       ('ManagerAgent', 'create_user'): UserInfo.FromString,
       ('ManagerAgent', 'execute'): RequestMessage.FromString,
+      ('ManagerAgent', 'refresh_resources'): UserInfo.FromString,
     }
     response_serializers = {
       ('ManagerAgent', 'create_user'): UserInfo.SerializeToString,
       ('ManagerAgent', 'execute'): ResponseMessage.SerializeToString,
+      ('ManagerAgent', 'refresh_resources'): ResponseMessage.SerializeToString,
     }
     method_implementations = {
       ('ManagerAgent', 'create_user'): face_utilities.unary_unary_inline(servicer.create_user),
       ('ManagerAgent', 'execute'): face_utilities.unary_unary_inline(servicer.execute),
+      ('ManagerAgent', 'refresh_resources'): face_utilities.unary_unary_inline(servicer.refresh_resources),
     }
     server_options = beta_implementations.server_options(request_deserializers=request_deserializers, response_serializers=response_serializers, thread_pool=pool, thread_pool_size=pool_size, default_timeout=default_timeout, maximum_timeout=maximum_timeout)
     return beta_implementations.server(method_implementations, options=server_options)
@@ -906,14 +980,17 @@ try:
     request_serializers = {
       ('ManagerAgent', 'create_user'): UserInfo.SerializeToString,
       ('ManagerAgent', 'execute'): RequestMessage.SerializeToString,
+      ('ManagerAgent', 'refresh_resources'): UserInfo.SerializeToString,
     }
     response_deserializers = {
       ('ManagerAgent', 'create_user'): UserInfo.FromString,
       ('ManagerAgent', 'execute'): ResponseMessage.FromString,
+      ('ManagerAgent', 'refresh_resources'): ResponseMessage.FromString,
     }
     cardinalities = {
       'create_user': cardinality.Cardinality.UNARY_UNARY,
       'execute': cardinality.Cardinality.UNARY_UNARY,
+      'refresh_resources': cardinality.Cardinality.UNARY_UNARY,
     }
     stub_options = beta_implementations.stub_options(host=host, metadata_transformer=metadata_transformer, request_serializers=request_serializers, response_deserializers=response_deserializers, thread_pool=pool, thread_pool_size=pool_size)
     return beta_implementations.dynamic_stub(channel, 'ManagerAgent', cardinalities, options=stub_options)

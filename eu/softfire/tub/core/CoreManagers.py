@@ -47,6 +47,7 @@ TESTBED_MAPPING = {
     'dt-dev': messages_pb2.DT_DEV,
 }
 
+
 def _repr_date(date):
     return "%d/%d/%d %d:%d" % (
         date.day, date.month, date.year, date.hour,
@@ -166,13 +167,13 @@ def list_resources(manager_name=None, _id=None):
     logger.debug("Saving %d resources" % len(result))
     for rm in result:
         resource_metadata = ResourceMetadata()
-        resource_metadata.name = rm.resource_id
+        resource_metadata.id = rm.resource_id
         resource_metadata.description = rm.description
         resource_metadata.cardinality = rm.cardinality
         resource_metadata.node_type = rm.node_type
         if rm.testbed:
             resource_metadata.testbed = list(TESTBED_MAPPING.keys())[list(TESTBED_MAPPING.values()).index(rm.testbed)]
-        save(resource_metadata)
+        save(resource_metadata, ResourceMetadata)
 
     return result
 
@@ -213,7 +214,7 @@ def get_images():
     for rm in find(ResourceMetadata):
         if rm.node_type == 'NfvImage':
             tmp = {
-                'resource_id': rm.name,
+                'resource_id': rm.id,
                 'node_type': rm.node_type,
                 'testbed': rm.testbed,
                 'description': rm.description
@@ -233,7 +234,7 @@ def get_resources():
     for rm in find(ResourceMetadata):
         if rm.node_type != 'NfvImage':
             tmp = {
-                'resource_id': rm.name,
+                'resource_id': rm.id,
                 'node_type': rm.node_type,
                 'description': rm.description,
                 'testbed': rm.testbed,
@@ -281,12 +282,13 @@ class UserAgent(object):
             logger.debug("informed manager %s of created user" % man)
 
         experimenter.testbed_tenants = {}
+        experimenter.ob_project_id = user_info.ob_project_id
 
         for k, v in user_info.testbed_tenants.items():
             experimenter.testbed_tenants[k] = v
 
         save(experimenter)
-        logger.info("Stored new experimenter: " % experimenter.name)
+        logger.info("Stored new experimenter: %s" % experimenter.username)
 
     def delete_user(self, username):
         for experimenter in find(Experimenter):
@@ -296,3 +298,50 @@ class UserAgent(object):
 
     def create_user_info(self, username, password, role):
         self.create_user(username, password, role)
+
+
+def get_user_info(username):
+    for ex in find(entities.Experimenter):
+        if ex.username == username:
+            result = messages_pb2.UserInfo()
+            # result.id = ex.id
+            result.name = ex.username
+            result.password = ex.password
+            result.ob_project_id = ex.ob_project_id
+            for k, v in ex.testbed_tenants.items():
+                result.testbed_tenants[k] = v
+            return result
+
+
+def refresh_resources(username, manager_name=None):
+    managers = []
+    if manager_name is None:
+        for man in find(ManagerEndpoint):
+            managers.append(man.name)
+    else:
+        managers.append(manager_name)
+
+    user_info = get_user_info(username)
+    result = []
+    if user_info:
+        for manager in managers:
+            stub = get_stub(manager)
+            request_message = user_info
+            response = stub.refresh_resources(request_message)
+            if response.result != 0:
+                logger.error("list resources returned %d: %s" % (response.result, response.error_message))
+                raise RpcFailedCall("list resources returned %d: %s" % (response.result, response.error_message))
+            result.extend(response.list_resource.resources)
+
+    logger.debug("Saving %d resources" % len(result))
+    for rm in result:
+        resource_metadata = ResourceMetadata()
+        resource_metadata.id = rm.resource_id
+        resource_metadata.description = rm.description
+        resource_metadata.cardinality = rm.cardinality
+        resource_metadata.node_type = rm.node_type
+        if rm.testbed:
+            resource_metadata.testbed = list(TESTBED_MAPPING.keys())[list(TESTBED_MAPPING.values()).index(rm.testbed)]
+        save(resource_metadata, ResourceMetadata)
+
+    return result

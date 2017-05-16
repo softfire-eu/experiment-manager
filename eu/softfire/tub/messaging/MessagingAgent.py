@@ -42,7 +42,7 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
         manager_endpoint = ManagerEndpoint()
         manager_endpoint.name = request.name
         manager_endpoint.endpoint = request.endpoint
-        save(manager_endpoint)
+        save(manager_endpoint, ManagerEndpoint)
         list_resources()
         response_message = messages_pb2.ResponseMessage()
         response_message.result = 0

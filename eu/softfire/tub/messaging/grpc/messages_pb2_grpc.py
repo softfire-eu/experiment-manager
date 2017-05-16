@@ -68,6 +68,11 @@ class ManagerAgentStub(object):
         request_serializer=messages__pb2.RequestMessage.SerializeToString,
         response_deserializer=messages__pb2.ResponseMessage.FromString,
         )
+    self.refresh_resources = channel.unary_unary(
+        '/ManagerAgent/refresh_resources',
+        request_serializer=messages__pb2.UserInfo.SerializeToString,
+        response_deserializer=messages__pb2.ResponseMessage.FromString,
+        )
     self.create_user = channel.unary_unary(
         '/ManagerAgent/create_user',
         request_serializer=messages__pb2.UserInfo.SerializeToString,
@@ -78,6 +83,11 @@ class ManagerAgentStub(object):
 class ManagerAgentServicer(object):
 
   def execute(self, request, context):
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def refresh_resources(self, request, context):
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
@@ -93,6 +103,11 @@ def add_ManagerAgentServicer_to_server(servicer, server):
       'execute': grpc.unary_unary_rpc_method_handler(
           servicer.execute,
           request_deserializer=messages__pb2.RequestMessage.FromString,
+          response_serializer=messages__pb2.ResponseMessage.SerializeToString,
+      ),
+      'refresh_resources': grpc.unary_unary_rpc_method_handler(
+          servicer.refresh_resources,
+          request_deserializer=messages__pb2.UserInfo.FromString,
           response_serializer=messages__pb2.ResponseMessage.SerializeToString,
       ),
       'create_user': grpc.unary_unary_rpc_method_handler(

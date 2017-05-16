@@ -38,6 +38,7 @@ setup(
         'grpcio',
         'grpcio-tools',
         'dateparser',
+        'mysqlclient',
     ],
     long_description=read('README.rst'),
     classifiers=[

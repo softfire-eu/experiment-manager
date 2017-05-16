@@ -17,8 +17,9 @@ class Experimenter(Base):
     __tablename__ = "experimenter"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
+    username = Column(String(250), nullable=False)
     role = Column(String(250), nullable=False)
+    ob_project_id = Column(String(250), nullable=False)
     password = Column(String(250), nullable=False)
     testbed_tenants = Column(PickleType)
 
@@ -45,8 +46,8 @@ class UsedResource(Base):
 class ResourceMetadata(Base):
     __tablename__ = "resource_metadata"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(250), unique=True, nullable=False)
+    # id = Column(Integer, primary_key=True)
+    id = Column(String(250), primary_key=True)
     node_type = Column(String(250), unique=False, nullable=False)
     cardinality = Column(Integer, nullable=False)
     description = Column(String(2500), nullable=False)

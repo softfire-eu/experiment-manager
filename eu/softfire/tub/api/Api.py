@@ -1,55 +1,34 @@
 import json
 import logging
 import os
+import traceback
 
 import bottle
 from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError, HTTPResponse
 from cork import Cork
 
+from eu.softfire.tub.core import CoreManagers
 from eu.softfire.tub.core.CoreManagers import Experiment, get_resources, UserAgent, get_images
-from eu.softfire.tub.exceptions.exceptions import ManagerNotFound
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
 logger = get_logger('eu.softfire.tub.api')
-bottle.TEMPLATE_PATH = [get_config('api','view-path','/etc/softfire/views')]
+bottle.TEMPLATE_PATH = [get_config('api', 'view-path', '/etc/softfire/views')]
 user_manager = UserAgent()
 aaa = Cork(get_config("api", "cork-files-path", "/etc/softfire/users"))
 authorize = aaa.make_auth_decorator(fail_redirect="/login")
 
 
-#######################
-# Experimenters pages #
-#######################
+######################
+# Experimenters urls #
+######################
 
-@get('/list_resources')
-@authorize(role="experimenter")
-def list_resources():
-    try:
-        return dict(
-            resources=get_resources()
-        )
-    except ManagerNotFound as e:
-        raise HTTPError(status=404, exception=e)
-
-
-@get('/api/v1/resources/<id>')
-@authorize(role="experimenter")
-def list_resources(_id):
-    try:
-        return get_resources(_id=_id)
-    except ManagerNotFound as e:
-        raise HTTPError(status=404, exception=e)
-
-
-@get('/api/v1/resources/<manager_name>')
-@authorize(role="experimenter")
-def list_resources(manager_name):
-    try:
-        return get_resources(manager_name)
-    except ManagerNotFound as e:
-        raise HTTPError(status=404, exception=e)
+@get('/refresh_images')
+@authorize(role='experimenter')
+def refresh_resources():
+    CoreManagers.refresh_resources(aaa.current_user.username)
+    return dict(ok=True, msg="Refreshing page...")
 
 
 @post('/reserve_resources')
@@ -112,22 +91,6 @@ def register():
     return 'User created'
 
 
-@bottle.post('/signup')
-@authorize("experimenter")
-def signup():
-    try:
-        password = postd().password
-        username = postd().username
-        role = 'experimenter'
-
-        user_manager.create_user_info(username=username, password=password, role=role)
-        aaa.create_user(username, role, password)
-        aaa.login(username=username, password=password, success_redirect="/experimenter")
-        # return dict(ok=True, msg='User created correctly')
-    except Exception as e:
-        return dict(ok=False, msg=e.message)
-
-
 @bottle.post('/reset_password')
 def send_password_reset_email():
     """Send out password reset email"""
@@ -185,8 +148,11 @@ def create_user():
         username = postd().username
         user_manager.create_user_info(username=username, password=password, role=role)
         aaa.create_user(username, role, password)
-        return dict(ok=True, msg='')
+        return dict(ok=True, msg='Create user %s' % username)
     except Exception as e:
+        traceback.print_exc()
+        if not hasattr(e, 'message'):
+            return dict(ok=False, msg=e.args)
         return dict(ok=False, msg=e.message)
 
 
