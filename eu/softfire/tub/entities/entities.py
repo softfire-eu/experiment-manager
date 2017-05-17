@@ -29,6 +29,7 @@ class Experimenter(Base):
 class Experiment(Base):
     __tablename__ = "experiment"
 
+    # id = Column(Integer, primary_key=True)
     id = Column(String(250), primary_key=True)
     name = Column(String(250), nullable=False)
     username = Column(String(250), nullable=False)
@@ -40,7 +41,7 @@ class UsedResource(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False, unique=True)
     resource_id = Column(String(250), nullable=False, unique=False)
-    parent_id = Column(Integer, ForeignKey('experiment.id'))
+    parent_id = Column(String(250), ForeignKey('experiment.id'))
     status = Column(Integer, nullable=False)
     value = Column(String(5000), nullable=True)
     start_date = Column(Date, nullable=False)

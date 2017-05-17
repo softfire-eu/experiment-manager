@@ -4,13 +4,13 @@ import os
 import traceback
 
 import bottle
+import time
 from beaker.middleware import SessionMiddleware
-from bottle import request, post, get, HTTPError, HTTPResponse
+from bottle import request, post, get, HTTPError
 from cork import Cork
 
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.CoreManagers import Experiment, get_resources, UserAgent, get_images
-from eu.softfire.tub.exceptions.exceptions import ResourceAlreadyBooked
+from eu.softfire.tub.core.CoreManagers import get_resources, UserAgent, get_images, CalendarManager
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -35,7 +35,7 @@ def refresh_resources():
 @post('/reserve_resources')
 @authorize(role='experimenter')
 def book_resources():
-    data = request.files.data
+    data = request.files.get('shit')
     logger.debug("files: %s" % list(request.files.keys()))
     for file in request.files:
         logger.debug("file %s" % file)
@@ -43,12 +43,18 @@ def book_resources():
     # logger.debug("Data.file: %s" % data.file)
     if data and data.file:
         filename = data.filename
-        try:
-            Experiment(data.file).reserve()
-        except ResourceAlreadyBooked as e:
-            return dict(ok=False, msg=e.args)
-        # raw = data.file.read()  # This is dangerous for big files
-        return "Hello %s! You uploaded %s (%d bytes)." % (aaa.current_user.username, filename, len(raw))
+        # try:
+        #     Experiment(data.file, username=aaa.current_user.username).reserve()
+        # except ResourceAlreadyBooked as e:
+        #     return dict(ok=False, msg=e.args)
+
+        raw = data.file.read()  # This is dangerous for big files
+        bottle.redirect('/experimenter')
+        # return dict(
+        #     ok=True,
+        #     msg="Hello %s! You uploaded %s (%d bytes)." % (aaa.current_user.username, filename, len(raw)),
+        #     redirect="/admin"
+        # )
     logger.debug(("got body: %s" % request.body.read()))
     return dict(ok=False, msg="no file was found in your request")
 
@@ -95,30 +101,31 @@ def register():
     return 'User created'
 
 
-@bottle.post('/reset_password')
-def send_password_reset_email():
-    """Send out password reset email"""
-    aaa.send_password_reset_email(
-        username=post_get('username'),
-        email_addr=post_get('email_address')
-    )
-    return 'Please check your mailbox.'
+# @bottle.post('/reset_password')
+# def send_password_reset_email():
+#     """Send out password reset email"""
+#     aaa.send_password_reset_email(
+#         username=post_get('username'),
+#         email_addr=post_get('email_address')
+#     )
+#     return 'Please check your mailbox.'
 
 
-@bottle.post('/change_password')
-def change_password():
-    """Change password"""
-    aaa.reset_password(post_get('reset_code'), post_get('password'))
-    return 'Thanks. <a href="/login">Go to login</a>'
+# @bottle.post('/change_password')
+# def change_password():
+#     """Change password"""
+#     aaa.reset_password(post_get('reset_code'), post_get('password'))
+#     return 'Thanks. <a href="/login">Go to login</a>'
 
 
 @bottle.route('/')
 @authorize()
 def index():
     """Only authenticated users can see this"""
-    # session = bottle.request.environ.get('beaker.session')
-    # aaa.require(fail_redirect='/login')
-    return 'Welcome! <br /> <a href="/admin">Admin page</a><br /> <a href="/logout">Logout</a> <br /> <a href="/experimenter">Experimenter</a>'
+    return 'Welcome! <br /> ' \
+           '<a href="/admin">Admin page</a> <br /> ' \
+           '<a href="/experimenter">Experimenter</a> <br /> ' \
+           '<a href="/logout">Logout</a> <br /> '
 
 
 @bottle.route('/my_role')
@@ -168,7 +175,7 @@ def delete_user():
         return dict(ok=True, msg='')
     except Exception as e:
         logger.debug(repr(e))
-        return dict(ok=False, msg=e.message)
+        return dict(ok=False, msg=e.args)
 
 
 @bottle.post('/create_role')
@@ -178,7 +185,7 @@ def create_role():
         aaa.create_role(post_get('role'), post_get('level'))
         return dict(ok=True, msg='')
     except Exception as e:
-        return dict(ok=False, msg=e.message)
+        return dict(ok=False, msg=e.args)
 
 
 @bottle.post('/delete_role')
@@ -188,7 +195,7 @@ def delete_role():
         aaa.delete_role(post_get('role'))
         return dict(ok=True, msg='')
     except Exception as e:
-        return dict(ok=False, msg=e.message)
+        return dict(ok=False, msg=e.args)
 
 
 ################
@@ -218,6 +225,7 @@ def login_form():
 
 @bottle.route('/experimenter')
 @bottle.view('experimenter')
+@authorize(role="experimenter", fail_redirect='/sorry_page')
 def login_form():
     """Serve experimenter form"""
     return dict(
@@ -231,11 +239,23 @@ def login_form():
     )
 
 
-@bottle.route('/change_password/:reset_code')
-@bottle.view('password_change_form')
-def change_password(reset_code):
-    """Show password change form"""
-    return dict(reset_code=reset_code)
+# @bottle.route('/change_password/:reset_code')
+# @bottle.view('password_change_form')
+# def change_password(reset_code):
+#     """Show password change form"""
+#     return dict(reset_code=reset_code)
+
+
+@bottle.route('/calendar')
+@bottle.view('calendar')
+@authorize(role="experimenter", fail_redirect='/sorry_page')
+def get_calendar():
+    return dict(
+        july=CalendarManager.get_month('july'),
+        august=CalendarManager.get_month('august'),
+        september=CalendarManager.get_month('september'),
+        current_user=aaa.current_user
+    )
 
 
 @bottle.route('/sorry_page')
@@ -245,6 +265,7 @@ def sorry_page():
 
 
 @bottle.route('/static/<filename>')
+# @authorize(role="experimenter", fail_redirect='/sorry_page')
 def server_static(filename):
     """ route to the css and static files"""
     if ".." in filename:

@@ -1,7 +1,8 @@
+import calendar
 import json
 import time
 import zipfile
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import dateparser
 import grpc
@@ -15,7 +16,7 @@ from eu.softfire.tub.entities.repositories import save, find, delete, get_user_i
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall, \
     ResourceNotFound, ResourceAlreadyBooked
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
-from eu.softfire.tub.utils.utils import get_logger
+from eu.softfire.tub.utils.utils import get_logger, get_config
 
 logger = get_logger('eu.softfire.tub.core')
 
@@ -169,6 +170,12 @@ class Experiment(object):
         if self.duration <= timedelta(0, 1, 0):
             raise ExperimentValidationError("Duration too short, modify start and end date")
 
+        resource_ids = [rm.resource_id for rm in find(ResourceMetadata)]
+        for node in self.topology_template.nodetemplates:
+            resource_id_ = node.get_properties()["resource_id"]
+            if resource_id_ not in resource_ids:
+                raise ExperimentValidationError("resource id %s not allowed" % resource_id_)
+
     def reserve(self):
         for node in self.topology_template.nodetemplates:
             used_resource = _get_used_resource_from_node(node, get_user_info(self.username))
@@ -241,6 +248,48 @@ class CalendarManager(object):
     @classmethod
     def get_metadata_from_usedresource(cls, used_resource):
         return find(ResourceMetadata, _id=used_resource.resource_id)
+
+    @classmethod
+    def get_month(cls, month):
+        result = {}
+
+        if month == 'july':
+            start = datetime(2017, 7, 1, 0, 0)
+            end = datetime(2017, 7, 30, 23, 59)
+        elif month == 'august':
+            start = datetime(2017, 8, 1, 0, 0)
+            end = datetime(2017, 8, 30, 23, 59)
+        elif month == 'september':
+            start = datetime(2017, 9, 1, 0, 0)
+            end = datetime(2017, 9, 30, 23, 59)
+        for ur in find(UsedResource):
+            if start <= ur.start_date and end >= ur.end_date:
+                for day in range(ur.start_date.day, ur.end_date.day):
+                    result[day] = ur.resource_id
+                    if day == ur.start_date.day:
+                        result[day] = "%s - %d:%d" % (ur.resource_id, ur.start_date.hour, ur.start_date.minutes)
+                    if day == ur.end_date.day:
+                        result[day] = "%s - %d:%d" % (ur.resource_id, ur.end_date.hour, ur.end_date.minutes)
+
+            elif start <= ur.start_date:
+                for day in range(ur.start_date.day, 30):
+                    result[day] = ur.resource_id
+                if day == ur.start_date.day:
+                    result[day] = "%s - %d:%d" % (ur.resource_id, ur.start_date.hour, ur.start_date.minutes)
+                if day == ur.end_date.day:
+                    result[day] = "%s - %d:%d" % (ur.resource_id, ur.end_date.hour, ur.end_date.minutes)
+            elif end >= ur.end_date:
+                for day in range(1, ur.end_date.day):
+                    result[day] = ur.resource_id
+                if day == ur.start_date.day:
+                    result[day] = "%s - %d:%d" % (ur.resource_id, ur.start_date.hour, ur.start_date.minutes)
+                if day == ur.end_date.day:
+                    result[day] = "%s - %d:%d" % (ur.resource_id, ur.end_date.hour, ur.end_date.minutes)
+
+        for day in range(0, 31):
+            if day not in result.keys():
+                result[day] = ''
+        return result
 
 
 def get_stub(manager_name):
