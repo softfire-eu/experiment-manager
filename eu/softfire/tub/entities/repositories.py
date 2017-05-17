@@ -31,6 +31,11 @@ def get_db_session():
         yield session
 
 
+def rollback():
+    with get_db_session() as se:
+        se.rollback()
+
+
 def save(entity, _clazz=None):
     if _clazz:
         if hasattr(entity, 'id'):  # usually id is None so this method acs as normal save

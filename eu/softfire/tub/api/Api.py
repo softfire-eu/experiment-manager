@@ -8,9 +8,12 @@ import time
 from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError
 from cork import Cork
+from toscaparser.common.exception import MissingRequiredFieldError
 
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.CoreManagers import get_resources, UserAgent, get_images, CalendarManager
+from eu.softfire.tub.core.CoreManagers import get_resources, UserAgent, get_images, CalendarManager, Experiment
+from eu.softfire.tub.entities.repositories import rollback
+from eu.softfire.tub.exceptions.exceptions import ResourceAlreadyBooked
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -42,19 +45,21 @@ def book_resources():
     logger.debug("Data: '%s'" % data)
     # logger.debug("Data.file: %s" % data.file)
     if data and data.file:
-        filename = data.filename
-        # try:
-        #     Experiment(data.file, username=aaa.current_user.username).reserve()
-        # except ResourceAlreadyBooked as e:
-        #     return dict(ok=False, msg=e.args)
-
-        raw = data.file.read()  # This is dangerous for big files
+        try:
+            Experiment(data.file, username=aaa.current_user.username).reserve()
+        except ResourceAlreadyBooked as e:
+            traceback.print_exc()
+            rollback()
+            return dict(ok=False, msg=e.args)
+        except MissingRequiredFieldError as e:
+            traceback.print_exc()
+            rollback()
+            return dict(ok=False, msg=e.message)
+        except Exception as e:
+            traceback.print_exc()
+            rollback()
+            return dict(ok=False, msg=e.args)
         bottle.redirect('/experimenter')
-        # return dict(
-        #     ok=True,
-        #     msg="Hello %s! You uploaded %s (%d bytes)." % (aaa.current_user.username, filename, len(raw)),
-        #     redirect="/admin"
-        # )
     logger.debug(("got body: %s" % request.body.read()))
     return dict(ok=False, msg="no file was found in your request")
 

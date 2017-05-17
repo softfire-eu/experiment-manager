@@ -122,21 +122,21 @@ class Experiment(object):
                 self.end_date = self.get_end_date(metadata)
                 self.duration = self.end_date - self.start_date
                 logger.debug("Experiment duration %s" % self.duration)
-            self._validate()
+        self._validate()
 
-            exp = entities.Experiment()
-            exp.id = "%s_%s" % (self.username, self.name)
-            exp.username = self.username
-            exp.name = self.name
-            exp.start_date = self.start_date
-            exp.end_date = self.end_date
-            exp.resources = []
-            for node in self.topology_template.nodetemplates:
-                exp.resources.append(self._get_used_resource_by_node(node))
+        exp = entities.Experiment()
+        exp.id = "%s_%s" % (self.username, self.name)
+        exp.username = self.username
+        exp.name = self.name
+        exp.start_date = self.start_date
+        exp.end_date = self.end_date
+        exp.resources = []
+        for node in self.topology_template.nodetemplates:
+            exp.resources.append(self._get_used_resource_by_node(node))
 
-            logger.info("Saving experiment %s" % exp.name)
-            save(exp)
-            self.experiment = exp
+        logger.info("Saving experiment %s" % exp.name)
+        save(exp)
+        self.experiment = exp
 
     @classmethod
     def get_end_date(cls, metadata):
@@ -148,7 +148,8 @@ class Experiment(object):
     @classmethod
     def get_start_date(cls, metadata):
         try:
-            return dateparser.parse(metadata.get(cls.START_DATE), settings={'DATE_ORDER': 'YMD'})
+            date_string = metadata.get(cls.START_DATE)
+            return dateparser.parse(date_string, settings={'DATE_ORDER': 'YMD'})
         except ValueError:
             raise ExperimentValidationError("Unknown start date format")
 
@@ -170,15 +171,15 @@ class Experiment(object):
         if self.duration <= timedelta(0, 1, 0):
             raise ExperimentValidationError("Duration too short, modify start and end date")
 
-        resource_ids = [rm.resource_id for rm in find(ResourceMetadata)]
+        resource_ids = [rm.id for rm in find(ResourceMetadata)]
         for node in self.topology_template.nodetemplates:
-            resource_id_ = node.get_properties()["resource_id"]
+            resource_id_ = node.get_properties()["resource_id"].value
             if resource_id_ not in resource_ids:
                 raise ExperimentValidationError("resource id %s not allowed" % resource_id_)
 
     def reserve(self):
         for node in self.topology_template.nodetemplates:
-            used_resource = _get_used_resource_from_node(node, get_user_info(self.username))
+            used_resource = _get_used_resource_from_node(node, self.username)
             CalendarManager.check_availability_for_node(used_resource)
         # all node have been granted
 
@@ -190,8 +191,9 @@ class Experiment(object):
     def _get_used_resource_by_node(self, node):
         resource = UsedResource()
         resource.name = node.name
-        resource.value = yaml.dump(node)
-        resource.resource_id = node.get_properties().get('resource_id')
+        resource.node_type = node.type
+        resource.value = yaml.dump(node.entity_tpl)
+        resource.resource_id = node.get_properties().get('resource_id').value
         resource.status = ResourceStatus.VALIDATING.value
         resource.start_date = self.start_date
         resource.end_date = self.end_date
@@ -199,7 +201,7 @@ class Experiment(object):
 
 
 def _get_used_resource_from_node(node, username):
-    for e in find(Experiment):
+    for e in find(entities.Experiment):
         if e.username == username:
             for ur in find(UsedResource):
                 if ur.parent_id == e.id and ur.name == node.name:
