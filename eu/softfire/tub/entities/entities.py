@@ -66,3 +66,9 @@ class ResourceStatus(Enum):
     DEPLOYED = 2
     TERMINATED = 3
     ERROR = 4
+
+    @staticmethod
+    def from_int_to_enum(num):
+        for val in ResourceStatus:
+            if val.value == num:
+                return val

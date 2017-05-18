@@ -78,6 +78,13 @@ def drop_tables():
     Base.metadata.drop_all(engine)
 
 
+def find_by_element_value(_clazz, element, value):
+    with get_db_session() as se:
+        res = se.query(_clazz).filter(element == value)
+        se.commit()
+    return res
+
+
 def get_user_info(username):
     for ex in find(entities.Experimenter):
         if ex.username == username:

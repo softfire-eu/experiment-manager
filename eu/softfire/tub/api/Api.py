@@ -4,16 +4,16 @@ import os
 import traceback
 
 import bottle
-import time
 from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError
 from cork import Cork
 from toscaparser.common.exception import MissingRequiredFieldError
 
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.CoreManagers import get_resources, UserAgent, get_images, CalendarManager, Experiment
+from eu.softfire.tub.core.CoreManagers import get_resources, UserAgent, get_images, CalendarManager, Experiment, \
+    get_experiment_dict
 from eu.softfire.tub.entities.repositories import rollback
-from eu.softfire.tub.exceptions.exceptions import ResourceAlreadyBooked
+from eu.softfire.tub.exceptions.exceptions import ResourceAlreadyBooked, RpcFailedCall
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -28,10 +28,24 @@ authorize = aaa.make_auth_decorator(fail_redirect="/login")
 # Experimenters urls #
 ######################
 
+@post('/release_resources')
+@authorize(role='experimenter')
+def delete_resources():
+    try:
+        CoreManagers.release_resources(aaa.current_user.username)
+        bottle.redirect('/experimenter')
+    except RpcFailedCall as e:
+        return dict(ok=False, msg=e.args)
+    return dict(ok=True, msg="Refreshing page...")
+
+
 @get('/refresh_images')
 @authorize(role='experimenter')
 def refresh_resources():
-    CoreManagers.refresh_resources(aaa.current_user.username)
+    try:
+        CoreManagers.refresh_resources(aaa.current_user.username)
+    except RpcFailedCall as e:
+        return dict(ok=False, msg=e.args)
     return dict(ok=True, msg="Refreshing page...")
 
 
@@ -240,7 +254,7 @@ def login_form():
         resources=get_resources(),
         images=get_images(),
         experiment_id="",
-        experiment_resources=[],
+        experiment_resources=get_experiment_dict(),
     )
 
 

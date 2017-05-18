@@ -1,22 +1,24 @@
-import calendar
+import json
 import json
 import time
+import traceback
 import zipfile
 from datetime import timedelta, datetime
 
 import dateparser
 import grpc
 import yaml
+from grpc._channel import _Rendezvous
 from toscaparser.tosca_template import ToscaTemplate
 
 from eu.softfire.tub.entities import entities
 from eu.softfire.tub.entities.entities import UsedResource, ManagerEndpoint, ResourceMetadata, Experimenter, \
     ResourceStatus
-from eu.softfire.tub.entities.repositories import save, find, delete, get_user_info
+from eu.softfire.tub.entities.repositories import save, find, delete, get_user_info, find_by_element_value
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall, \
     ResourceNotFound, ResourceAlreadyBooked
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
-from eu.softfire.tub.utils.utils import get_logger, get_config
+from eu.softfire.tub.utils.utils import get_logger
 
 logger = get_logger('eu.softfire.tub.core')
 
@@ -347,14 +349,40 @@ def provide_resources(manager_name, resource_ids):
     return response.provide_resource.resources
 
 
-def release_resources(manager_name, resource_ids):
-    stub = get_stub(manager_name)
-    response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
-                                                        payload=json.dumps({'ids': resource_ids})))
-    if response.result != 0:
-        logger.error("release resources returned %d: %s" % (response.result, response.error_message))
-        raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
-    return response.result
+def release_resources(username):
+    user_info = get_user_info(username)
+    experiment_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username, username)[0]
+    used_resources = experiment_to_delete.resources
+    managers = [man_name
+                for man_name, node_types in MAPPING_MANAGERS.items()
+                for ur in used_resources
+                if ur.node_type in node_types]
+    for manager_name in managers:
+        stub = get_stub(manager_name)
+        try:
+
+            payload = []
+            for ur in used_resources:
+                if ur.node_type in MAPPING_MANAGERS.get(manager_name):
+                    if ur.value:
+                        payload.append(yaml.load(ur.value))
+
+            payload = json.dumps(payload)
+            response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
+                                                                payload=payload,
+                                                                user_info=user_info))
+        except _Rendezvous:
+            traceback.print_exc()
+            logger.error("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
+            raise RpcFailedCall("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
+        if response.result != 0:
+            logger.error("release resources returned %d: %s" % (response.result, response.error_message))
+            raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
+        for ur in [u for u in used_resources if u.node_type in MAPPING_MANAGERS.get(manager_name)]:
+            logger.info("deleting %s" % ur.name)
+            delete(ur)
+    logger.info("deleting %s" % experiment_to_delete.name)
+    delete(experiment_to_delete)
 
 
 def run_list_resources():
@@ -384,6 +412,22 @@ def get_images():
 
             res.append(tmp)
 
+    return res
+
+
+def get_experiment_dict():
+    res = []
+    for ex in find(entities.Experiment):
+        for ur in ex.resources:
+            tmp = {
+                'resource_id': ur.resource_id,
+                'status': ResourceStatus.from_int_to_enum(ur.status).name,
+                'value': ''
+            }
+            if ur.status == ResourceStatus.DEPLOYED:
+                tmp['value'] = yaml.load(ur.value)
+
+            res.append(tmp)
     return res
 
 
@@ -421,7 +465,12 @@ def refresh_resources(username, manager_name=None):
         for manager in managers:
             stub = get_stub(manager)
             request_message = user_info
-            response = stub.refresh_resources(request_message)
+            try:
+                response = stub.refresh_resources(request_message)
+            except _Rendezvous:
+                traceback.print_exc()
+                logger.error("Exception while calling gRPC, maybe %s Manager is down?" % manager)
+                raise RpcFailedCall("Exception while calling gRPC, maybe %s Manager is down?" % manager)
             if response.result != 0:
                 logger.error("list resources returned %d: %s" % (response.result, response.error_message))
                 raise RpcFailedCall("list resources returned %d: %s" % (response.result, response.error_message))
