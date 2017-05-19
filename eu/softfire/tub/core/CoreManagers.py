@@ -1,8 +1,8 @@
 import json
 import json
-import time
 import traceback
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta, datetime
 
 import dateparser
@@ -16,11 +16,15 @@ from eu.softfire.tub.entities.entities import UsedResource, ManagerEndpoint, Res
     ResourceStatus
 from eu.softfire.tub.entities.repositories import save, find, delete, get_user_info, find_by_element_value
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall, \
-    ResourceNotFound, ResourceAlreadyBooked
+    ResourceNotFound, ResourceAlreadyBooked, ExperimentNotFound
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
 from eu.softfire.tub.utils.utils import get_logger
 
 logger = get_logger('eu.softfire.tub.core')
+
+REFRESH_RES_NODE_TYPES = [
+    "NfvImage"
+]
 
 MAPPING_MANAGERS = {
     'sdn-manager': [
@@ -50,6 +54,7 @@ TESTBED_MAPPING = {
     'ads-dev': messages_pb2.ADS_DEV,
     'dt': messages_pb2.DT,
     'dt-dev': messages_pb2.DT_DEV,
+    'any': messages_pb2.ANY,
 }
 
 
@@ -315,16 +320,20 @@ def list_resources(manager_name=None, _id=None):
         managers.append(manager_name)
 
     result = []
+    # List resources can be done in parallel
+    max_workers = len(managers)
+    tpe = ThreadPoolExecutor(max_workers=max_workers)
+    threads = []
     for manager in managers:
-        stub = get_stub(manager)
-        request_message = messages_pb2.RequestMessage(method=messages_pb2.LIST_RESOURCES, payload='', user_info=None)
-        response = stub.execute(request_message)
-        if response.result != 0:
-            logger.error("list resources returned %d: %s" % (response.result, response.error_message))
-            raise RpcFailedCall("list resources returned %d: %s" % (response.result, response.error_message))
-        result.extend(response.list_resource.resources)
+        threads.append(tpe.submit(_execute_rpc_list_res, manager))
+    for t in threads:
+        result.extend(t.result())
 
     logger.debug("Saving %d resources" % len(result))
+
+    for rm in find(entities.ResourceMetadata):
+        delete(rm)
+
     for rm in result:
         resource_metadata = ResourceMetadata()
         resource_metadata.id = rm.resource_id
@@ -338,20 +347,42 @@ def list_resources(manager_name=None, _id=None):
     return result
 
 
-def provide_resources(manager_name, resource_ids):
-    stub = get_stub(manager_name)
-    # TODO add user information in the payload of the request
-    response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
-                                                        payload=json.dumps({'ids': resource_ids})))
+def _execute_rpc_list_res(manager):
+    stub = get_stub(manager)
+    request_message = messages_pb2.RequestMessage(method=messages_pb2.LIST_RESOURCES, payload='', user_info=None)
+    response = stub.execute(request_message)
     if response.result != 0:
-        logger.error("provide resources returned %d: %s" % (response.result, response.error_message))
-        raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
-    return response.provide_resource.resources
+        logger.error("list resources returned %d: %s" % (response.result, response.error_message))
+        raise RpcFailedCall("list resources returned %d: %s" % (response.result, response.error_message))
+    return response.list_resource.resources
+
+
+def provide_resources(username):
+    experiments_to_deploy = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
+    if len(experiments_to_deploy) == 0:
+        logger.error("No experiment to be deleted....")
+        raise ExperimentNotFound("No experiment to be deployed....")
+    experiment_to_deploy = experiments_to_deploy[0]
+    user_info = get_user_info(username)
+    logger.debug("Received deploy resources from user %s" % user_info.username)
+    logger.debug("Received deploy resources %s" % experiment_to_deploy.name)
+    # stub = get_stub(manager_name)
+    # # TODO add user information in the payload of the request
+    # response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
+    #                                                     payload=json.dumps({'ids': resource_ids})))
+    # if response.result != 0:
+    #     logger.error("provide resources returned %d: %s" % (response.result, response.error_message))
+    #     raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
+    # return response.provide_resource.resources
 
 
 def release_resources(username):
+    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
+    if len(experiments_to_delete) == 0:
+        logger.error("No experiment to be deleted....")
+        raise ExperimentNotFound("No experiment to be deleted....")
+    experiment_to_delete = experiments_to_delete[0]
     user_info = get_user_info(username)
-    experiment_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username, username)[0]
     used_resources = experiment_to_delete.resources
     managers = [man_name
                 for man_name, node_types in MAPPING_MANAGERS.items()
@@ -383,16 +414,6 @@ def release_resources(username):
             delete(ur)
     logger.info("deleting %s" % experiment_to_delete.name)
     delete(experiment_to_delete)
-
-
-def run_list_resources():
-    logger.debug("executed!")
-    while True:
-        try:
-            list_resources()
-        except Exception as e:
-            logger.warn("Got exception while executing thread")
-        time.sleep(10)
 
 
 def get_images():
@@ -431,7 +452,7 @@ def get_experiment_dict():
     return res
 
 
-def get_resources():
+def get_resources_dict():
     res = []
     for rm in find(ResourceMetadata):
         if rm.node_type != 'NfvImage':
@@ -477,6 +498,11 @@ def refresh_resources(username, manager_name=None):
             result.extend(response.list_resource.resources)
 
     logger.debug("Saving %d resources" % len(result))
+
+    for rm in find(entities.ResourceMetadata):
+        if rm.node_type in REFRESH_RES_NODE_TYPES:
+            delete(rm)
+
     for rm in result:
         resource_metadata = ResourceMetadata()
         resource_metadata.id = rm.resource_id

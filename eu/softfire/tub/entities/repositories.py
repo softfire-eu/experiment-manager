@@ -80,7 +80,7 @@ def drop_tables():
 
 def find_by_element_value(_clazz, element, value):
     with get_db_session() as se:
-        res = se.query(_clazz).filter(element == value)
+        res = se.query(_clazz).filter(element == value).all()
         se.commit()
     return res
 

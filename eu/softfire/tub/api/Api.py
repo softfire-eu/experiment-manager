@@ -7,13 +7,11 @@ import bottle
 from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError
 from cork import Cork
-from toscaparser.common.exception import MissingRequiredFieldError
 
+import eu.softfire.tub.exceptions.exceptions as exceptions
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.CoreManagers import get_resources, UserAgent, get_images, CalendarManager, Experiment, \
+from eu.softfire.tub.core.CoreManagers import get_resources_dict, UserAgent, get_images, CalendarManager, Experiment, \
     get_experiment_dict
-from eu.softfire.tub.entities.repositories import rollback
-from eu.softfire.tub.exceptions.exceptions import ResourceAlreadyBooked, RpcFailedCall
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -28,54 +26,40 @@ authorize = aaa.make_auth_decorator(fail_redirect="/login")
 # Experimenters urls #
 ######################
 
+@post('/provide_resources')
+@authorize(role='experimenter')
+def provide_resources():
+    CoreManagers.provide_resources(aaa.current_user.username)
+    bottle.redirect('/experimenter')
+
+
 @post('/release_resources')
 @authorize(role='experimenter')
 def delete_resources():
-    try:
-        CoreManagers.release_resources(aaa.current_user.username)
-        bottle.redirect('/experimenter')
-    except RpcFailedCall as e:
-        return dict(ok=False, msg=e.args)
-    return dict(ok=True, msg="Refreshing page...")
+    CoreManagers.release_resources(aaa.current_user.username)
+    bottle.redirect('/experimenter')
 
 
 @get('/refresh_images')
 @authorize(role='experimenter')
 def refresh_resources():
-    try:
-        CoreManagers.refresh_resources(aaa.current_user.username)
-    except RpcFailedCall as e:
-        return dict(ok=False, msg=e.args)
-    return dict(ok=True, msg="Refreshing page...")
+    CoreManagers.refresh_resources(aaa.current_user.username)
 
 
 @post('/reserve_resources')
 @authorize(role='experimenter')
 def book_resources():
-    data = request.files.get('shit')
+    data = request.files.get('data')
     logger.debug("files: %s" % list(request.files.keys()))
     for file in request.files:
         logger.debug("file %s" % file)
     logger.debug("Data: '%s'" % data)
     # logger.debug("Data.file: %s" % data.file)
     if data and data.file:
-        try:
-            Experiment(data.file, username=aaa.current_user.username).reserve()
-        except ResourceAlreadyBooked as e:
-            traceback.print_exc()
-            rollback()
-            return dict(ok=False, msg=e.args)
-        except MissingRequiredFieldError as e:
-            traceback.print_exc()
-            rollback()
-            return dict(ok=False, msg=e.message)
-        except Exception as e:
-            traceback.print_exc()
-            rollback()
-            return dict(ok=False, msg=e.args)
+        Experiment(data.file, username=aaa.current_user.username).reserve()
         bottle.redirect('/experimenter')
     logger.debug(("got body: %s" % request.body.read()))
-    return dict(ok=False, msg="no file was found in your request")
+    raise FileNotFoundError("File not found in your request")
 
 
 #################
@@ -251,7 +235,7 @@ def login_form():
         current_user=aaa.current_user,
         users=aaa.list_users(),
         roles=aaa.list_roles(),
-        resources=get_resources(),
+        resources=get_resources_dict(),
         images=get_images(),
         experiment_id="",
         experiment_resources=get_experiment_dict(),
@@ -296,6 +280,40 @@ def server_static(filename):
 # Utils #
 #########
 
+def error_translation(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ValueError as e:
+            traceback.print_exc()
+            bottle.abort(400, e.args)
+        except exceptions.ExperimentNotFound as e:
+            traceback.print_exc()
+            bottle.abort(404, e.message)
+        except exceptions.ExperimentValidationError as e:
+            traceback.print_exc()
+            bottle.abort(400, e.message)
+        except exceptions.ManagerNotFound as e:
+            traceback.print_exc()
+            bottle.abort(404, e.message)
+        except exceptions.ResourceAlreadyBooked as e:
+            traceback.print_exc()
+            bottle.abort(400, e.message)
+        except exceptions.ResourceNotFound as e:
+            traceback.print_exc()
+            bottle.abort(404, e.message)
+        except exceptions.RpcFailedCall:
+            traceback.print_exc()
+            bottle.abort(500, "Ups, an internal error occurred, please report to us the procedure and we will fix it")
+        except FileNotFoundError:
+            traceback.print_exc()
+            bottle.abort(404, "File not found in your request")
+        # except:
+        #     traceback.print_exc()
+        #     bottle.abort(500, "Ups, an internal error occurred, please report to us the procedure and we will fix it")
+
+    return wrapper
+
 
 def postd():
     return bottle.request.forms
@@ -334,6 +352,7 @@ def start():
     bottle.debug(True)
     port = get_config(section='api', key='port', default=8080)
     app = bottle.app()
+    bottle.install(error_translation)
     session_opts = {
         'session.cookie_expires': True,
         'session.encrypt_key': get_config('api', 'encrypt_key', 'softfire'),

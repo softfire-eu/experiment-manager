@@ -1,18 +1,27 @@
-class ManagerNotFound(Exception):
+class BaseException(Exception):
+    def __init__(self, message=None):
+        self.message = message
+
+
+class ManagerNotFound(BaseException):
     pass
 
 
-class RpcFailedCall(Exception):
+class RpcFailedCall(BaseException):
     pass
 
 
-class ExperimentValidationError(Exception):
+class ExperimentValidationError(BaseException):
     pass
 
 
-class ResourceNotFound(Exception):
+class ResourceNotFound(BaseException):
     pass
 
 
-class ResourceAlreadyBooked(Exception):
+class ResourceAlreadyBooked(BaseException):
+    pass
+
+
+class ExperimentNotFound(BaseException):
     pass
