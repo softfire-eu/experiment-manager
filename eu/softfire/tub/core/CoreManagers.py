@@ -3,7 +3,7 @@ import json
 import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 import dateparser
 import grpc
@@ -244,7 +244,7 @@ class CalendarManager(object):
         counter = 0
         # if not then i need to calculate the number of resource already booked for that period
         for ur in find(UsedResource):
-            if ur.status == ResourceStatus.RESERVED.value():
+            if ur.status == ResourceStatus.RESERVED.value:
                 if ur.start_date <= used_resource.start_date <= ur.end_date:
                     counter += 1
                 elif ur.start_date <= used_resource.end_date <= ur.end_date:
@@ -259,45 +259,16 @@ class CalendarManager(object):
         return find(ResourceMetadata, _id=used_resource.resource_id)
 
     @classmethod
-    def get_month(cls, month):
-        result = {}
+    def get_month(cls):
+        result = []
 
-        if month == 'july':
-            start = datetime(2017, 7, 1, 0, 0)
-            end = datetime(2017, 7, 30, 23, 59)
-        elif month == 'august':
-            start = datetime(2017, 8, 1, 0, 0)
-            end = datetime(2017, 8, 30, 23, 59)
-        elif month == 'september':
-            start = datetime(2017, 9, 1, 0, 0)
-            end = datetime(2017, 9, 30, 23, 59)
         for ur in find(UsedResource):
-            if start <= ur.start_date and end >= ur.end_date:
-                for day in range(ur.start_date.day, ur.end_date.day):
-                    result[day] = ur.resource_id
-                    if day == ur.start_date.day:
-                        result[day] = "%s - %d:%d" % (ur.resource_id, ur.start_date.hour, ur.start_date.minutes)
-                    if day == ur.end_date.day:
-                        result[day] = "%s - %d:%d" % (ur.resource_id, ur.end_date.hour, ur.end_date.minutes)
+            result.append({
+                "resource_id": ur.resource_id,
+                "start": ur.start_date,
+                "end": ur.end_date
+            })
 
-            elif start <= ur.start_date:
-                for day in range(ur.start_date.day, 30):
-                    result[day] = ur.resource_id
-                if day == ur.start_date.day:
-                    result[day] = "%s - %d:%d" % (ur.resource_id, ur.start_date.hour, ur.start_date.minutes)
-                if day == ur.end_date.day:
-                    result[day] = "%s - %d:%d" % (ur.resource_id, ur.end_date.hour, ur.end_date.minutes)
-            elif end >= ur.end_date:
-                for day in range(1, ur.end_date.day):
-                    result[day] = ur.resource_id
-                if day == ur.start_date.day:
-                    result[day] = "%s - %d:%d" % (ur.resource_id, ur.start_date.hour, ur.start_date.minutes)
-                if day == ur.end_date.day:
-                    result[day] = "%s - %d:%d" % (ur.resource_id, ur.end_date.hour, ur.end_date.minutes)
-
-        for day in range(0, 31):
-            if day not in result.keys():
-                result[day] = ''
         return result
 
 

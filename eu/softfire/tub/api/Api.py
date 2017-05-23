@@ -254,9 +254,7 @@ def login_form():
 @authorize(role="experimenter", fail_redirect='/sorry_page')
 def get_calendar():
     return dict(
-        july=CalendarManager.get_month('july'),
-        august=CalendarManager.get_month('august'),
-        september=CalendarManager.get_month('september'),
+        calendar=CalendarManager.get_month(),
         current_user=aaa.current_user
     )
 
