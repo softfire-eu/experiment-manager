@@ -74,11 +74,11 @@ class UserAgent(object):
 
         managers.remove('nfv-manager')
 
-        user_info = get_stub('nfv-manager').create_user(messages_pb2.UserInfo(name=username, password=password))
+        user_info = get_stub_from_manager_name('nfv-manager').create_user(messages_pb2.UserInfo(name=username, password=password))
         logger.info("Created user, project and tenant on the NFV Resource Manager")
 
         for man in managers:
-            get_stub(man).create_user(user_info)
+            get_stub_from_manager_name(man).create_user(user_info)
             logger.debug("informed manager %s of created user" % man)
 
         experimenter.testbed_tenants = {}
@@ -98,6 +98,9 @@ class UserAgent(object):
 
     def create_user_info(self, username, password, role):
         self.create_user(username, password, role)
+
+
+
 
 
 class Experiment(object):
@@ -183,6 +186,8 @@ class Experiment(object):
             resource_id_ = node.get_properties()["resource_id"].value
             if resource_id_ not in resource_ids:
                 raise ExperimentValidationError("resource id %s not allowed" % resource_id_)
+
+            _validate_resource(node)
 
     def reserve(self):
         for node in self.topology_template.nodetemplates:
@@ -272,14 +277,32 @@ class CalendarManager(object):
         return result
 
 
-def get_stub(manager_name):
+def get_stub_from_manager_name(manager_name):
     for manager_endpoint in find(ManagerEndpoint):
         if manager_endpoint.name == manager_name:
-            endpoint = manager_endpoint.endpoint
-            logger.debug("looking for endpoint %s" % endpoint)
-            channel = grpc.insecure_channel(endpoint)
-            return messages_pb2_grpc.ManagerAgentStub(channel)
+            return get_stub_from_manager_endpoint(manager_endpoint)
     raise ManagerNotFound("No manager found for name %s" % manager_name)
+
+
+def get_stub_from_manager_endpoint(manager_endpoint):
+    endpoint = manager_endpoint.endpoint
+    logger.debug("looking for endpoint %s" % endpoint)
+    channel = grpc.insecure_channel(endpoint)
+    return messages_pb2_grpc.ManagerAgentStub(channel)
+
+
+def _validate_resource(node, username):
+    for manager_endpoint in find(ManagerEndpoint):
+        if node.node_type in MAPPING_MANAGERS.get(manager_endpoint.name):
+            request_message = messages_pb2.RequestMessage(method=messages_pb2.VALIDATE_RESOURCES,
+                                                          payload=yaml.dump(node.entity_tpl),
+                                                          user_info=get_user_info(username))
+            try:
+                response = get_stub_from_manager_endpoint(manager_endpoint).execute(request_message)
+            except Exception as e:
+                raise RpcFailedCall(e.args)
+            if response.result < 0:
+                raise RpcFailedCall(response.error_message)
 
 
 def list_resources(manager_name=None, _id=None):
@@ -319,7 +342,7 @@ def list_resources(manager_name=None, _id=None):
 
 
 def _execute_rpc_list_res(manager):
-    stub = get_stub(manager)
+    stub = get_stub_from_manager_name(manager)
     request_message = messages_pb2.RequestMessage(method=messages_pb2.LIST_RESOURCES, payload='', user_info=None)
     response = stub.execute(request_message)
     if response.result != 0:
@@ -360,7 +383,7 @@ def release_resources(username):
                 for ur in used_resources
                 if ur.node_type in node_types]
     for manager_name in managers:
-        stub = get_stub(manager_name)
+        stub = get_stub_from_manager_name(manager_name)
         try:
 
             payload = []
@@ -455,7 +478,7 @@ def refresh_resources(username, manager_name=None):
     result = []
     if user_info:
         for manager in managers:
-            stub = get_stub(manager)
+            stub = get_stub_from_manager_name(manager)
             request_message = user_info
             try:
                 response = stub.refresh_resources(request_message)
