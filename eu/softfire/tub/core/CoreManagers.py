@@ -326,7 +326,9 @@ def list_resources(manager_name=None, _id=None):
     logger.debug("Saving %d resources" % len(result))
 
     for rm in find(entities.ResourceMetadata):
-        delete(rm)
+        for rm_to_del in result:
+            if rm.id == rm_to_del.resource_id:
+                delete(rm)
 
     for rm in result:
         resource_metadata = ResourceMetadata()
