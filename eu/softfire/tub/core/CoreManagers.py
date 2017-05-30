@@ -187,7 +187,7 @@ class Experiment(object):
             if resource_id_ not in resource_ids:
                 raise ExperimentValidationError("resource id %s not allowed" % resource_id_)
 
-            _validate_resource(node)
+            _validate_resource(node, self.username)
 
     def reserve(self):
         for node in self.topology_template.nodetemplates:
@@ -293,7 +293,7 @@ def get_stub_from_manager_endpoint(manager_endpoint):
 
 def _validate_resource(node, username):
     for manager_endpoint in find(ManagerEndpoint):
-        if node.node_type in MAPPING_MANAGERS.get(manager_endpoint.name):
+        if node.type in MAPPING_MANAGERS.get(manager_endpoint.name):
             request_message = messages_pb2.RequestMessage(method=messages_pb2.VALIDATE_RESOURCES,
                                                           payload=yaml.dump(node.entity_tpl),
                                                           user_info=get_user_info(username))
