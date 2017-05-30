@@ -359,16 +359,22 @@ def provide_resources(username):
         raise ExperimentNotFound("No experiment to be deployed....")
     experiment_to_deploy = experiments_to_deploy[0]
     user_info = get_user_info(username)
-    logger.debug("Received deploy resources from user %s" % user_info.username)
+    logger.debug("Received deploy resources from user %s" % user_info.name)
     logger.debug("Received deploy resources %s" % experiment_to_deploy.name)
-    # stub = get_stub(manager_name)
-    # # TODO add user information in the payload of the request
-    # response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
-    #                                                     payload=json.dumps({'ids': resource_ids})))
-    # if response.result != 0:
-    #     logger.error("provide resources returned %d: %s" % (response.result, response.error_message))
-    #     raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
-    # return response.provide_resource.resources
+
+    for res_to_deploy in experiment_to_deploy.resources:
+        for manager_name, node_types in MAPPING_MANAGERS.items():
+            if res_to_deploy.node_type in node_types:
+                stub = get_stub_from_manager_name(manager_name)
+                response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
+                                                                    payload=yaml.dump(res_to_deploy.value),
+                                                                    user_info=user_info))
+                if response.result < 0:
+                    logger.error("provide resources returned %d: %s" % (response.result, response.error_message))
+                    raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
+                for ur in experiment_to_deploy.resources:
+                    if ur.resource_id == res_to_deploy.resource_id:
+                        ur.value = response
 
 
 def release_resources(username):
@@ -438,7 +444,7 @@ def get_experiment_dict():
             tmp = {
                 'resource_id': ur.resource_id,
                 'status': ResourceStatus.from_int_to_enum(ur.status).name,
-                'value': ''
+                'value': ur.value or ''
             }
             if ur.status == ResourceStatus.DEPLOYED:
                 tmp['value'] = yaml.load(ur.value)
