@@ -41,6 +41,9 @@ MAPPING_MANAGERS = {
     'security-manager': [
         'SecurityResource'
     ],
+    'physical-device-manager': [
+        'PhysicalResource'
+    ]
 }
 
 TESTBED_MAPPING = {
@@ -58,49 +61,45 @@ TESTBED_MAPPING = {
 }
 
 
-class UserAgent(object):
-    def __init__(self):
-        pass
+def create_user(username, password, role='experimenter'):
+    experimenter = Experimenter()
+    experimenter.username = username
+    experimenter.password = password
+    experimenter.role = role
 
-    def create_user(self, username, password, role='experimenter'):
-        experimenter = Experimenter()
-        experimenter.username = username
-        experimenter.password = password
-        experimenter.role = role
+    managers = []
+    for man in find(ManagerEndpoint):
+        managers.append(man.name)
 
-        managers = []
-        for man in find(ManagerEndpoint):
-            managers.append(man.name)
+    managers.remove('nfv-manager')
 
-        managers.remove('nfv-manager')
+    user_info = get_stub_from_manager_name('nfv-manager').create_user(
+        messages_pb2.UserInfo(name=username, password=password))
+    logger.info("Created user, project and tenant on the NFV Resource Manager")
 
-        user_info = get_stub_from_manager_name('nfv-manager').create_user(messages_pb2.UserInfo(name=username, password=password))
-        logger.info("Created user, project and tenant on the NFV Resource Manager")
+    # for man in managers:
+    #     get_stub_from_manager_name(man).create_user(user_info)
+    #     logger.debug("informed manager %s of created user" % man)
 
-        for man in managers:
-            get_stub_from_manager_name(man).create_user(user_info)
-            logger.debug("informed manager %s of created user" % man)
+    experimenter.testbed_tenants = {}
+    experimenter.ob_project_id = user_info.ob_project_id
 
-        experimenter.testbed_tenants = {}
-        experimenter.ob_project_id = user_info.ob_project_id
+    for k, v in user_info.testbed_tenants.items():
+        experimenter.testbed_tenants[k] = v
 
-        for k, v in user_info.testbed_tenants.items():
-            experimenter.testbed_tenants[k] = v
-
-        save(experimenter)
-        logger.info("Stored new experimenter: %s" % experimenter.username)
-
-    def delete_user(self, username):
-        for experimenter in find(Experimenter):
-            if experimenter.name == username:
-                delete(experimenter)
-                return
-
-    def create_user_info(self, username, password, role):
-        self.create_user(username, password, role)
+    save(experimenter)
+    logger.info("Stored new experimenter: %s" % experimenter.username)
 
 
+def delete_user(username):
+    for experimenter in find(Experimenter):
+        if experimenter.name == username:
+            delete(experimenter)
+            return
 
+
+def create_user_info(username, password, role):
+    create_user(username, password, role)
 
 
 class Experiment(object):

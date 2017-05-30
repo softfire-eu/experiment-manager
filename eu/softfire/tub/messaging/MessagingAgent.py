@@ -3,8 +3,8 @@ from concurrent import futures
 
 import grpc
 
-from eu.softfire.tub.core.CoreManagers import list_resources
-from eu.softfire.tub.entities.entities import ManagerEndpoint
+from eu.softfire.tub.core.CoreManagers import list_resources, MAPPING_MANAGERS
+from eu.softfire.tub.entities.entities import ManagerEndpoint, ResourceMetadata
 from eu.softfire.tub.entities.repositories import save, find, delete
 from eu.softfire.tub.messaging.grpc import messages_pb2
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc
@@ -33,6 +33,9 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
         logger.info("unregistering %s" % request)
         for manager_endpoint in find(ManagerEndpoint):
             if manager_endpoint.name == request.name:
+                for resource_type in MAPPING_MANAGERS.get(manager_endpoint.name):
+                    for rm in [rm for rm in find(ResourceMetadata) if rm.node_type == resource_type]:
+                        delete(rm)
                 delete(manager_endpoint)
                 return messages_pb2.ResponseMessage(result=0)
         return messages_pb2.ResponseMessage(result=1, error_message="manager endpoint not found")

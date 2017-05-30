@@ -10,14 +10,13 @@ from cork import Cork
 
 import eu.softfire.tub.exceptions.exceptions as exceptions
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.CoreManagers import get_resources_dict, UserAgent, get_images, CalendarManager, Experiment, \
-    get_experiment_dict
+from eu.softfire.tub.core.CoreManagers import get_resources_dict, get_images, CalendarManager, Experiment, \
+    get_experiment_dict, create_user_info
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
 logger = get_logger('eu.softfire.tub.api')
 bottle.TEMPLATE_PATH = [get_config('api', 'view-path', '/etc/softfire/views')]
-user_manager = UserAgent()
 aaa = Cork(get_config("api", "cork-files-path", "/etc/softfire/users"))
 authorize = aaa.make_auth_decorator(fail_redirect="/login")
 
@@ -160,7 +159,7 @@ def create_user():
         password = postd().password
         role = postd().role
         username = postd().username
-        user_manager.create_user_info(username=username, password=password, role=role)
+        create_user_info(username=username, password=password, role=role)
         aaa.create_user(username, role, password)
         return dict(ok=True, msg='Create user %s' % username)
     except Exception as e:
