@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.pool import StaticPool
 
 from eu.softfire.tub.entities import entities
 from eu.softfire.tub.entities.entities import Base
@@ -15,7 +16,11 @@ logger = get_logger('eu.softfire.tub.repository')
 
 lock = threading.RLock()
 
-engine = create_engine(get_config('database', 'url', "sqlite:////tmp/experiment-manager.db"))
+db_url = get_config('database', 'url', "sqlite:////tmp/experiment-manager.db")
+if db_url.startswith("sqlite:"):
+    engine = create_engine(db_url, poolclass=StaticPool, connect_args={'check_same_thread': False})
+else:
+    engine = create_engine(db_url)
 debug_echo = (logger.getEffectiveLevel() == logging.DEBUG) and get_config('database', 'show_sql',
                                                                           False).lower() == 'true'
 engine.echo = debug_echo

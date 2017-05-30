@@ -36,7 +36,6 @@ setup(
         'bottle-cork',
         'sqlalchemy',
         'grpcio',
-        'grpcio-tools',
         'dateparser',
         'mysqlclient',
     ],
@@ -50,6 +49,5 @@ setup(
         "Framework :: Bottle",
         "Framework :: AsyncIO",
 
-    ],
-    package_data={'': ['*.tpl', '*.ico', '*.jpg']}
+    ]
 )
