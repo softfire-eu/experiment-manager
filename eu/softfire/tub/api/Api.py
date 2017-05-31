@@ -45,6 +45,14 @@ def refresh_resources():
     CoreManagers.refresh_resources(aaa.current_user.username)
 
 
+@get('/get_status')
+@authorize(role='experimenter')
+def get_status():
+    experiment_dict = CoreManagers.get_experiment_dict(aaa.current_user.username)
+    bottle.response.headers['Content-Type'] = 'application/json'
+    return json.dumps(experiment_dict)
+
+
 @post('/reserve_resources')
 @authorize(role='experimenter')
 def book_resources():
@@ -232,12 +240,10 @@ def login_form():
     """Serve experimenter form"""
     return dict(
         current_user=aaa.current_user,
-        users=aaa.list_users(),
-        roles=aaa.list_roles(),
         resources=get_resources_dict(),
         images=get_images(),
         experiment_id="",
-        experiment_resources=get_experiment_dict(),
+        experiment_resources=get_experiment_dict(aaa.current_user.username),
     )
 
 
