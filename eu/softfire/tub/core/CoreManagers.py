@@ -67,19 +67,12 @@ def create_user(username, password, role='experimenter'):
     experimenter.password = password
     experimenter.role = role
 
-    managers = []
-    for man in find(ManagerEndpoint):
-        managers.append(man.name)
-
-    managers.remove('nfv-manager')
-
-    user_info = get_stub_from_manager_name('nfv-manager').create_user(
-        messages_pb2.UserInfo(name=username, password=password))
+    user_info = messages_pb2.UserInfo(name=username, password=password)
+    user_info = get_stub_from_manager_name('nfv-manager').create_user(user_info)
     logger.info("Created user, project and tenant on the NFV Resource Manager")
 
-    # for man in managers:
-    #     get_stub_from_manager_name(man).create_user(user_info)
-    #     logger.debug("informed manager %s of created user" % man)
+    # user_info = get_stub_from_manager_name('sdn-manager').create_user(user_info)
+    # logger.info("Updated user_info from SDN Manager")
 
     experimenter.testbed_tenants = {}
     experimenter.ob_project_id = user_info.ob_project_id
@@ -369,12 +362,21 @@ def provide_resources(username):
                 response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
                                                                     payload=yaml.dump(res_to_deploy.value),
                                                                     user_info=user_info))
-                if response.result < 0:
-                    logger.error("provide resources returned %d: %s" % (response.result, response.error_message))
-                    raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
+
                 for ur in experiment_to_deploy.resources:
                     if ur.resource_id == res_to_deploy.resource_id:
-                        ur.value = response
+                        if response.result < 0:
+                            logger.error(
+                                "provide resources returned %d: %s" % (response.result, response.error_message))
+                            # raise RpcFailedCall(
+                            #     "provide resources returned %d: %s" % (response.result, response.error_message))
+                            ur.status = ResourceStatus.ERROR.value
+                            continue
+                        ur.value = ""
+                        for res in response.provide_resource.resources:
+                            logger.debug("Received: %s" % str(res.content))
+                            ur.value += res.content
+                        ur.status = ResourceStatus.DEPLOYED.value
 
 
 def release_resources(username):
@@ -437,19 +439,20 @@ def get_images():
     return res
 
 
-def get_experiment_dict():
+def get_experiment_dict(username):
     res = []
     for ex in find(entities.Experiment):
-        for ur in ex.resources:
-            tmp = {
-                'resource_id': ur.resource_id,
-                'status': ResourceStatus.from_int_to_enum(ur.status).name,
-                'value': ur.value or ''
-            }
-            if ur.status == ResourceStatus.DEPLOYED:
-                tmp['value'] = yaml.load(ur.value)
+        if ex.username == username:
+            for ur in ex.resources:
+                tmp = {
+                    'resource_id': ur.resource_id,
+                    'status': ResourceStatus.from_int_to_enum(ur.status).name,
+                    'value': '{}'
+                }
+                if ur.status == ResourceStatus.DEPLOYED.value:
+                    tmp['value'] = ur.value
 
-            res.append(tmp)
+                res.append(tmp)
     return res
 
 
@@ -524,3 +527,16 @@ def get_used_resources_by_experimenter(exp_name):
         if experimenter is not None and experimenter.name == exp_name:
             res.append(ur)
     return res
+
+
+def update_experiment(username, manager_name, resources):
+    experiment = find_by_element_value(entities.Experiment, entities.Experiment.username, username)[0]
+    index = 0
+
+    for ur in experiment.resources:
+        if ur.node_type in MAPPING_MANAGERS.get(manager_name):
+            ur.value = json.dumps(json.loads(resources[index].content))
+            # delete(ur)
+            # ur.make_transient()
+            # save(ur)
+            index += 1
