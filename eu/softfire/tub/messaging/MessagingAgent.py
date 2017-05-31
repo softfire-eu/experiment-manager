@@ -3,6 +3,7 @@ from concurrent import futures
 
 import grpc
 
+from eu.softfire.tub.core import CoreManagers
 from eu.softfire.tub.core.CoreManagers import list_resources, MAPPING_MANAGERS
 from eu.softfire.tub.entities.entities import ManagerEndpoint, ResourceMetadata
 from eu.softfire.tub.entities.repositories import save, find, delete
@@ -29,6 +30,16 @@ def receive_forever():
 
 
 class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
+    def update_status(self, request, context):
+        # logger.debug("Received request: %s" % request)
+        username = request.username
+        manager_name = request.manager_name
+        resources = request.resources
+        CoreManagers.update_experiment(username, manager_name, resources)
+        response_message = messages_pb2.ResponseMessage()
+        response_message.result = 0
+        return response_message
+
     def unregister(self, request, context):
         logger.info("unregistering %s" % request)
         for manager_endpoint in find(ManagerEndpoint):

@@ -22,6 +22,11 @@ class RegistrationServiceStub(object):
         request_serializer=messages__pb2.UnregisterMessage.SerializeToString,
         response_deserializer=messages__pb2.ResponseMessage.FromString,
         )
+    self.update_status = channel.unary_unary(
+        '/RegistrationService/update_status',
+        request_serializer=messages__pb2.StatusMessage.SerializeToString,
+        response_deserializer=messages__pb2.ResponseMessage.FromString,
+        )
 
 
 class RegistrationServiceServicer(object):
@@ -32,6 +37,11 @@ class RegistrationServiceServicer(object):
     raise NotImplementedError('Method not implemented!')
 
   def unregister(self, request, context):
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def update_status(self, request, context):
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
@@ -47,6 +57,11 @@ def add_RegistrationServiceServicer_to_server(servicer, server):
       'unregister': grpc.unary_unary_rpc_method_handler(
           servicer.unregister,
           request_deserializer=messages__pb2.UnregisterMessage.FromString,
+          response_serializer=messages__pb2.ResponseMessage.SerializeToString,
+      ),
+      'update_status': grpc.unary_unary_rpc_method_handler(
+          servicer.update_status,
+          request_deserializer=messages__pb2.StatusMessage.FromString,
           response_serializer=messages__pb2.ResponseMessage.SerializeToString,
       ),
   }

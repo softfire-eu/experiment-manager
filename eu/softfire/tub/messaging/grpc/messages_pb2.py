@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='messages.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0emessages.proto\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"X\n\x0eRequestMessage\x12\x17\n\x06method\x18\x01 \x01(\x0e\x32\x07.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\x12\x1c\n\tuser_info\x18\x03 \x01(\x0b\x32\t.UserInfo\"\xe8\x01\n\x0fResponseMessage\x12\x17\n\x06result\x18\x01 \x01(\x0e\x32\x07.Result\x12.\n\rlist_resource\x18\x02 \x01(\x0b\x32\x15.ListResourceResponseH\x00\x12\x34\n\x10provide_resource\x18\x03 \x01(\x0b\x32\x18.ProvideResourceResponseH\x00\x12\x34\n\x10refresh_resource\x18\x04 \x01(\x0b\x32\x18.RefreshResourceResponseH\x00\x12\x15\n\rerror_message\x18\x05 \x01(\tB\t\n\x07message\"<\n\x14ListResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"7\n\x17ProvideResourceResponse\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\"?\n\x17RefreshResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"\x7f\n\x10ResourceMetadata\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05\x12\x19\n\x07testbed\x18\x04 \x01(\x0e\x32\x08.Testbed\x12\x11\n\tnode_type\x18\x05 \x01(\t\"\xbc\x01\n\x08UserInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\x12\x15\n\rob_project_id\x18\x04 \x01(\t\x12\x36\n\x0ftestbed_tenants\x18\x05 \x03(\x0b\x32\x1d.UserInfo.TestbedTenantsEntry\x1a\x35\n\x13TestbedTenantsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\'\n\x08Resource\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t*b\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02\x12\x16\n\x12VALIDATE_RESOURCES\x10\x03*\x1b\n\x06Result\x12\x06\n\x02Ok\x10\x00\x12\t\n\x05\x45RROR\x10\x01*\x92\x01\n\x07Testbed\x12\n\n\x06SURREY\x10\x00\x12\t\n\x05\x46OKUS\x10\x01\x12\x06\n\x02\x44T\x10\x02\x12\x07\n\x03\x41\x44S\x10\x03\x12\x0c\n\x08\x45RICSSON\x10\x04\x12\x0e\n\nSURREY_DEV\x10\x05\x12\r\n\tFOKUS_DEV\x10\x06\x12\n\n\x06\x44T_DEV\x10\x07\x12\x0b\n\x07\x41\x44S_DEV\x10\x08\x12\x10\n\x0c\x45RICSSON_DEV\x10\t\x12\x07\n\x03\x41NY\x10\n2}\n\x13RegistrationService\x12\x30\n\x08register\x12\x10.RegisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x34\n\nunregister\x12\x12.UnregisterMessage\x1a\x10.ResponseMessage\"\x00\x32\x99\x01\n\x0cManagerAgent\x12.\n\x07\x65xecute\x12\x0f.RequestMessage\x1a\x10.ResponseMessage\"\x00\x12\x32\n\x11refresh_resources\x12\t.UserInfo\x1a\x10.ResponseMessage\"\x00\x12%\n\x0b\x63reate_user\x12\t.UserInfo\x1a\t.UserInfo\"\x00\x42\x02H\x03\x62\x06proto3')
+  serialized_pb=_b('\n\x0emessages.proto\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"U\n\rStatusMessage\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\x12\x10\n\x08username\x18\x02 \x01(\t\x12\x14\n\x0cmanager_name\x18\x03 \x01(\t\"X\n\x0eRequestMessage\x12\x17\n\x06method\x18\x01 \x01(\x0e\x32\x07.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\x12\x1c\n\tuser_info\x18\x03 \x01(\x0b\x32\t.UserInfo\"\xe8\x01\n\x0fResponseMessage\x12\x17\n\x06result\x18\x01 \x01(\x0e\x32\x07.Result\x12.\n\rlist_resource\x18\x02 \x01(\x0b\x32\x15.ListResourceResponseH\x00\x12\x34\n\x10provide_resource\x18\x03 \x01(\x0b\x32\x18.ProvideResourceResponseH\x00\x12\x34\n\x10refresh_resource\x18\x04 \x01(\x0b\x32\x18.RefreshResourceResponseH\x00\x12\x15\n\rerror_message\x18\x05 \x01(\tB\t\n\x07message\"<\n\x14ListResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"7\n\x17ProvideResourceResponse\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\"?\n\x17RefreshResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"\x7f\n\x10ResourceMetadata\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05\x12\x19\n\x07testbed\x18\x04 \x01(\x0e\x32\x08.Testbed\x12\x11\n\tnode_type\x18\x05 \x01(\t\"\xbc\x01\n\x08UserInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\x12\x15\n\rob_project_id\x18\x04 \x01(\t\x12\x36\n\x0ftestbed_tenants\x18\x05 \x03(\x0b\x32\x1d.UserInfo.TestbedTenantsEntry\x1a\x35\n\x13TestbedTenantsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\'\n\x08Resource\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t*b\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02\x12\x16\n\x12VALIDATE_RESOURCES\x10\x03*\x1b\n\x06Result\x12\x06\n\x02Ok\x10\x00\x12\t\n\x05\x45RROR\x10\x01*\x92\x01\n\x07Testbed\x12\n\n\x06SURREY\x10\x00\x12\t\n\x05\x46OKUS\x10\x01\x12\x06\n\x02\x44T\x10\x02\x12\x07\n\x03\x41\x44S\x10\x03\x12\x0c\n\x08\x45RICSSON\x10\x04\x12\x0e\n\nSURREY_DEV\x10\x05\x12\r\n\tFOKUS_DEV\x10\x06\x12\n\n\x06\x44T_DEV\x10\x07\x12\x0b\n\x07\x41\x44S_DEV\x10\x08\x12\x10\n\x0c\x45RICSSON_DEV\x10\t\x12\x07\n\x03\x41NY\x10\n2\xb2\x01\n\x13RegistrationService\x12\x30\n\x08register\x12\x10.RegisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x34\n\nunregister\x12\x12.UnregisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x33\n\rupdate_status\x12\x0e.StatusMessage\x1a\x10.ResponseMessage\"\x00\x32\x99\x01\n\x0cManagerAgent\x12.\n\x07\x65xecute\x12\x0f.RequestMessage\x1a\x10.ResponseMessage\"\x00\x12\x32\n\x11refresh_resources\x12\t.UserInfo\x1a\x10.ResponseMessage\"\x00\x12%\n\x0b\x63reate_user\x12\t.UserInfo\x1a\t.UserInfo\"\x00\x42\x02H\x03\x62\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -49,8 +49,8 @@ _METHOD = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1013,
-  serialized_end=1111,
+  serialized_start=1100,
+  serialized_end=1198,
 )
 _sym_db.RegisterEnumDescriptor(_METHOD)
 
@@ -72,8 +72,8 @@ _RESULT = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1113,
-  serialized_end=1140,
+  serialized_start=1200,
+  serialized_end=1227,
 )
 _sym_db.RegisterEnumDescriptor(_RESULT)
 
@@ -131,8 +131,8 @@ _TESTBED = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1143,
-  serialized_end=1289,
+  serialized_start=1230,
+  serialized_end=1376,
 )
 _sym_db.RegisterEnumDescriptor(_TESTBED)
 
@@ -240,6 +240,51 @@ _UNREGISTERMESSAGE = _descriptor.Descriptor(
 )
 
 
+_STATUSMESSAGE = _descriptor.Descriptor(
+  name='StatusMessage',
+  full_name='StatusMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='resources', full_name='StatusMessage.resources', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='username', full_name='StatusMessage.username', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='manager_name', full_name='StatusMessage.manager_name', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=143,
+  serialized_end=228,
+)
+
+
 _REQUESTMESSAGE = _descriptor.Descriptor(
   name='RequestMessage',
   full_name='RequestMessage',
@@ -280,8 +325,8 @@ _REQUESTMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=143,
-  serialized_end=231,
+  serialized_start=230,
+  serialized_end=318,
 )
 
 
@@ -342,8 +387,8 @@ _RESPONSEMESSAGE = _descriptor.Descriptor(
       name='message', full_name='ResponseMessage.message',
       index=0, containing_type=None, fields=[]),
   ],
-  serialized_start=234,
-  serialized_end=466,
+  serialized_start=321,
+  serialized_end=553,
 )
 
 
@@ -373,8 +418,8 @@ _LISTRESOURCERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=468,
-  serialized_end=528,
+  serialized_start=555,
+  serialized_end=615,
 )
 
 
@@ -404,8 +449,8 @@ _PROVIDERESOURCERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=530,
-  serialized_end=585,
+  serialized_start=617,
+  serialized_end=672,
 )
 
 
@@ -435,8 +480,8 @@ _REFRESHRESOURCERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=587,
-  serialized_end=650,
+  serialized_start=674,
+  serialized_end=737,
 )
 
 
@@ -494,8 +539,8 @@ _RESOURCEMETADATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=652,
-  serialized_end=779,
+  serialized_start=739,
+  serialized_end=866,
 )
 
 
@@ -532,8 +577,8 @@ _USERINFO_TESTBEDTENANTSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=917,
-  serialized_end=970,
+  serialized_start=1004,
+  serialized_end=1057,
 )
 
 _USERINFO = _descriptor.Descriptor(
@@ -590,8 +635,8 @@ _USERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=782,
-  serialized_end=970,
+  serialized_start=869,
+  serialized_end=1057,
 )
 
 
@@ -628,10 +673,11 @@ _RESOURCE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=972,
-  serialized_end=1011,
+  serialized_start=1059,
+  serialized_end=1098,
 )
 
+_STATUSMESSAGE.fields_by_name['resources'].message_type = _RESOURCE
 _REQUESTMESSAGE.fields_by_name['method'].enum_type = _METHOD
 _REQUESTMESSAGE.fields_by_name['user_info'].message_type = _USERINFO
 _RESPONSEMESSAGE.fields_by_name['result'].enum_type = _RESULT
@@ -655,6 +701,7 @@ _USERINFO_TESTBEDTENANTSENTRY.containing_type = _USERINFO
 _USERINFO.fields_by_name['testbed_tenants'].message_type = _USERINFO_TESTBEDTENANTSENTRY
 DESCRIPTOR.message_types_by_name['RegisterMessage'] = _REGISTERMESSAGE
 DESCRIPTOR.message_types_by_name['UnregisterMessage'] = _UNREGISTERMESSAGE
+DESCRIPTOR.message_types_by_name['StatusMessage'] = _STATUSMESSAGE
 DESCRIPTOR.message_types_by_name['RequestMessage'] = _REQUESTMESSAGE
 DESCRIPTOR.message_types_by_name['ResponseMessage'] = _RESPONSEMESSAGE
 DESCRIPTOR.message_types_by_name['ListResourceResponse'] = _LISTRESOURCERESPONSE
@@ -680,6 +727,13 @@ UnregisterMessage = _reflection.GeneratedProtocolMessageType('UnregisterMessage'
   # @@protoc_insertion_point(class_scope:UnregisterMessage)
   ))
 _sym_db.RegisterMessage(UnregisterMessage)
+
+StatusMessage = _reflection.GeneratedProtocolMessageType('StatusMessage', (_message.Message,), dict(
+  DESCRIPTOR = _STATUSMESSAGE,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:StatusMessage)
+  ))
+_sym_db.RegisterMessage(StatusMessage)
 
 RequestMessage = _reflection.GeneratedProtocolMessageType('RequestMessage', (_message.Message,), dict(
   DESCRIPTOR = _REQUESTMESSAGE,
@@ -778,6 +832,11 @@ try:
           request_serializer=UnregisterMessage.SerializeToString,
           response_deserializer=ResponseMessage.FromString,
           )
+      self.update_status = channel.unary_unary(
+          '/RegistrationService/update_status',
+          request_serializer=StatusMessage.SerializeToString,
+          response_deserializer=ResponseMessage.FromString,
+          )
 
 
   class RegistrationServiceServicer(object):
@@ -788,6 +847,11 @@ try:
       raise NotImplementedError('Method not implemented!')
 
     def unregister(self, request, context):
+      context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+      context.set_details('Method not implemented!')
+      raise NotImplementedError('Method not implemented!')
+
+    def update_status(self, request, context):
       context.set_code(grpc.StatusCode.UNIMPLEMENTED)
       context.set_details('Method not implemented!')
       raise NotImplementedError('Method not implemented!')
@@ -803,6 +867,11 @@ try:
         'unregister': grpc.unary_unary_rpc_method_handler(
             servicer.unregister,
             request_deserializer=UnregisterMessage.FromString,
+            response_serializer=ResponseMessage.SerializeToString,
+        ),
+        'update_status': grpc.unary_unary_rpc_method_handler(
+            servicer.update_status,
+            request_deserializer=StatusMessage.FromString,
             response_serializer=ResponseMessage.SerializeToString,
         ),
     }
@@ -887,6 +956,8 @@ try:
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
     def unregister(self, request, context):
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
+    def update_status(self, request, context):
+      context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
 
 
   class BetaRegistrationServiceStub(object):
@@ -901,6 +972,9 @@ try:
     def unregister(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
       raise NotImplementedError()
     unregister.future = None
+    def update_status(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      raise NotImplementedError()
+    update_status.future = None
 
 
   def beta_create_RegistrationService_server(servicer, pool=None, pool_size=None, default_timeout=None, maximum_timeout=None):
@@ -912,14 +986,17 @@ try:
     request_deserializers = {
       ('RegistrationService', 'register'): RegisterMessage.FromString,
       ('RegistrationService', 'unregister'): UnregisterMessage.FromString,
+      ('RegistrationService', 'update_status'): StatusMessage.FromString,
     }
     response_serializers = {
       ('RegistrationService', 'register'): ResponseMessage.SerializeToString,
       ('RegistrationService', 'unregister'): ResponseMessage.SerializeToString,
+      ('RegistrationService', 'update_status'): ResponseMessage.SerializeToString,
     }
     method_implementations = {
       ('RegistrationService', 'register'): face_utilities.unary_unary_inline(servicer.register),
       ('RegistrationService', 'unregister'): face_utilities.unary_unary_inline(servicer.unregister),
+      ('RegistrationService', 'update_status'): face_utilities.unary_unary_inline(servicer.update_status),
     }
     server_options = beta_implementations.server_options(request_deserializers=request_deserializers, response_serializers=response_serializers, thread_pool=pool, thread_pool_size=pool_size, default_timeout=default_timeout, maximum_timeout=maximum_timeout)
     return beta_implementations.server(method_implementations, options=server_options)
@@ -934,14 +1011,17 @@ try:
     request_serializers = {
       ('RegistrationService', 'register'): RegisterMessage.SerializeToString,
       ('RegistrationService', 'unregister'): UnregisterMessage.SerializeToString,
+      ('RegistrationService', 'update_status'): StatusMessage.SerializeToString,
     }
     response_deserializers = {
       ('RegistrationService', 'register'): ResponseMessage.FromString,
       ('RegistrationService', 'unregister'): ResponseMessage.FromString,
+      ('RegistrationService', 'update_status'): ResponseMessage.FromString,
     }
     cardinalities = {
       'register': cardinality.Cardinality.UNARY_UNARY,
       'unregister': cardinality.Cardinality.UNARY_UNARY,
+      'update_status': cardinality.Cardinality.UNARY_UNARY,
     }
     stub_options = beta_implementations.stub_options(host=host, metadata_transformer=metadata_transformer, request_serializers=request_serializers, response_deserializers=response_deserializers, thread_pool=pool, thread_pool_size=pool_size)
     return beta_implementations.dynamic_stub(channel, 'RegistrationService', cardinalities, options=stub_options)
