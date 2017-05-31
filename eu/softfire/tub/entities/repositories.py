@@ -33,7 +33,8 @@ session = _session()
 @contextmanager
 def get_db_session():
     with lock:
-        yield session
+        with session.no_autoflush:
+            yield session
 
 
 def rollback():
