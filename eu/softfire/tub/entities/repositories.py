@@ -49,13 +49,14 @@ def save(entity, _clazz=None):
         else:
             _id = entity.name
         try:
-            found = find(_clazz, _id)
-            if isinstance(found, list):
-                for e in found:
-                    delete(e)
-            else:
-                if found:
-                    delete(found)
+            if _id:
+                found = find(_clazz, _id)
+                if isinstance(found, list):
+                    for e in found:
+                        delete(e)
+                else:
+                    if found:
+                        delete(found)
         except NoResultFound as nrf:
             pass
 
