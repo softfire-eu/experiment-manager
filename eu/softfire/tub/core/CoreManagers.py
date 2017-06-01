@@ -73,6 +73,7 @@ def create_user(username, password, role='experimenter'):
     for man in MANAGERS_CREATE_USER:
         try:
             user_info = get_stub_from_manager_name(man).create_user(user_info)
+            logger.info("Manager %s create user finished, new UserInfo: %s" % (man, user_info))
         except ManagerNotFound as e:
             traceback.print_exc()
             logger.error("one of the manager is not register and need to create user")
@@ -90,9 +91,8 @@ def create_user(username, password, role='experimenter'):
 
 def delete_user(username):
     for experimenter in find(Experimenter):
-        if experimenter.name == username:
+        if experimenter.username == username:
             delete(experimenter)
-            return
 
 
 def create_user_info(username, password, role):
@@ -545,3 +545,11 @@ def update_experiment(username, manager_name, resources):
             # ur.make_transient()
             # save(ur)
             index += 1
+
+
+def list_managers():
+    return [man.name for man in find(ManagerEndpoint)]
+
+
+def list_experimenters():
+    return [man.username for man in find(Experimenter)]
