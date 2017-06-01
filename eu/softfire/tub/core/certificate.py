@@ -7,7 +7,7 @@ from datetime import date
 from OpenSSL import crypto
 from six import string_types
 
-from utils.utils import get_config
+from eu.softfire.pd.utils.utils import get_config
 
 KEY_LENGTH_CHOICES = {
     'none': ('', ''),
@@ -44,25 +44,20 @@ class CertificateGenerator(object):
         self.digest = 'sha1'
         with open(get_config('system', 'cert-ca-file', '/etc/softfire/softfire-ca.p12'), 'rb') as buf:
             buffer = buf.read()
-            self.ca_cert = crypto.load_pkcs12(buffer=buffer,
-                                              passphrase=get_config('system',
-                                                                    'cert-passphrase',
-                                                                    'Uss<quetgew0')).get_certificate()
-            self.ca_key = crypto.load_pkcs12(buffer=buffer,
-                                             passphrase=get_config('system',
-                                                                   'cert-passphrase',
-                                                                   'Uss<quetgew0')).get_privatekey()
+            load_pkcs_ = crypto.load_pkcs12(buffer=buffer,
+                                            passphrase=get_config('system', 'cert-passphrase', 'softfire'))
+            self.ca_cert = load_pkcs_.get_certificate()
+            self.ca_key = load_pkcs_.get_privatekey()
 
         d = date.today()
         self.validity_start = datetime.datetime.combine(d, datetime.datetime.min.time())
         d = d + datetime.timedelta(days=DEFAULT_CERT_VALIDITY)
         self.validity_end = datetime.datetime.combine(d, datetime.datetime.min.time())
-        # self.validity_start = time.timezone.make_aware(self.validity_start)
-        # self.validity_end = time.timezone.make_aware(self.validity_end)
         self.certificate = None
         self.private_key = None
         self.country_code = 'DE'
         self.common_name = username
+        self.organization = 'SoftFIRE'
 
     def generate(self):
         """
@@ -72,21 +67,13 @@ class CertificateGenerator(object):
         key = crypto.PKey()
         key.generate_key(crypto.TYPE_RSA, int(self.key_length))
         cert = crypto.X509()
-        print(cert.get_subject())
         subject = self._fill_subject(cert.get_subject())
-        # cert.get_subject().commonName = username
-        # cert.get_subject().countryName = 'DE'
-        # cert.get_subject().organizationName = 'SoftFIRE'
-        print(cert.get_subject())
 
         cert.set_version(0x2)  # version 3 (0 indexed counting)
-        # cert.set_subject(cert.get_subject())
+        cert.set_subject(subject)
         cert.set_serial_number(self.serial_number)
         start_strftime = self.validity_start.strftime(generalized_time)
         end_strftime = self.validity_end.strftime(generalized_time)
-
-        print(start_strftime)
-        print(end_strftime)
 
         cert.set_notBefore(bytes_compat(start_strftime))
         cert.set_notAfter(bytes_compat(end_strftime))
@@ -102,9 +89,6 @@ class CertificateGenerator(object):
         self.certificate = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
 
-        print(cert.get_subject())
-        print()
-        print(cert.has_expired())
 
     def _fill_subject(self, subject):
         """
@@ -116,7 +100,7 @@ class CertificateGenerator(object):
             'country_code': 'countryName',
             # 'state': 'stateOrProvinceName',
             # 'city': 'localityName',
-            # 'organization': 'organizationName',
+            'organization': 'organizationName',
             # 'email': 'emailAddress',
             'common_name': 'commonName'
         }  # set x509 subject attributes only if not empty strings
@@ -129,7 +113,6 @@ class CertificateGenerator(object):
                     value = str(value)
                 setattr(subject, subject_attr, value)
         return subject
-
 
     def _add_extensions(self, cert):
         """
