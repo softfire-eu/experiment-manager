@@ -163,49 +163,35 @@ def register():
 @bottle.post('/create_user')
 @authorize(role='admin')
 def create_user():
-    try:
-        password = postd().password
-        role = postd().role
-        username = postd().username
-        create_user_info(username=username, password=password, role=role)
-        aaa.create_user(username, role, password)
-        return dict(ok=True, msg='Create user %s' % username)
-    except Exception as e:
-        traceback.print_exc()
-        if not hasattr(e, 'message'):
-            return dict(ok=False, msg=e.args)
-        return dict(ok=False, msg=e.message)
+    password = postd().password
+    role = postd().role
+    username = postd().username
+    create_user_info(username=username, password=password, role=role)
+    aaa.create_user(username, role, password)
+    return dict(ok=True, msg='Create user %s' % username)
 
 
 @bottle.post('/delete_user')
 @authorize(role='admin')
 def delete_user():
-    try:
-        aaa.delete_user(post_get('username'))
-        return dict(ok=True, msg='')
-    except Exception as e:
-        logger.debug(repr(e))
-        return dict(ok=False, msg=e.args)
+    username = post_get('username')
+    CoreManagers.delete_user(username)
+    aaa.delete_user(username)
+    return dict(ok=True, msg='')
 
 
 @bottle.post('/create_role')
 @authorize(role='admin')
 def create_role():
-    try:
-        aaa.create_role(post_get('role'), post_get('level'))
-        return dict(ok=True, msg='')
-    except Exception as e:
-        return dict(ok=False, msg=e.args)
+    aaa.create_role(post_get('role'), post_get('level'))
+    return dict(ok=True, msg='')
 
 
 @bottle.post('/delete_role')
 @authorize(role='admin')
 def delete_role():
-    try:
-        aaa.delete_role(post_get('role'))
-        return dict(ok=True, msg='')
-    except Exception as e:
-        return dict(ok=False, msg=e.args)
+    aaa.delete_role(post_get('role'))
+    return dict(ok=True, msg='')
 
 
 ################
@@ -222,7 +208,9 @@ def admin():
     return dict(
         current_user=aaa.current_user,
         users=aaa.list_users(),
-        roles=aaa.list_roles()
+        roles=aaa.list_roles(),
+        managers=CoreManagers.list_managers(),
+        experimenters=CoreManagers.list_experimenters(),
     )
 
 
@@ -245,13 +233,6 @@ def login_form():
         experiment_id="",
         experiment_resources=get_experiment_dict(aaa.current_user.username),
     )
-
-
-# @bottle.route('/change_password/:reset_code')
-# @bottle.view('password_change_form')
-# def change_password(reset_code):
-#     """Show password change form"""
-#     return dict(reset_code=reset_code)
 
 
 @bottle.route('/calendar')
@@ -311,9 +292,9 @@ def error_translation(func):
         except FileNotFoundError:
             traceback.print_exc()
             bottle.abort(404, "File not found in your request")
-        # except:
-        #     traceback.print_exc()
-        #     bottle.abort(500, "Ups, an internal error occurred, please report to us the procedure and we will fix it")
+            # except:
+            #     traceback.print_exc()
+            #     bottle.abort(500, "Ups, an internal error occurred, please report to us the procedure and we will fix it")
 
     return wrapper
 
