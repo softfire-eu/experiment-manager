@@ -60,6 +60,8 @@ TESTBED_MAPPING = {
     'any': messages_pb2.ANY,
 }
 
+MANAGERS_CREATE_USER = ['nfv-manager', 'sdn-manager']
+
 
 def create_user(username, password, role='experimenter'):
     experimenter = Experimenter()
@@ -68,11 +70,13 @@ def create_user(username, password, role='experimenter'):
     experimenter.role = role
 
     user_info = messages_pb2.UserInfo(name=username, password=password)
-    user_info = get_stub_from_manager_name('nfv-manager').create_user(user_info)
+    for man in MANAGERS_CREATE_USER:
+        try:
+            user_info = get_stub_from_manager_name(man).create_user(user_info)
+        except ManagerNotFound as e:
+            traceback.print_exc()
+            logger.error("one of the manager is not register and need to create user")
     logger.info("Created user, project and tenant on the NFV Resource Manager")
-
-    # user_info = get_stub_from_manager_name('sdn-manager').create_user(user_info)
-    # logger.info("Updated user_info from SDN Manager")
 
     experimenter.testbed_tenants = {}
     experimenter.ob_project_id = user_info.ob_project_id
@@ -105,6 +109,7 @@ class Experiment(object):
         zf = zipfile.ZipFile(self.file_path)
         for info in zf.infolist():
             filename = info.filename
+            logger.debug("Filename: %s" % filename)
             if filename.endswith(".yaml") and filename.startswith("Definitions/"):
                 logger.debug("parsing %s..." % filename)
                 try:
