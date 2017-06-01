@@ -38,6 +38,7 @@ setup(
         'grpcio',
         'dateparser',
         'mysqlclient',
+        'pyOpenSSL',
     ],
     long_description=read('README.rst'),
     classifiers=[
