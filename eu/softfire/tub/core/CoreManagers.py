@@ -411,16 +411,17 @@ def _release_resource_for_manager(manager_name, used_resources, user_info):
                     response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
                                                                         payload=ur.value,
                                                                         user_info=user_info))
+                    if response.result != 0:
+                        logger.error("release resources returned %d: %s" % (response.result, response.error_message))
+                        raise RpcFailedCall(
+                            "provide resources returned %d: %s" % (response.result, response.error_message))
+                    for u in [u for u in used_resources if u.node_type in MAPPING_MANAGERS.get(manager_name)]:
+                        logger.info("deleting %s" % u.name)
+                        delete(u)
     except _Rendezvous:
         traceback.print_exc()
         logger.error("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
         raise RpcFailedCall("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
-    if response.result != 0:
-        logger.error("release resources returned %d: %s" % (response.result, response.error_message))
-        raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
-    for ur in [u for u in used_resources if u.node_type in MAPPING_MANAGERS.get(manager_name)]:
-        logger.info("deleting %s" % ur.name)
-        delete(ur)
 
 
 def get_images():
