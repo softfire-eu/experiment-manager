@@ -45,12 +45,10 @@ def init_sys():
     logger.debug("user in the DB: %s" % len(usernames_db))
     logger.debug("user in Cork: %s" % len(usernames_cork))
     if len(usernames_cork) > len(usernames_db) + 1:
-        usernames_to_delete = usernames_cork - usernames_db
+        usernames_to_delete = set(usernames_cork) - set(usernames_db)
         for u in usernames_to_delete:
             if u != 'admin':
-                for udb in users_in_db:
-                    if u.username == udb.username:
-                        delete(udb)
+                aaa.delete_user(u)
 
     t = threading.Thread(target=check_endpoint)
     t.start()
