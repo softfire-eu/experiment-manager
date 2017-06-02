@@ -4,9 +4,11 @@ import logging
 import logging.config
 import os
 import sys
-from threading import Thread
+from threading import Thread, Event
 
 from eu.softfire.tub.utils.static_config import CONFIG_FILE_PATH
+
+THREAD_DELETE = {}
 
 
 def get_logger(name):
@@ -67,3 +69,22 @@ class ExceptionHandlerThread(Thread):
                 super(self.__class__, self).run()
         except Exception as e:
             self.exception = e
+
+
+class TimerTerminationThread(Thread):
+    def __init__(self, days: int, func, *args):
+        super().__init__()
+        self.event = Event()
+        self.days = days
+        self.function = func
+        self.args = args
+
+    def run(self):
+        while not self.event.wait(86400 * self.days):
+            self.function(self.args)
+            if not self.event.is_set():
+                self.event.set()
+            del THREAD_DELETE[self.ident]
+
+    def stop(self):
+        self.event.set()
