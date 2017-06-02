@@ -1,9 +1,10 @@
 import json
 import json
+import time
 import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import dateparser
 import grpc
@@ -18,7 +19,7 @@ from eu.softfire.tub.entities.repositories import save, find, delete, get_user_i
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall, \
     ResourceNotFound, ResourceAlreadyBooked, ExperimentNotFound
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
-from eu.softfire.tub.utils.utils import get_logger, ExceptionHandlerThread
+from eu.softfire.tub.utils.utils import get_logger, ExceptionHandlerThread, TimerTerminationThread, THREAD_DELETE
 
 logger = get_logger('eu.softfire.tub.core')
 
@@ -136,12 +137,18 @@ class Experiment(object):
         exp.start_date = self.start_date
         exp.end_date = self.end_date
         exp.resources = []
+
         for node in self.topology_template.nodetemplates:
             exp.resources.append(self._get_used_resource_by_node(node))
 
+        thread = TimerTerminationThread(abs((self.end_date - datetime.now()).days), _terminate_expired_experiment,
+                                        [exp])
+        exp.tident = thread.ident
         logger.info("Saving experiment %s" % exp.name)
         save(exp)
         self.experiment = exp
+        THREAD_DELETE[thread.ident] = thread
+        thread.start()
 
     @classmethod
     def get_end_date(cls, metadata):
@@ -223,6 +230,16 @@ class Experiment(object):
         return resource
 
 
+def _terminate_expired_experiment(experiment: entities.Experiment):
+    experiment_to_delete = find(entities.Experiment, _id=experiment.id)
+    if experiment_to_delete == experiment:
+        _release_all_experiment_resources(experiment_to_delete, experiment_to_delete.username)
+
+        delete(experiment)
+    else:
+        logger.debug("The initial experiment was removed")
+
+
 def _get_used_resource_from_node(node, username):
     for e in find(entities.Experiment):
         if e.username == username:
@@ -233,59 +250,7 @@ def _get_used_resource_from_node(node, username):
     raise ResourceNotFound('Resource with name %s  for user %s was not found' % (node.name, username))
 
 
-class CalendarManager(object):
-    def __init__(self):
-        pass
 
-    @classmethod
-    def check_availability_for_node(cls, used_resource):
-        if not cls.check_overlapping_booking(used_resource):
-            raise ResourceAlreadyBooked('Some resources where already booked, please check the calendar')
-
-    @classmethod
-    def check_overlapping_booking(cls, used_resource):
-        """
-        Check calendar availability of this resource
-        
-        :param used_resource: the used resource to book
-         :type used_resource: UsedResource
-        :return: True when availability is granted False otherwise
-         :rtype: bool
-        """
-        resource_metadata = cls.get_metadata_from_usedresource(used_resource)
-        # if the resource metadata associated has infinite cardinality return true
-        if resource_metadata.cardinality <= 0:
-            return True
-        max_concurrent = resource_metadata.cardinality
-        counter = 0
-        # if not then i need to calculate the number of resource already booked for that period
-        for ur in find(UsedResource):
-            if ur.status == ResourceStatus.RESERVED.value:
-                if ur.start_date <= used_resource.start_date <= ur.end_date:
-                    counter += 1
-                elif ur.start_date <= used_resource.end_date <= ur.end_date:
-                    counter += 1
-        if counter < max_concurrent:
-            return True
-
-        return False
-
-    @classmethod
-    def get_metadata_from_usedresource(cls, used_resource):
-        return find(ResourceMetadata, _id=used_resource.resource_id)
-
-    @classmethod
-    def get_month(cls):
-        result = []
-
-        for ur in find(UsedResource):
-            result.append({
-                "resource_id": ur.resource_id,
-                "start": ur.start_date,
-                "end": ur.end_date
-            })
-
-        return result
 
 
 def get_stub_from_manager_name(manager_name):
@@ -412,6 +377,16 @@ def release_resources(username):
         logger.error("No experiment to be deleted....")
         raise ExperimentNotFound("No experiment to be deleted....")
     experiment_to_delete = experiments_to_delete[0]
+    thread_delete = THREAD_DELETE.get(experiment_to_delete.tident)
+    if thread_delete:
+        thread_delete.stop()
+    _release_all_experiment_resources(experiment_to_delete, username)
+
+    logger.info("deleting %s" % experiment_to_delete.name)
+    delete(experiment_to_delete)
+
+
+def _release_all_experiment_resources(experiment_to_delete, username):
     user_info = get_user_info(username)
     used_resources = experiment_to_delete.resources
     managers = [man_name
@@ -424,30 +399,22 @@ def release_resources(username):
                                         args=[manager_name, used_resources, user_info])
         threads.append(thread)
         thread.start()
-
     for t in threads:
         t.join()
         if t.exception:
             raise t.exception
-
-    logger.info("deleting %s" % experiment_to_delete.name)
-    delete(experiment_to_delete)
 
 
 def _release_resource_for_manager(manager_name, used_resources, user_info):
     stub = get_stub_from_manager_name(manager_name)
     try:
 
-        payload = []
         for ur in used_resources:
             if ur.node_type in MAPPING_MANAGERS.get(manager_name):
                 if ur.value:
-                    payload.append(json.loads(ur.value))
-
-        payload = json.dumps(payload)
-        response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
-                                                            payload=payload,
-                                                            user_info=user_info))
+                    response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
+                                                                        payload=ur.value,
+                                                                        user_info=user_info))
     except _Rendezvous:
         traceback.print_exc()
         logger.error("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)

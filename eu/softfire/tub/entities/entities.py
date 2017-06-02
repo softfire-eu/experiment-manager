@@ -31,9 +31,16 @@ class Experiment(Base):
 
     # id = Column(Integer, primary_key=True)
     id = Column(String(250), primary_key=True)
+    tident = Column(String(250), primary_key=False)
     name = Column(String(250), nullable=False)
     username = Column(String(250), nullable=False)
     resources = relationship("UsedResource", cascade="all")
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __cmp__(self, other):
+        return self.__dict__ == other.__dict__
 
 
 class UsedResource(Base):
