@@ -18,7 +18,7 @@ from eu.softfire.tub.entities.repositories import save, find, delete, get_user_i
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall, \
     ResourceNotFound, ResourceAlreadyBooked, ExperimentNotFound
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
-from eu.softfire.tub.utils.utils import get_logger
+from eu.softfire.tub.utils.utils import get_logger, ExceptionHandlerThread
 
 logger = get_logger('eu.softfire.tub.core')
 
@@ -177,12 +177,19 @@ class Experiment(object):
             raise ExperimentValidationError("Duration too short, modify start and end date")
 
         resource_ids = [rm.id for rm in find(ResourceMetadata)]
+        threads = []
         for node in self.topology_template.nodetemplates:
             resource_id_ = node.get_properties()["resource_id"].value
             if resource_id_ not in resource_ids:
                 raise ExperimentValidationError("resource id %s not allowed" % resource_id_)
 
-            _validate_resource(node, self.username)
+            thread = ExceptionHandlerThread(target=_validate_resource, args=[node, self.username])
+            threads.append(thread)
+            thread.start()
+        for t in threads:
+            t.join()
+            if t.exception:
+                raise t.exception
 
     def reserve(self):
         for node in self.topology_template.nodetemplates:
@@ -199,7 +206,7 @@ class Experiment(object):
         resource = UsedResource()
         resource.name = node.name
         resource.node_type = node.type
-        resource.value = yaml.dump(node.entity_tpl)
+        resource.value = json.dumps(node.entity_tpl)
         resource.resource_id = node.get_properties().get('resource_id').value
         resource.status = ResourceStatus.VALIDATING.value
         if node.get_properties().get(self.START_DATE):
@@ -392,7 +399,7 @@ def provide_resources(username):
                             #     "provide resources returned %d: %s" % (response.result, response.error_message))
                             ur.status = ResourceStatus.ERROR.value
                             continue
-                        ur.value = "{}"
+                        ur.value = ""
                         for res in response.provide_resource.resources:
                             logger.debug("Received: %s" % str(res.content))
                             ur.value += res.content
@@ -411,32 +418,46 @@ def release_resources(username):
                 for man_name, node_types in MAPPING_MANAGERS.items()
                 for ur in used_resources
                 if ur.node_type in node_types]
+    threads = []
     for manager_name in managers:
-        stub = get_stub_from_manager_name(manager_name)
-        try:
+        thread = ExceptionHandlerThread(target=_release_resource_for_manager,
+                                        args=[manager_name, used_resources, user_info])
+        threads.append(thread)
+        thread.start()
 
-            payload = []
-            for ur in used_resources:
-                if ur.node_type in MAPPING_MANAGERS.get(manager_name):
-                    if ur.value:
-                        payload.append(yaml.load(ur.value))
+    for t in threads:
+        t.join()
+        if t.exception:
+            raise t.exception
 
-            payload = json.dumps(payload)
-            response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
-                                                                payload=payload,
-                                                                user_info=user_info))
-        except _Rendezvous:
-            traceback.print_exc()
-            logger.error("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
-            raise RpcFailedCall("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
-        if response.result != 0:
-            logger.error("release resources returned %d: %s" % (response.result, response.error_message))
-            raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
-        for ur in [u for u in used_resources if u.node_type in MAPPING_MANAGERS.get(manager_name)]:
-            logger.info("deleting %s" % ur.name)
-            delete(ur)
     logger.info("deleting %s" % experiment_to_delete.name)
     delete(experiment_to_delete)
+
+
+def _release_resource_for_manager(manager_name, used_resources, user_info):
+    stub = get_stub_from_manager_name(manager_name)
+    try:
+
+        payload = []
+        for ur in used_resources:
+            if ur.node_type in MAPPING_MANAGERS.get(manager_name):
+                if ur.value:
+                    payload.append(json.loads(ur.value))
+
+        payload = json.dumps(payload)
+        response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
+                                                            payload=payload,
+                                                            user_info=user_info))
+    except _Rendezvous:
+        traceback.print_exc()
+        logger.error("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
+        raise RpcFailedCall("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
+    if response.result != 0:
+        logger.error("release resources returned %d: %s" % (response.result, response.error_message))
+        raise RpcFailedCall("provide resources returned %d: %s" % (response.result, response.error_message))
+    for ur in [u for u in used_resources if u.node_type in MAPPING_MANAGERS.get(manager_name)]:
+        logger.info("deleting %s" % ur.name)
+        delete(ur)
 
 
 def get_images():
@@ -467,11 +488,8 @@ def get_experiment_dict(username):
                 tmp = {
                     'resource_id': ur.resource_id,
                     'status': ResourceStatus.from_int_to_enum(ur.status).name,
-                    'value': '{}'
+                    'value': ur.value
                 }
-                if ur.status == ResourceStatus.DEPLOYED.value:
-                    tmp['value'] = ur.value
-
                 res.append(tmp)
     return res
 
@@ -556,9 +574,6 @@ def update_experiment(username, manager_name, resources):
     for ur in experiment.resources:
         if ur.node_type in MAPPING_MANAGERS.get(manager_name):
             ur.value = json.dumps(json.loads(resources[index].content))
-            # delete(ur)
-            # ur.make_transient()
-            # save(ur)
             index += 1
 
 
