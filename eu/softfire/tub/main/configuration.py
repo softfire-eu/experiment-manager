@@ -6,7 +6,7 @@ from cork import Cork
 
 from eu.softfire.tub.entities.entities import Experimenter, ManagerEndpoint
 from eu.softfire.tub.entities.repositories import find, delete
-from eu.softfire.tub.utils.utils import get_config, get_logger, get_user_dict
+from eu.softfire.tub.utils.utils import get_config, get_logger, get_user_dict, write_user_dict
 
 logger = get_logger(__name__)
 
