@@ -1,6 +1,4 @@
 import json
-import json
-import time
 import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
@@ -12,12 +10,13 @@ import yaml
 from grpc._channel import _Rendezvous
 from toscaparser.tosca_template import ToscaTemplate
 
+from eu.softfire.tub.core.calendar import CalendarManager
 from eu.softfire.tub.entities import entities
 from eu.softfire.tub.entities.entities import UsedResource, ManagerEndpoint, ResourceMetadata, Experimenter, \
     ResourceStatus
 from eu.softfire.tub.entities.repositories import save, find, delete, get_user_info, find_by_element_value
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall, \
-    ResourceNotFound, ResourceAlreadyBooked, ExperimentNotFound
+    ResourceNotFound, ExperimentNotFound
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
 from eu.softfire.tub.utils.utils import get_logger, ExceptionHandlerThread, TimerTerminationThread, THREAD_DELETE
 
@@ -248,9 +247,6 @@ def _get_used_resource_from_node(node, username):
                     return ur
 
     raise ResourceNotFound('Resource with name %s  for user %s was not found' % (node.name, username))
-
-
-
 
 
 def get_stub_from_manager_name(manager_name):

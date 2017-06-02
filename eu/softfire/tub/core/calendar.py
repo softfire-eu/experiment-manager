@@ -49,10 +49,12 @@ class CalendarManager(object):
         result = []
 
         for ur in find(UsedResource):
-            result.append({
-                "resource_id": ur.resource_id,
-                "start": ur.start_date,
-                "end": ur.end_date
-            })
+            rm = find(ResourceMetadata, _id=ur.resource_id)
+            if rm and rm.cardinality > 0:
+                result.append({
+                    "resource_id": ur.resource_id,
+                    "start": ur.start_date,
+                    "end": ur.end_date,
+                })
 
         return result

@@ -3,6 +3,7 @@ import threading
 
 from cork import Cork
 
+from eu.softfire.tub.api import Api
 from eu.softfire.tub.entities.entities import Experimenter, ManagerEndpoint
 from eu.softfire.tub.entities.repositories import find, delete
 from eu.softfire.tub.utils.utils import get_config, get_logger, get_user_dict, write_user_dict
@@ -48,10 +49,9 @@ def init_sys():
         for u in usernames_to_delete:
             if u != 'admin':
                 logger.debug("Removing user %s" % u)
-                user_dict = get_user_dict()
-                del user_dict[u]
-                write_user_dict(user_dict)
-
+                Api.aaa.delete_user(u)
+    usernames_cork = [u[0] for u in aaa.list_users()]
+    logger.debug("user in Cork: %s" % len(usernames_cork))
     t = threading.Thread(target=check_endpoint)
     t.start()
     return t

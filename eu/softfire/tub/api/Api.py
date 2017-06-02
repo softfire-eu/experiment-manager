@@ -334,7 +334,7 @@ def add_authorized_experimenter(username):
 
 
 def start():
-    bottle.debug(False)
+    bottle.debug(True)
     port = get_config(section='api', key='port', default=8080)
     app = bottle.app()
     bottle.install(error_translation)
