@@ -1,6 +1,5 @@
 import socket
 import threading
-import time
 
 from cork import Cork
 
@@ -53,13 +52,12 @@ def init_sys():
                 del user_dict[u]
                 write_user_dict(user_dict)
 
-
     t = threading.Thread(target=check_endpoint)
     t.start()
     return t
 
 
-def _is_ex_man__running(man_ip, man_port):
+def _is_man__running(man_ip, man_port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(2)
     result = sock.connect_ex((man_ip, int(man_port)))
@@ -67,10 +65,11 @@ def _is_ex_man__running(man_ip, man_port):
 
 
 def check_endpoint():
+    stop.wait(int(get_config('system', 'manager-check-delay', '20')))
     while not stop.is_set():
         for endpoint in find(ManagerEndpoint):
             man_ip, man_port = endpoint.endpoint.split(':')
-            if not _is_ex_man__running(man_ip, man_port):
+            if not _is_man__running(man_ip, man_port):
                 logger.error("Manager %s on endpoint %s is not running" % (endpoint.name, endpoint.endpoint))
                 delete(endpoint)
         stop.wait(int(get_config('system', 'manager-check-delay', '20')))
