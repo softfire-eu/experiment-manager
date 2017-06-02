@@ -35,7 +35,8 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
         username = request.username
         manager_name = request.manager_name
         resources = request.resources
-        CoreManagers.update_experiment(username, manager_name, resources)
+        if username and manager_name and resources and len(resources):
+            CoreManagers.update_experiment(username, manager_name, resources)
         response_message = messages_pb2.ResponseMessage()
         response_message.result = 0
         return response_message
