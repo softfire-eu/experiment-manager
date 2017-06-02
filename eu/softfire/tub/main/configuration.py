@@ -6,7 +6,7 @@ from cork import Cork
 
 from eu.softfire.tub.entities.entities import Experimenter, ManagerEndpoint
 from eu.softfire.tub.entities.repositories import find, delete
-from eu.softfire.tub.utils.utils import get_config, get_logger
+from eu.softfire.tub.utils.utils import get_config, get_logger, get_user_dict
 
 logger = get_logger(__name__)
 
@@ -48,7 +48,11 @@ def init_sys():
         usernames_to_delete = set(usernames_cork) - set(usernames_db)
         for u in usernames_to_delete:
             if u != 'admin':
-                aaa.delete_user(u)
+                logger.debug("Removing user %s" % u)
+                user_dict = get_user_dict()
+                del user_dict[u]
+                write_user_dict(user_dict)
+
 
     t = threading.Thread(target=check_endpoint)
     t.start()

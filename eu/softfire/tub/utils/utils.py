@@ -34,3 +34,15 @@ def get_config(section, key, default=None):
         return config.get(section=section, option=key)
     except configparser.NoOptionError:
         return default
+
+
+def get_user_dict():
+    if os.path.exists(get_config('system', "cork-files-path", "/etc/softfire/users")):
+        with open(get_config('system', "cork-files-path", "/etc/softfire/users"), 'r') as f:
+            return f.read()
+
+
+def write_user_dict(user_dict):
+    if os.path.exists(get_config('system', "cork-files-path", "/etc/softfire/users")):
+        with open(get_config('system', "cork-files-path", "/etc/softfire/users"), 'w') as f:
+            f.write(user_dict)
