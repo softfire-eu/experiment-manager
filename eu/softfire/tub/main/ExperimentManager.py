@@ -3,6 +3,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 from eu.softfire.tub.api import Api as api
 from eu.softfire.tub.entities.repositories import drop_tables
+from eu.softfire.tub.main.configuration import init_sys
 from eu.softfire.tub.messaging.MessagingAgent import receive_forever
 from eu.softfire.tub.utils.utils import get_logger, get_config
 
@@ -11,13 +12,13 @@ def start(argv):
     """
     Start the ExperimentManager
     """
-    logger = get_logger("eu.softfire.tub.main")
-    logger.info("Starting Experiment Manager.")
-
+    logger = get_logger(__name__)
     executor = ProcessPoolExecutor(3)
     loop = asyncio.get_event_loop()
     asyncio.ensure_future(loop.run_in_executor(executor, receive_forever))
     asyncio.ensure_future(loop.run_in_executor(executor, api.start))
+    init_sys()
+    logger.info("Starting Experiment Manager.")
 
     try:
         loop.run_forever()

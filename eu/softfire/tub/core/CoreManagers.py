@@ -28,9 +28,7 @@ REFRESH_RES_NODE_TYPES = [
 
 MAPPING_MANAGERS = {
     'sdn-manager': [
-        'ODLController',
-        'OSDNController',
-        'VTNController'
+        'SdnResource'
     ],
     'nfv-manager': [
         'NfvResource'
@@ -357,7 +355,7 @@ def provide_resources(username):
         raise ExperimentNotFound("No experiment to be deployed....")
     experiment_to_deploy = experiments_to_deploy[0]
     user_info = get_user_info(username)
-    logger.debug("Received deploy resources from user %s" % user_info.name)
+    logger.debug("Received deploy resources from user %s" % user_info.username)
     logger.debug("Received deploy resources %s" % experiment_to_deploy.name)
 
     for res_to_deploy in experiment_to_deploy.resources:
