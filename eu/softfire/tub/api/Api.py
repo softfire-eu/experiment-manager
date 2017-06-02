@@ -10,7 +10,8 @@ from cork import Cork
 
 import eu.softfire.tub.exceptions.exceptions as exceptions
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.CoreManagers import get_resources_dict, get_images, CalendarManager, Experiment, \
+from eu.softfire.tub.core.calendar import CalendarManager
+from eu.softfire.tub.core.CoreManagers import get_resources_dict, get_images, Experiment, \
     get_experiment_dict, create_user_info
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
