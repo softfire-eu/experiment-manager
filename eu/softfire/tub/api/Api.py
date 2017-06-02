@@ -333,7 +333,7 @@ def add_authorized_experimenter(username):
 
 
 def start():
-    bottle.debug(True)
+    bottle.debug(False)
     port = get_config(section='api', key='port', default=8080)
     app = bottle.app()
     bottle.install(error_translation)
@@ -346,6 +346,6 @@ def start():
         'session.validate_key': True,
     }
     app = SessionMiddleware(app, session_opts)
-    quiet_bottle = logger.getEffectiveLevel() < logging.DEBUG
+    quiet_bottle = get_config('api','quiet','true').lower() == 'true'
     logger.debug("Bootlepy quiet mode: %s" % quiet_bottle)
     bottle.run(app=app, quiet=quiet_bottle, port=port, host='0.0.0.0')
