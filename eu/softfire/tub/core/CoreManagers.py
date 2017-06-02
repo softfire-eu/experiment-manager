@@ -202,8 +202,17 @@ class Experiment(object):
         resource.value = yaml.dump(node.entity_tpl)
         resource.resource_id = node.get_properties().get('resource_id').value
         resource.status = ResourceStatus.VALIDATING.value
-        resource.start_date = self.start_date
-        resource.end_date = self.end_date
+        if node.get_properties().get(self.START_DATE):
+            resource.start_date = dateparser.parse(node.get_properties().get(self.START_DATE).value,
+                                                   settings={'DATE_ORDER': 'YMD'})
+        else:
+            resource.start_date = self.start_date
+
+        if node.get_properties().get(self.END_DATE):
+            resource.end_date = dateparser.parse(node.get_properties().get(self.END_DATE).value,
+                                                 settings={'DATE_ORDER': 'YMD'})
+        else:
+            resource.end_date = self.end_date
         return resource
 
 
@@ -275,6 +284,7 @@ class CalendarManager(object):
 def get_stub_from_manager_name(manager_name):
     for manager_endpoint in find(ManagerEndpoint):
         if manager_endpoint.name == manager_name:
+            logger.debug("Getting stub for manager: %s" % manager_name)
             return get_stub_from_manager_endpoint(manager_endpoint)
     raise ManagerNotFound("No manager found for name %s" % manager_name)
 
@@ -298,6 +308,9 @@ def _validate_resource(node, username):
                 raise RpcFailedCall(e.args)
             if response.result < 0:
                 raise RpcFailedCall(response.error_message)
+            return
+
+    raise ManagerNotFound("manager handling resource %s was not found" % node.type)
 
 
 def list_resources(manager_name=None, _id=None):
@@ -355,7 +368,11 @@ def provide_resources(username):
         raise ExperimentNotFound("No experiment to be deployed....")
     experiment_to_deploy = experiments_to_deploy[0]
     user_info = get_user_info(username)
-    logger.debug("Received deploy resources from user %s" % user_info.username)
+    if hasattr(user_info, 'name'):
+        un = user_info.name
+    else:
+        un = user_info.username
+    logger.debug("Received deploy resources from user %s" % un)
     logger.debug("Received deploy resources %s" % experiment_to_deploy.name)
 
     for res_to_deploy in experiment_to_deploy.resources:
@@ -363,7 +380,7 @@ def provide_resources(username):
             if res_to_deploy.node_type in node_types:
                 stub = get_stub_from_manager_name(manager_name)
                 response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
-                                                                    payload=yaml.dump(res_to_deploy.value),
+                                                                    payload=res_to_deploy.value,
                                                                     user_info=user_info))
 
                 for ur in experiment_to_deploy.resources:
@@ -375,7 +392,7 @@ def provide_resources(username):
                             #     "provide resources returned %d: %s" % (response.result, response.error_message))
                             ur.status = ResourceStatus.ERROR.value
                             continue
-                        ur.value = ""
+                        ur.value = "{}"
                         for res in response.provide_resource.resources:
                             logger.debug("Received: %s" % str(res.content))
                             ur.value += res.content
