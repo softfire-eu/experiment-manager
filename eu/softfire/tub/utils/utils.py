@@ -1,8 +1,10 @@
 import configparser
+import json
 import logging
 import logging.config
 import os
-import json
+import sys
+from threading import Thread
 
 from eu.softfire.tub.utils.static_config import CONFIG_FILE_PATH
 
@@ -47,3 +49,21 @@ def write_user_dict(user_dict):
     if os.path.exists(get_config('system', "cork-files-path", "/etc/softfire/users") + "/users.json"):
         with open(get_config('system', "cork-files-path", "/etc/softfire/users/") + "/users.json", 'w') as f:
             f.write(json.dumps(user_dict))
+
+
+class ExceptionHandlerThread(Thread):
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, *, daemon=None):
+        if sys.version_info > (3, 0):
+            super().__init__(group, target, name, args, kwargs, daemon=daemon)
+        else:
+            super(self.__class__, self).__init__(group, target, name, args, kwargs, daemon=daemon)
+        self.exception = None
+
+    def run(self):
+        try:
+            if sys.version_info > (3, 0):
+                super().run()
+            else:
+                super(self.__class__, self).run()
+        except Exception as e:
+            self.exception = e
