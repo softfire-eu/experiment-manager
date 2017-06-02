@@ -42,7 +42,7 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
         return response_message
 
     def unregister(self, request, context):
-        logger.info("unregistering %s" % request)
+        logger.info("unregistering %s" % request.name)
         for manager_endpoint in find(ManagerEndpoint):
             if manager_endpoint.name == request.name:
                 for resource_type in MAPPING_MANAGERS.get(manager_endpoint.name):
@@ -53,7 +53,7 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
         return messages_pb2.ResponseMessage(result=1, error_message="manager endpoint not found")
 
     def register(self, request, context):
-        logger.info("registering %s" % request)
+        logger.info("registering %s" % request.name)
         manager_endpoint = ManagerEndpoint()
         manager_endpoint.name = request.name
         manager_endpoint.endpoint = request.endpoint
