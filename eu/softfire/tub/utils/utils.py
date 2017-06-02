@@ -37,12 +37,12 @@ def get_config(section, key, default=None):
 
 
 def get_user_dict():
-    if os.path.exists(get_config('system', "cork-files-path", "/etc/softfire/users")):
-        with open(get_config('system', "cork-files-path", "/etc/softfire/users"), 'r') as f:
+    if os.path.exists(get_config('system', "cork-files-path", "/etc/softfire/users") + "/users.json"):
+        with open(get_config('system', "cork-files-path", "/etc/softfire/users") + "/users.json", 'r') as f:
             return f.read()
 
 
 def write_user_dict(user_dict):
-    if os.path.exists(get_config('system', "cork-files-path", "/etc/softfire/users")):
-        with open(get_config('system', "cork-files-path", "/etc/softfire/users"), 'w') as f:
+    if os.path.exists(get_config('system', "cork-files-path", "/etc/softfire/users") + "/users.json"):
+        with open(get_config('system', "cork-files-path", "/etc/softfire/users/") + "/users.json", 'w') as f:
             f.write(user_dict)
