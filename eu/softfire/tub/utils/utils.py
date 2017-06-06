@@ -8,8 +8,6 @@ from threading import Thread, Event
 
 from eu.softfire.tub.utils.static_config import CONFIG_FILE_PATH
 
-THREAD_DELETE = {}
-
 
 def get_logger(name):
     logging.config.fileConfig(CONFIG_FILE_PATH)
@@ -80,11 +78,11 @@ class TimerTerminationThread(Thread):
         self.args = args
 
     def run(self):
+        # while not self.event.wait(self.days):
         while not self.event.wait(86400 * self.days):
-            self.function(self.args)
+            self.function(*self.args[0])
             if not self.event.is_set():
                 self.event.set()
-            del THREAD_DELETE[self.ident]
 
     def stop(self):
         self.event.set()

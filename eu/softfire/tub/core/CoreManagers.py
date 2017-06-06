@@ -1,4 +1,5 @@
 import json
+import os
 import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
@@ -18,7 +19,7 @@ from eu.softfire.tub.entities.repositories import save, find, delete, get_user_i
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall, \
     ResourceNotFound, ExperimentNotFound
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
-from eu.softfire.tub.utils.utils import get_logger, ExceptionHandlerThread, TimerTerminationThread, THREAD_DELETE
+from eu.softfire.tub.utils.utils import get_logger, ExceptionHandlerThread, TimerTerminationThread, get_config
 
 logger = get_logger('eu.softfire.tub.core')
 
@@ -97,6 +98,13 @@ def create_user_info(username, password, role):
     create_user(username, password, role)
 
 
+def _start_termination_thread_for_res(res):
+    thread = TimerTerminationThread(abs((res.end_date - datetime.now()).days), _terminate_expired_resource, [res])
+    logger.debug("Starting thread checking resource: %s " % res.id)
+    # thread = TimerTerminationThread(5, _terminate_expired_resource, [res])
+    thread.start()
+
+
 class Experiment(object):
     END_DATE = 'end-date'
     START_DATE = 'start-date'
@@ -127,6 +135,20 @@ class Experiment(object):
                 self.end_date = self.get_end_date(metadata)
                 self.duration = self.end_date - self.start_date
                 logger.debug("Experiment duration %s" % self.duration)
+            if filename.startswith("Files/") and filename.endswith('.csar'):
+                experiment_nsd_csar_location = get_config('system', 'temp-csar-location',
+                                                          '/etc/softfire/experiment-nsd-csar')
+                if not os.path.exists(experiment_nsd_csar_location):
+                    os.makedirs(experiment_nsd_csar_location)
+                data = zf.read(filename)
+
+                nsd_file_location = "%s/%s" % (
+                    get_config('system', 'temp-csar-location', '/etc/softfire/experiment-nsd-csar'),
+                    filename.split('/')[-1]
+                )
+                with open(nsd_file_location, 'wb+') as f:
+                    f.write(data)
+
         self._validate()
 
         exp = entities.Experiment()
@@ -140,14 +162,14 @@ class Experiment(object):
         for node in self.topology_template.nodetemplates:
             exp.resources.append(self._get_used_resource_by_node(node))
 
-        thread = TimerTerminationThread(abs((self.end_date - datetime.now()).days), _terminate_expired_experiment,
-                                        [exp])
-        exp.tident = thread.ident
         logger.info("Saving experiment %s" % exp.name)
+        element_value = find_by_element_value(entities.Experiment, entities.Experiment.username, self.username)
+        if len(element_value):
+            raise ExperimentValidationError("You cannot have two experiments at the same time!")
         save(exp)
         self.experiment = exp
-        THREAD_DELETE[thread.ident] = thread
-        thread.start()
+        for res in exp.resources:
+            _start_termination_thread_for_res(res)
 
     @classmethod
     def get_end_date(cls, metadata):
@@ -229,14 +251,33 @@ class Experiment(object):
         return resource
 
 
-def _terminate_expired_experiment(experiment: entities.Experiment):
-    experiment_to_delete = find(entities.Experiment, _id=experiment.id)
-    if experiment_to_delete == experiment:
-        _release_all_experiment_resources(experiment_to_delete, experiment_to_delete.username)
+def _release_used_resource(res: entities.UsedResource):
+    exp = find(entities.Experiment, _id=res.parent_id)
+    user_info = get_user_info(exp.username)
+    for man, node_types in MAPPING_MANAGERS.items():
+        if res.node_type in node_types:
+            response = get_stub_from_manager_name(man).execute(
+                messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
+                                            payload=res.value,
+                                            user_info=user_info))
+            if response.result != 0:
+                logger.error("release resources returned %d: %s" % (response.result, response.error_message))
+                raise RpcFailedCall(
+                    "provide resources returned %d: %s" % (response.result, response.error_message))
 
-        delete(experiment)
+
+def _terminate_expired_resource(res: entities.UsedResource):
+    resource_to_delete = find(entities.UsedResource, _id=res.id)
+    exp_id = resource_to_delete.parent_id
+    if resource_to_delete and res == resource_to_delete:
+        _release_used_resource(res)
+        delete(resource_to_delete)
     else:
         logger.debug("The initial experiment was removed")
+        return
+    exp = find(entities.Experiment, _id=exp_id)
+    if not len(exp.resources):
+        delete(exp)
 
 
 def _get_used_resource_from_node(node, username):
@@ -373,9 +414,6 @@ def release_resources(username):
         logger.error("No experiment to be deleted....")
         raise ExperimentNotFound("No experiment to be deleted....")
     experiment_to_delete = experiments_to_delete[0]
-    thread_delete = THREAD_DELETE.get(experiment_to_delete.tident)
-    if thread_delete:
-        thread_delete.stop()
     _release_all_experiment_resources(experiment_to_delete, username)
 
     logger.info("deleting %s" % experiment_to_delete.name)
