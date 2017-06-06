@@ -99,7 +99,11 @@ def create_user_info(username, password, role):
 
 
 def _start_termination_thread_for_res(res):
-    thread = TimerTerminationThread(abs((res.end_date - datetime.now()).days), _terminate_expired_resource, [res])
+    res_end_date = res.end_date
+    logger.debug("Type of res.end: %s" % type(res_end_date))
+    days = (res_end_date - datetime.date(datetime.today()).today()).days
+    thread = TimerTerminationThread(abs(days), _terminate_expired_resource, [res])
+    logger.debug("Days to the end of experiement: %s" % days)
     logger.debug("Starting thread checking resource: %s " % res.id)
     # thread = TimerTerminationThread(5, _terminate_expired_resource, [res])
     thread.start()
@@ -238,14 +242,12 @@ class Experiment(object):
         resource.resource_id = node.get_properties().get('resource_id').value
         resource.status = ResourceStatus.VALIDATING.value
         if node.get_properties().get(self.START_DATE):
-            resource.start_date = dateparser.parse(node.get_properties().get(self.START_DATE).value,
-                                                   settings={'DATE_ORDER': 'YMD'})
+            resource.start_date = Experiment.get_start_date(node.get_properties())
         else:
             resource.start_date = self.start_date
 
         if node.get_properties().get(self.END_DATE):
-            resource.end_date = dateparser.parse(node.get_properties().get(self.END_DATE).value,
-                                                 settings={'DATE_ORDER': 'YMD'})
+            resource.end_date = Experiment.get_end_date(node.get_properties())
         else:
             resource.end_date = self.end_date
         return resource
