@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import traceback
 
@@ -10,9 +9,10 @@ from cork import Cork
 
 import eu.softfire.tub.exceptions.exceptions as exceptions
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.calendar import CalendarManager
 from eu.softfire.tub.core.CoreManagers import get_resources_dict, get_images, Experiment, \
     get_experiment_dict, create_user_info
+from eu.softfire.tub.core.calendar import CalendarManager
+from eu.softfire.tub.core.certificate import CertificateGenerator
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -159,6 +159,30 @@ def register():
     logger.debug(("got body: %s" % request.body.read().decode("utf-8")))
     add_authorized_experimenter(post_get('username'))
     return 'User created'
+
+
+@bottle.post('/certificates')
+@authorize(role='admin')
+def get_certificate():
+    username = post_get('username')
+    days = int(post_get('days'))
+    cert_gen = CertificateGenerator(username, days)
+    cert_gen.generate('123456')
+    openvpn_config = cert_gen.get_openvpn_config()
+    headers = {
+        'Content-Type': 'text/plain;charset=UTF-8',
+        'Content-Disposition': 'attachment; filename="softfire-vpn_%s.ovpn"' % username,
+        "Content-Length": len(openvpn_config)
+    }
+    return bottle.HTTPResponse(openvpn_config, 200, **headers)
+
+
+@bottle.get('/test_cert')
+def get_certificate():
+    username = 'test'
+    cert_gen = CertificateGenerator(username)
+    cert_gen.generate('123456')
+    return cert_gen.certificate.decode("utf-8")
 
 
 @bottle.post('/create_user')
@@ -347,6 +371,6 @@ def start():
         'session.validate_key': True,
     }
     app = SessionMiddleware(app, session_opts)
-    quiet_bottle = get_config('api','quiet','true').lower() == 'true'
+    quiet_bottle = get_config('api', 'quiet', 'true').lower() == 'true'
     logger.debug("Bootlepy quiet mode: %s" % quiet_bottle)
     bottle.run(app=app, quiet=quiet_bottle, port=port, host='0.0.0.0')
