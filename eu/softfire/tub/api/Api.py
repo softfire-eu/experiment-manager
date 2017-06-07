@@ -166,7 +166,7 @@ def register():
 def get_certificate():
     username = post_get('username')
     if not username:
-        raise bottel.HTTPError(500, "Username missing")
+        raise bottle.HTTPError(500, "Username missing")
     password = post_get('password', default=None)
     days = int(post_get('days', default=None))
     cert_gen = CertificateGenerator()
@@ -178,6 +178,7 @@ def get_certificate():
         "Content-Length": len(openvpn_config)
     }
     return bottle.HTTPResponse(openvpn_config, 200, **headers)
+
 
 @bottle.post('/create_user')
 @authorize(role='admin')
