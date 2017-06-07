@@ -179,15 +179,6 @@ def get_certificate():
     }
     return bottle.HTTPResponse(openvpn_config, 200, **headers)
 
-
-@bottle.get('/test_cert')
-def get_certificate():
-    username = 'test'
-    cert_gen = CertificateGenerator()
-    cert_gen.generate('123456',username,1)
-    return cert_gen.certificate.decode("utf-8")
-
-
 @bottle.post('/create_user')
 @authorize(role='admin')
 def create_user():
