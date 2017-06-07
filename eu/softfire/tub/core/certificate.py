@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 from OpenSSL import crypto
+from bottle import template
 from six import string_types
 
 from eu.softfire.tub.utils.utils import get_config, get_logger
@@ -39,7 +40,6 @@ def bytes_compat(string, encoding='utf-8'):
 class CertificateGenerator(object):
     def __init__(self):
         self.key_length = 2048
-        # self.digest = 'sha256WithRSAEncryption'
         self.digest = 'sha1'
         with open(get_config('system', 'cert-ca-file', '/etc/softfire/softfire-ca.p12'), 'rb') as buf:
             buffer = buf.read()
@@ -47,16 +47,17 @@ class CertificateGenerator(object):
                                         passphrase=get_config('system', 'cert-passphrase', 'softfire').encode())
         self.ca_cert = load_pkcs_.get_certificate()
         self.ca_key = load_pkcs_.get_privatekey()
-
+        self.certificate = None
+        self.private_key = None
+        with open(get_config('system', 'openvpn-template-location', '/etc/softfire/template_openvpn.tpl'), 'r') as f:
+            self.openvpn_config_tpl = f.read()
 
     def generate(self, passphrase=None, common_name=None, days=DEFAULT_CERT_VALIDITY):
-        # create a key pair
         k = crypto.PKey()
         k.generate_key(crypto.TYPE_RSA, self.key_length)
 
-        # create a self-signed cert
         cert = crypto.X509()
-        #cert.get_subject().CN = common_name
+        # cert.get_subject().CN = common_name
         cert.get_subject().commonName = common_name
         cert.set_serial_number(random.randint(990000, 999999999999999999999999999))
         cert.gmtime_adj_notBefore(-600)
@@ -70,15 +71,12 @@ class CertificateGenerator(object):
         self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k, passphrase=passphrase.encode())
         return self
 
-
     def _add_extensions(self, cert):
         """
         (internal use only)
         adds x509 extensions to ``cert``
         """
         ext = list()
-
-        # prepare extensions for end-entity certs
         ext.append(crypto.X509Extension(b'basicConstraints',
                                         True,
                                         b'CA:FALSE'))
@@ -91,191 +89,28 @@ class CertificateGenerator(object):
                                         b'hash',
                                         subject=cert))
         cert.add_extensions(ext)
-        # # authorityKeyIdentifier must be added after
-        # # the other extensions have been already added
         cert.add_extensions([
             crypto.X509Extension(b'authorityKeyIdentifier',
                                  False,
                                  b'keyid:always,issuer:always',
                                  issuer=issuer_cert)
         ])
-        # for ext in self.extensions:
-        #     cert.add_extensions([
-        #         crypto.X509Extension(bytes_compat(ext['name']),
-        #                              bool(ext['critical']),
-        #                              bytes_compat(ext['value']))
-        #     ])
         return cert
 
     def get_openvpn_config(self):
-        res = """dev tun
-client
-remote softfire-vpn.av.tu-berlin.de 443
-;proto udp
-proto tcp
-nobind
-persist-key
-persist-tun
-comp-lzo
-keepalive 10 120
-verb 3
-remote-cert-tls server
-resolv-retry infinite
-nobind
-<ca>
------BEGIN CERTIFICATE-----
-MIIFAzCCA+ugAwIBAgIQLJdZE0PTZ7/N1PiCOH1EOzANBgkqhkiG9w0BAQsFADCB
-pTELMAkGA1UEBhMCREUxDzANBgNVBAgMBkJlcmxpbjEPMA0GA1UEBwwGQmVybGlu
-MRIwEAYDVQQKDAlUVSBCZXJsaW4xCzAJBgNVBAsMAkFWMR4wHAYDVQQDDBVUVSBC
-ZXJsaW4gU29mdEZJUkUgQ0ExMzAxBgkqhkiG9w0BCQEWJGF2LWluZnJhc3RydWN0
-dXJlQGxpc3RzLnR1LWJlcmxpbi5kZTAeFw0xNjA2MjcxNTMxNTlaFw0yMTA2MjYx
-NTMxNTlaMIGlMQswCQYDVQQGEwJERTEPMA0GA1UECAwGQmVybGluMQ8wDQYDVQQH
-DAZCZXJsaW4xEjAQBgNVBAoMCVRVIEJlcmxpbjELMAkGA1UECwwCQVYxHjAcBgNV
-BAMMFVRVIEJlcmxpbiBTb2Z0RklSRSBDQTEzMDEGCSqGSIb3DQEJARYkYXYtaW5m
-cmFzdHJ1Y3R1cmVAbGlzdHMudHUtYmVybGluLmRlMIIBIjANBgkqhkiG9w0BAQEF
-AAOCAQ8AMIIBCgKCAQEA1Fk2hti4hsahT8t+8fEfxrSAiJJDuXyj5g48mn37u8o2
-0VK/9STmG7nCiZQwtEIiz9MpxDo6oeap8qwJacp5V6RTZ5d3sPypfM5S06vxTOZX
-KsvWWv7E7An+O0J8I819mfg3/SkJJmu12i13f+r03+29hnlPZaXuqZnQmKFfolpP
-GHTaPLbn5aED17Lyg0eyFiCCXBes5FM9fBuqbSU+jDmfwd+nBcJG61oHdrGvp5vZ
-gUQm8X43sMeb/dP8ncHP3cft47A5QHc+GKDNroWW43almezOgByzzckG39eWqV0h
-E18Bts5y9BUdsYNJdZaLEWAPMLR8Li3LAx1gd2YVwQIDAQABo4IBKzCCAScwEgYD
-VR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYEFDMfaUfm
-l6CQdssrpTLv4WG81BHhMIHhBgNVHSMEgdkwgdaAFDMfaUfml6CQdssrpTLv4WG8
-1BHhoYGrpIGoMIGlMQswCQYDVQQGEwJERTEPMA0GA1UECAwGQmVybGluMQ8wDQYD
-VQQHDAZCZXJsaW4xEjAQBgNVBAoMCVRVIEJlcmxpbjELMAkGA1UECwwCQVYxHjAc
-BgNVBAMMFVRVIEJlcmxpbiBTb2Z0RklSRSBDQTEzMDEGCSqGSIb3DQEJARYkYXYt
-aW5mcmFzdHJ1Y3R1cmVAbGlzdHMudHUtYmVybGluLmRlghAsl1kTQ9Nnv83U+II4
-fUQ7MA0GCSqGSIb3DQEBCwUAA4IBAQCz6j6JMXbBUG0j4Ijx4JsuuuHaJBmBB/eN
-S6qthzg8F6wC45K2Xel0T3+uhFmnBbylWIVP0Xl3SthGeukJqT2VgnbRbYt6I17x
-ot8eUyZb495moDJ8wWN8XU6Atcl6igB2tNmsZkj5OnaepQTyy1Ocl8akHN4TNKD5
-olNy0TpH70+FfzuDRKGqfzivAT5P3l1zyRcRDSk4wVEXFB/95ZqX90AvPiLOfGAe
-aEIbwcXwcVxYma83LhCiBZo3SQ1wH+cvOrDwQ/SY0u2fndpf5WqAeBj9A3aYgqCS
-lMg366OjDzFpNaTLX4HQPX682AuMj338NPLoPXXfyHxmIMN4ZRcs
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIFmTCCBIGgAwIBAgICAQIwDQYJKoZIhvcNAQELBQAwgaUxCzAJBgNVBAYTAkRF
-MQ8wDQYDVQQIDAZCZXJsaW4xDzANBgNVBAcMBkJlcmxpbjESMBAGA1UECgwJVFUg
-QmVybGluMQswCQYDVQQLDAJBVjEeMBwGA1UEAwwVVFUgQmVybGluIFNvZnRGSVJF
-IENBMTMwMQYJKoZIhvcNAQkBFiRhdi1pbmZyYXN0cnVjdHVyZUBsaXN0cy50dS1i
-ZXJsaW4uZGUwHhcNMTYwNzI3MTQ0ODQzWhcNMTgwNzI3MTQ0ODQzWjBgMQswCQYD
-VQQGEwJERTEPMA0GA1UECAwGQmVybGluMQ8wDQYDVQQHDAZCZXJsaW4xGTAXBgNV
-BAoMEEZyYXVuaG9mZXIgRk9LVVMxFDASBgNVBAMMC0ZpdGVhZ2xlIENBMIICIjAN
-BgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA3Hy2l7zLZRE306xu15X9jZFub7SS
-yiQxndC4zDun+av/TiQJU/gK1/TPo6Y0u2+sqpuTPCh6XBA2N63AmZzpZpSAMBux
-JTm+BOYIqa0GJ5tW5tKBMPH3pITdgsh256ckyf57LUKH66yQgTfJskpF5ovDMNUq
-6vZAvEVjXa/A3tUaB5NxcQeLixKJJrmuh2TBxN3OOWNKD8vyal6KKOTYpeaillZ9
-zqmtNr9nXnlhfMBZPXJBQmw2OOlaX5uIuceMkpg6TIVrNlbdJuS9TeTVmx1MtmVm
-73Q5ii2FcopYrV1v8W4C3atxFCTfmFRlrRm6sJ7ZRQhGtJphPZczwtqcC7MKJjQN
-bYeAG8BQHRnVQrVXr5+jrysqFWGoXGDISVprm0DjGij5ok2jIYaSgBpLVrD3e4eC
-LgYH58+f8u5tQxE1TxGCudAb0fSMy+GAe+5qbbEQkLc/+WXnGi4xTTozebmccJs8
-mbu5/BICYu5e53B58DFJy8x8qjLQjXuvspKqcPT5Dp07LmIu30sgrXG+Mdq1cWjV
-VHx9XwJz1c89Oy/6TandrznRfGVNAzXPenm3gr0wib7qwWlsSPTrBOcXyjMthV27
-wX6MK5GWWH+Uk5Z9a/V2JE9+J3KtEtk8D4xSEIQJ+pJZtXh1YxNzzYhY/czJLYdA
-loVSHOjwDmPtbEECAwEAAaOCARUwggERMAwGA1UdEwQFMAMBAf8wHQYDVR0OBBYE
-FMKA1MAJkTlwFZ5USVhoOJkZO4CDMIHhBgNVHSMEgdkwgdaAFDMfaUfml6CQdssr
-pTLv4WG81BHhoYGrpIGoMIGlMQswCQYDVQQGEwJERTEPMA0GA1UECAwGQmVybGlu
-MQ8wDQYDVQQHDAZCZXJsaW4xEjAQBgNVBAoMCVRVIEJlcmxpbjELMAkGA1UECwwC
-QVYxHjAcBgNVBAMMFVRVIEJlcmxpbiBTb2Z0RklSRSBDQTEzMDEGCSqGSIb3DQEJ
-ARYkYXYtaW5mcmFzdHJ1Y3R1cmVAbGlzdHMudHUtYmVybGluLmRlghAsl1kTQ9Nn
-v83U+II4fUQ7MA0GCSqGSIb3DQEBCwUAA4IBAQAYcCmGctVfnRZ6oL2z6qvn9Dhm
-Hpt1zIC0pR7vKroi8OyGpv+BB7gHEXX0ecq8VtLKTcXWYR+7NdZS7IX8lyd81LiX
-XB1x09hEKH8O71T9v3TAMVtFDHmUito8cJQtPJFlVLZyL5xF+H0VHHEED4JP8xp4
-KPFd2Rt0ixTNnE3ccUgumty1X+xq0rWSCzOXy11TxOv2tzB7TA/O85XRw9QzE3jw
-4WjTS7tH9Phe/JTxbnhADS7k5mHZ+FDmX4xeTrXKNKv9+W1Qz9qQQ441IWpokBow
-tBeOMiadvRRQ2fhNuKCpgVUgyUyts0fFvDwJhLTnUqEbdgr19HbLO8GwqPbk
------END CERTIFICATE-----
-</ca>
-<cert>\n"""
-        res += self.certificate.decode("utf-8") + "</cert>\n<key>\n"
-        res += self.private_key.decode("utf-8") + "</key>\n"
-        return res
+        openvpn_options = {
+            'openvpn_server': get_config('openvpn', 'openvpn_server', 'softfire-vpn.av.tu-berlin.de'),
+            'openvpn_port': int(get_config('openvpn', 'openvpn_port', "443")),
+            'protocol': get_config('openvpn', 'openvpn_protocol', 'tcp'),
+            'certificate': self.certificate.decode("utf-8"), 'key': self.private_key.decode("utf-8")
+        }
+        return template(self.openvpn_config_tpl, openvpn_options)
 
 
 if __name__ == '__main__':
     cert_gen = CertificateGenerator()
-    cert_gen.generate(passphrase='123456',common_name="foobar", days=1)
-    #print(cert_gen.certificate.decode("utf-8"))
-    print("""
-dev tun
-client
-remote softfire-vpn.av.tu-berlin.de 443
-;proto udp
-proto tcp
-nobind
-persist-key
-persist-tun
-comp-lzo
-keepalive 10 120
-verb 3
-remote-cert-tls server
-resolv-retry infinite
-nobind
-<ca>
------BEGIN CERTIFICATE-----
-MIIFAzCCA+ugAwIBAgIQLJdZE0PTZ7/N1PiCOH1EOzANBgkqhkiG9w0BAQsFADCB
-pTELMAkGA1UEBhMCREUxDzANBgNVBAgMBkJlcmxpbjEPMA0GA1UEBwwGQmVybGlu
-MRIwEAYDVQQKDAlUVSBCZXJsaW4xCzAJBgNVBAsMAkFWMR4wHAYDVQQDDBVUVSBC
-ZXJsaW4gU29mdEZJUkUgQ0ExMzAxBgkqhkiG9w0BCQEWJGF2LWluZnJhc3RydWN0
-dXJlQGxpc3RzLnR1LWJlcmxpbi5kZTAeFw0xNjA2MjcxNTMxNTlaFw0yMTA2MjYx
-NTMxNTlaMIGlMQswCQYDVQQGEwJERTEPMA0GA1UECAwGQmVybGluMQ8wDQYDVQQH
-DAZCZXJsaW4xEjAQBgNVBAoMCVRVIEJlcmxpbjELMAkGA1UECwwCQVYxHjAcBgNV
-BAMMFVRVIEJlcmxpbiBTb2Z0RklSRSBDQTEzMDEGCSqGSIb3DQEJARYkYXYtaW5m
-cmFzdHJ1Y3R1cmVAbGlzdHMudHUtYmVybGluLmRlMIIBIjANBgkqhkiG9w0BAQEF
-AAOCAQ8AMIIBCgKCAQEA1Fk2hti4hsahT8t+8fEfxrSAiJJDuXyj5g48mn37u8o2
-0VK/9STmG7nCiZQwtEIiz9MpxDo6oeap8qwJacp5V6RTZ5d3sPypfM5S06vxTOZX
-KsvWWv7E7An+O0J8I819mfg3/SkJJmu12i13f+r03+29hnlPZaXuqZnQmKFfolpP
-GHTaPLbn5aED17Lyg0eyFiCCXBes5FM9fBuqbSU+jDmfwd+nBcJG61oHdrGvp5vZ
-gUQm8X43sMeb/dP8ncHP3cft47A5QHc+GKDNroWW43almezOgByzzckG39eWqV0h
-E18Bts5y9BUdsYNJdZaLEWAPMLR8Li3LAx1gd2YVwQIDAQABo4IBKzCCAScwEgYD
-VR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYEFDMfaUfm
-l6CQdssrpTLv4WG81BHhMIHhBgNVHSMEgdkwgdaAFDMfaUfml6CQdssrpTLv4WG8
-1BHhoYGrpIGoMIGlMQswCQYDVQQGEwJERTEPMA0GA1UECAwGQmVybGluMQ8wDQYD
-VQQHDAZCZXJsaW4xEjAQBgNVBAoMCVRVIEJlcmxpbjELMAkGA1UECwwCQVYxHjAc
-BgNVBAMMFVRVIEJlcmxpbiBTb2Z0RklSRSBDQTEzMDEGCSqGSIb3DQEJARYkYXYt
-aW5mcmFzdHJ1Y3R1cmVAbGlzdHMudHUtYmVybGluLmRlghAsl1kTQ9Nnv83U+II4
-fUQ7MA0GCSqGSIb3DQEBCwUAA4IBAQCz6j6JMXbBUG0j4Ijx4JsuuuHaJBmBB/eN
-S6qthzg8F6wC45K2Xel0T3+uhFmnBbylWIVP0Xl3SthGeukJqT2VgnbRbYt6I17x
-ot8eUyZb495moDJ8wWN8XU6Atcl6igB2tNmsZkj5OnaepQTyy1Ocl8akHN4TNKD5
-olNy0TpH70+FfzuDRKGqfzivAT5P3l1zyRcRDSk4wVEXFB/95ZqX90AvPiLOfGAe
-aEIbwcXwcVxYma83LhCiBZo3SQ1wH+cvOrDwQ/SY0u2fndpf5WqAeBj9A3aYgqCS
-lMg366OjDzFpNaTLX4HQPX682AuMj338NPLoPXXfyHxmIMN4ZRcs
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIFmTCCBIGgAwIBAgICAQIwDQYJKoZIhvcNAQELBQAwgaUxCzAJBgNVBAYTAkRF
-MQ8wDQYDVQQIDAZCZXJsaW4xDzANBgNVBAcMBkJlcmxpbjESMBAGA1UECgwJVFUg
-QmVybGluMQswCQYDVQQLDAJBVjEeMBwGA1UEAwwVVFUgQmVybGluIFNvZnRGSVJF
-IENBMTMwMQYJKoZIhvcNAQkBFiRhdi1pbmZyYXN0cnVjdHVyZUBsaXN0cy50dS1i
-ZXJsaW4uZGUwHhcNMTYwNzI3MTQ0ODQzWhcNMTgwNzI3MTQ0ODQzWjBgMQswCQYD
-VQQGEwJERTEPMA0GA1UECAwGQmVybGluMQ8wDQYDVQQHDAZCZXJsaW4xGTAXBgNV
-BAoMEEZyYXVuaG9mZXIgRk9LVVMxFDASBgNVBAMMC0ZpdGVhZ2xlIENBMIICIjAN
-BgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA3Hy2l7zLZRE306xu15X9jZFub7SS
-yiQxndC4zDun+av/TiQJU/gK1/TPo6Y0u2+sqpuTPCh6XBA2N63AmZzpZpSAMBux
-JTm+BOYIqa0GJ5tW5tKBMPH3pITdgsh256ckyf57LUKH66yQgTfJskpF5ovDMNUq
-6vZAvEVjXa/A3tUaB5NxcQeLixKJJrmuh2TBxN3OOWNKD8vyal6KKOTYpeaillZ9
-zqmtNr9nXnlhfMBZPXJBQmw2OOlaX5uIuceMkpg6TIVrNlbdJuS9TeTVmx1MtmVm
-73Q5ii2FcopYrV1v8W4C3atxFCTfmFRlrRm6sJ7ZRQhGtJphPZczwtqcC7MKJjQN
-bYeAG8BQHRnVQrVXr5+jrysqFWGoXGDISVprm0DjGij5ok2jIYaSgBpLVrD3e4eC
-LgYH58+f8u5tQxE1TxGCudAb0fSMy+GAe+5qbbEQkLc/+WXnGi4xTTozebmccJs8
-mbu5/BICYu5e53B58DFJy8x8qjLQjXuvspKqcPT5Dp07LmIu30sgrXG+Mdq1cWjV
-VHx9XwJz1c89Oy/6TandrznRfGVNAzXPenm3gr0wib7qwWlsSPTrBOcXyjMthV27
-wX6MK5GWWH+Uk5Z9a/V2JE9+J3KtEtk8D4xSEIQJ+pJZtXh1YxNzzYhY/czJLYdA
-loVSHOjwDmPtbEECAwEAAaOCARUwggERMAwGA1UdEwQFMAMBAf8wHQYDVR0OBBYE
-FMKA1MAJkTlwFZ5USVhoOJkZO4CDMIHhBgNVHSMEgdkwgdaAFDMfaUfml6CQdssr
-pTLv4WG81BHhoYGrpIGoMIGlMQswCQYDVQQGEwJERTEPMA0GA1UECAwGQmVybGlu
-MQ8wDQYDVQQHDAZCZXJsaW4xEjAQBgNVBAoMCVRVIEJlcmxpbjELMAkGA1UECwwC
-QVYxHjAcBgNVBAMMFVRVIEJlcmxpbiBTb2Z0RklSRSBDQTEzMDEGCSqGSIb3DQEJ
-ARYkYXYtaW5mcmFzdHJ1Y3R1cmVAbGlzdHMudHUtYmVybGluLmRlghAsl1kTQ9Nn
-v83U+II4fUQ7MA0GCSqGSIb3DQEBCwUAA4IBAQAYcCmGctVfnRZ6oL2z6qvn9Dhm
-Hpt1zIC0pR7vKroi8OyGpv+BB7gHEXX0ecq8VtLKTcXWYR+7NdZS7IX8lyd81LiX
-XB1x09hEKH8O71T9v3TAMVtFDHmUito8cJQtPJFlVLZyL5xF+H0VHHEED4JP8xp4
-KPFd2Rt0ixTNnE3ccUgumty1X+xq0rWSCzOXy11TxOv2tzB7TA/O85XRw9QzE3jw
-4WjTS7tH9Phe/JTxbnhADS7k5mHZ+FDmX4xeTrXKNKv9+W1Qz9qQQ441IWpokBow
-tBeOMiadvRRQ2fhNuKCpgVUgyUyts0fFvDwJhLTnUqEbdgr19HbLO8GwqPbk
------END CERTIFICATE-----
-</ca>
-<cert>""")
-    print(cert_gen.certificate.decode("utf-8") + "</cert>\n<key>")
-    print(cert_gen.private_key.decode("utf-8") + "</key>")
+    cert_gen.generate(passphrase='123456', common_name="foobar", days=1)
+    print(cert_gen.get_openvpn_config())
     print("")
     print("")
     print("")
