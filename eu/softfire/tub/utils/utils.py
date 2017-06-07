@@ -37,6 +37,8 @@ def get_config(section, key, default=None):
         return config.get(section=section, option=key)
     except configparser.NoOptionError:
         return default
+    except configparser.NoSectionError:
+        return default
 
 
 def get_user_dict():
