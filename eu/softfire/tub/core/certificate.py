@@ -37,26 +37,8 @@ def bytes_compat(string, encoding='utf-8'):
 
 
 class CertificateGenerator(object):
-    def __init__(self, username, days=DEFAULT_CERT_VALIDITY):
-        self.key_length = '2048'
-        self.serial_number = int("%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s" % (
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999),
-            random.randint(99990000, 999999999999999999999999999)))
+    def __init__(self):
+        self.key_length = 2048
         # self.digest = 'sha256WithRSAEncryption'
         self.digest = 'sha1'
         with open(get_config('system', 'cert-ca-file', '/etc/softfire/softfire-ca.p12'), 'rb') as buf:
@@ -66,69 +48,28 @@ class CertificateGenerator(object):
         self.ca_cert = load_pkcs_.get_certificate()
         self.ca_key = load_pkcs_.get_privatekey()
 
-        self.validity_start = datetime.datetime.now() - datetime.timedelta(hours=3)
-        self.validity_end = self.validity_start + datetime.timedelta(days=days)
-        self.certificate = None
-        self.private_key = None
-        # self.country_code = 'DE'
-        self.common_name = username
-        # self.organization = 'SoftFIRE'
 
-    def generate(self, passphrase=None):
-        """
-        (internal use only)
-        generates a new x509 certificate (CA or end-entity)
-        """
-        key = crypto.PKey()
-        key.generate_key(crypto.TYPE_RSA, int(self.key_length))
+    def generate(self, passphrase=None, common_name=None, days=DEFAULT_CERT_VALIDITY):
+        # create a key pair
+        k = crypto.PKey()
+        k.generate_key(crypto.TYPE_RSA, self.key_length)
 
+        # create a self-signed cert
         cert = crypto.X509()
-        subject = self._fill_subject(cert.get_subject())
-
-        cert.set_version(0x2)  # version 3 (0 indexed counting)
-        cert.set_subject(subject)
-        cert.set_serial_number(self.serial_number)
-        start_strftime = self.validity_start.strftime(generalized_time)
-        end_strftime = self.validity_end.strftime(generalized_time)
-
-        issuer = self.ca_cert.get_subject()
-        issuer_key = self.ca_key
-        cert.set_issuer(issuer)
-
-        cert.set_notBefore(start_strftime.encode())
-        cert.set_notAfter(end_strftime.encode())
-
-        cert.set_pubkey(key)
+        #cert.get_subject().CN = common_name
+        cert.get_subject().commonName = common_name
+        cert.set_serial_number(random.randint(990000, 999999999999999999999999999))
+        cert.gmtime_adj_notBefore(-600)
+        cert.gmtime_adj_notAfter(int(datetime.timedelta(days=days).total_seconds()))
+        cert.set_issuer(self.ca_cert.get_subject())
+        cert.set_pubkey(k)
         cert = self._add_extensions(cert)
-        cert.sign(issuer_key, str(self.digest))
+        cert.sign(self.ca_key, self.digest)
 
         self.certificate = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, key, passphrase=passphrase.encode())
+        self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k, passphrase=passphrase.encode())
+        return self
 
-    def _fill_subject(self, subject):
-        """
-        (internal use only)
-        fills OpenSSL.crypto.X509Name object
-        """
-
-        attr_map = {
-            'country_code': 'countryName',
-            'state': 'stateOrProvinceName',
-            'city': 'localityName',
-            'organization': 'organizationName',
-            'email': 'emailAddress',
-            'common_name': 'commonName'
-        }  # set x509 subject attributes only if not empty strings
-        for model_attr, subject_attr in attr_map.items():
-            if hasattr(self, model_attr):
-                value = getattr(self, model_attr)
-                if value:
-                    # coerce value to string, allow these fields to be redefined
-                    # as foreign keys by subclasses without losing compatibility
-                    if not isinstance(value, string_types):
-                        value = str(value)
-                    setattr(subject, subject_attr, value)
-        return subject
 
     def _add_extensions(self, cert):
         """
@@ -141,23 +82,23 @@ class CertificateGenerator(object):
         ext.append(crypto.X509Extension(b'basicConstraints',
                                         True,
                                         b'CA:FALSE'))
-        # ext.append(crypto.X509Extension(b'keyUsage',
-        #                                 CERT_KEYUSAGE_CRITICAL,
-        #                                 bytes_compat(CERT_KEYUSAGE_VALUE)))
-        # issuer_cert = self.ca_cert
-        # ext.append(crypto.X509Extension(b'subjectKeyIdentifier',
-        #                                 False,
-        #                                 b'hash',
-        #                                 subject=cert))
+        ext.append(crypto.X509Extension(b'keyUsage',
+                                        CERT_KEYUSAGE_CRITICAL,
+                                        bytes_compat(CERT_KEYUSAGE_VALUE)))
+        issuer_cert = self.ca_cert
+        ext.append(crypto.X509Extension(b'subjectKeyIdentifier',
+                                        False,
+                                        b'hash',
+                                        subject=cert))
         cert.add_extensions(ext)
         # # authorityKeyIdentifier must be added after
         # # the other extensions have been already added
-        # cert.add_extensions([
-        #     crypto.X509Extension(b'authorityKeyIdentifier',
-        #                          False,
-        #                          b'keyid:always,issuer:always',
-        #                          issuer=issuer_cert)
-        # ])
+        cert.add_extensions([
+            crypto.X509Extension(b'authorityKeyIdentifier',
+                                 False,
+                                 b'keyid:always,issuer:always',
+                                 issuer=issuer_cert)
+        ])
         # for ext in self.extensions:
         #     cert.add_extensions([
         #         crypto.X509Extension(bytes_compat(ext['name']),
@@ -251,8 +192,9 @@ tBeOMiadvRRQ2fhNuKCpgVUgyUyts0fFvDwJhLTnUqEbdgr19HbLO8GwqPbk
 
 
 if __name__ == '__main__':
-    cert_gen = CertificateGenerator('user_number_1')
-    cert_gen.generate()
+    cert_gen = CertificateGenerator()
+    cert_gen.generate(passphrase='123456',common_name="foobar", days=1)
+    #print(cert_gen.certificate.decode("utf-8"))
     print("""
 dev tun
 client

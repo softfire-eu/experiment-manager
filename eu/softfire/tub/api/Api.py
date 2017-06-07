@@ -165,9 +165,12 @@ def register():
 @authorize(role='admin')
 def get_certificate():
     username = post_get('username')
-    days = int(post_get('days'))
-    cert_gen = CertificateGenerator(username, days)
-    cert_gen.generate('123456')
+    if not username:
+        raise bottel.HTTPError(500, "Username missing")
+    password = post_get('password', default=None)
+    days = int(post_get('days', default=None))
+    cert_gen = CertificateGenerator()
+    cert_gen.generate(password, username, days)
     openvpn_config = cert_gen.get_openvpn_config()
     headers = {
         'Content-Type': 'text/plain;charset=UTF-8',
@@ -180,8 +183,8 @@ def get_certificate():
 @bottle.get('/test_cert')
 def get_certificate():
     username = 'test'
-    cert_gen = CertificateGenerator(username)
-    cert_gen.generate('123456')
+    cert_gen = CertificateGenerator()
+    cert_gen.generate('123456',username,1)
     return cert_gen.certificate.decode("utf-8")
 
 
