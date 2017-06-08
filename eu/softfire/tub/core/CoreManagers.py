@@ -264,7 +264,11 @@ class Experiment(object):
             used_resource = _get_used_resource_from_node(node, self.username)
             used_resources.append(used_resource)
             CalendarManager.check_availability_for_node(used_resource)
-        CalendarManager.check_overlapping_resources(used_resources)
+        try:
+            CalendarManager.check_overlapping_resources(used_resources)
+        except ExperimentValidationError as e:
+            delete(self.experiment)
+            raise e
         # all node have been granted
 
         for us in self.experiment.resources:
