@@ -259,9 +259,12 @@ class Experiment(object):
                 raise t.exception
 
     def reserve(self):
+        used_resources = []
         for node in self.topology_template.nodetemplates:
             used_resource = _get_used_resource_from_node(node, self.username)
+            used_resources.append(used_resource)
             CalendarManager.check_availability_for_node(used_resource)
+        CalendarManager.check_overlapping_resources(used_resources)
         # all node have been granted
 
         for us in self.experiment.resources:
