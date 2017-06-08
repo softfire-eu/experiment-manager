@@ -62,6 +62,13 @@ TESTBED_MAPPING = {
 MANAGERS_CREATE_USER = ['nfv-manager', 'sdn-manager']
 
 
+def _get_testbed_string(testbed_id):
+    for k, v in TESTBED_MAPPING.items():
+        if v == testbed_id:
+            return k
+    raise KeyError
+
+
 def create_user(username, password, role='experimenter'):
     experimenter = Experimenter()
     experimenter.username = username
@@ -355,8 +362,7 @@ def list_resources(manager_name=None, _id=None):
         resource_metadata.description = rm.description
         resource_metadata.cardinality = rm.cardinality
         resource_metadata.node_type = rm.node_type
-        if rm.testbed:
-            resource_metadata.testbed = list(TESTBED_MAPPING.keys())[list(TESTBED_MAPPING.values()).index(rm.testbed)]
+        resource_metadata.testbed = _get_testbed_string(rm.testbed)
         save(resource_metadata, ResourceMetadata)
 
     return result
@@ -378,6 +384,7 @@ def provide_resources(username):
         logger.error("No experiment to be deleted....")
         raise ExperimentNotFound("No experiment to be deployed....")
     experiment_to_deploy = experiments_to_deploy[0]
+
     user_info = get_user_info(username)
     if hasattr(user_info, 'name'):
         un = user_info.name
@@ -386,26 +393,29 @@ def provide_resources(username):
     logger.debug("Received deploy resources from user %s" % un)
     logger.debug("Received deploy resources %s" % experiment_to_deploy.name)
 
+    involved_managers = [man_name for ur in experiment_to_deploy.resources for man_name, node_types in MAPPING_MANAGERS.items() if ur.node_type in node_types]
+
     manager_ordered = get_config('system', 'deployment-order', '').split(';')
     remaining_managers = set(list(MAPPING_MANAGERS.keys())) - set(manager_ordered)
     for manager_name in manager_ordered:
-        _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
+        if manager_name in involved_managers:
+            _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
 
     for manager_name in remaining_managers:
-        _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
+        if manager_name in involved_managers:
+            _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
 
 
 def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info):
     stub = get_stub_from_manager_name(manager_name)
-    for res_to_deploy in experiment_to_deploy.resources:
+    for ur_to_deploy in experiment_to_deploy.resources:
         node_types = MAPPING_MANAGERS.get(manager_name)
-        if res_to_deploy.node_type in node_types:
+        if ur_to_deploy.node_type in node_types:
             response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
-                                                                payload=res_to_deploy.value,
+                                                                payload=ur_to_deploy.value,
                                                                 user_info=user_info))
-
             for ur in experiment_to_deploy.resources:
-                if ur.resource_id == res_to_deploy.resource_id:
+                if ur.id == ur_to_deploy.id:
                     if response.result < 0:
                         logger.error(
                             "provide resources returned %d: %s" % (response.result, response.error_message))
