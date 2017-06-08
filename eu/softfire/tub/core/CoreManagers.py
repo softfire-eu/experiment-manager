@@ -109,6 +109,24 @@ def _start_termination_thread_for_res(res):
     thread.start()
 
 
+def add_resource(resource_id, testbed, csar_file_path):
+    """
+    Creates a new ResourceMetadata object and stores it in the database.
+    :param node:
+    :return:
+    """
+    resource_metadata = ResourceMetadata()
+    zf = zipfile.ZipFile(csar_file_path, 'r')
+    metadata_file = zf.read('tosca-metadata/Metadata.yaml')
+    metadata_dict = yaml.load(metadata_file)
+    resource_metadata.description = metadata_dict.get('description')
+    resource_metadata.cardinality = -1
+    resource_metadata.node_type = "NfvResource"
+    resource_metadata.testbed = testbed
+    resource_metadata.id = resource_id
+    save(resource_metadata, ResourceMetadata)
+
+
 class Experiment(object):
     END_DATE = 'end-date'
     START_DATE = 'start-date'
@@ -140,6 +158,7 @@ class Experiment(object):
                 self.duration = self.end_date - self.start_date
                 logger.debug("Experiment duration %s" % self.duration)
             if filename.startswith("Files/") and filename.endswith('.csar'):
+
                 experiment_nsd_csar_location = get_config('system', 'temp-csar-location',
                                                           '/etc/softfire/experiment-nsd-csar')
                 if not os.path.exists(experiment_nsd_csar_location):
@@ -152,6 +171,15 @@ class Experiment(object):
                 )
                 with open(nsd_file_location, 'wb+') as f:
                     f.write(data)
+
+        for node in self.topology_template.nodetemplates:
+            file_name = node.get_properties().get('file_name')
+            if file_name:
+                file_name = file_name.value
+            if file_name and file_name.startswith("Files/") and file_name.endswith(".csar"):
+                testbeds = node.get_properties().get('testbeds').value
+                add_resource(node.get_properties().get('resource_id').value, list(testbeds.keys())[0], '/etc/softfire/experiment-nsd-csar/{}'.format(file_name[6:]))
+
 
         self._validate()
 
@@ -212,7 +240,7 @@ class Experiment(object):
         threads = []
         for node in self.topology_template.nodetemplates:
             resource_id_ = node.get_properties()["resource_id"].value
-            if resource_id_ not in resource_ids:
+            if (resource_id_ not in resource_ids) and (node.type != 'NfvResource'):
                 raise ExperimentValidationError("resource id %s not allowed" % resource_id_)
 
             thread = ExceptionHandlerThread(target=_validate_resource, args=[node, self.username])
@@ -251,6 +279,7 @@ class Experiment(object):
         else:
             resource.end_date = self.end_date
         return resource
+
 
 
 def _release_used_resource(res: entities.UsedResource):
@@ -411,7 +440,7 @@ def provide_resources(username):
 
 
 def release_resources(username):
-    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
+    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username, username) # TODO find by username??
     if len(experiments_to_delete) == 0:
         logger.error("No experiment to be deleted....")
         raise ExperimentNotFound("No experiment to be deleted....")

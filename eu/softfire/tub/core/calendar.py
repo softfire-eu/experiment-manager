@@ -10,7 +10,7 @@ class CalendarManager(object):
     @classmethod
     def check_availability_for_node(cls, used_resource):
         if not cls.check_overlapping_booking(used_resource):
-            raise ResourceAlreadyBooked('Some resources where already booked, please check the calendar')
+            raise ResourceAlreadyBooked('Some resources were already booked, please check the calendar')
 
     @classmethod
     def check_overlapping_booking(cls, used_resource):
