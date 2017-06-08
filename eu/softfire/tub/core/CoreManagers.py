@@ -491,8 +491,10 @@ def _release_resource_for_manager(manager_name, used_resources, user_info):
         raise RpcFailedCall("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
 
 
-def get_images():
-    res = []
+def get_other_resources():
+    images = []
+    networks = []
+    flavours = []
     for rm in find(ResourceMetadata):
         if rm.node_type == 'NfvImage':
             tmp = {
@@ -506,9 +508,35 @@ def get_images():
             else:
                 tmp['cardinality'] = rm.cardinality
 
-            res.append(tmp)
+            images.append(tmp)
+        if rm.node_type == 'NfvFlavor':
+            tmp = {
+                'resource_id': rm.id,
+                'node_type': rm.node_type,
+                'testbed': rm.testbed,
+                'description': rm.description
+            }
+            if rm.cardinality < 0:
+                tmp['cardinality'] = 'infinite'
+            else:
+                tmp['cardinality'] = rm.cardinality
 
-    return res
+            flavours.append(tmp)
+        if rm.node_type == 'NfvNetwork':
+            tmp = {
+                'resource_id': rm.id,
+                'node_type': rm.node_type,
+                'testbed': rm.testbed,
+                'description': rm.description
+            }
+            if rm.cardinality < 0:
+                tmp['cardinality'] = 'infinite'
+            else:
+                tmp['cardinality'] = rm.cardinality
+
+            networks.append(tmp)
+
+    return images, networks, flavours
 
 
 def get_experiment_dict(username):
@@ -578,13 +606,13 @@ def refresh_resources(username, manager_name=None):
 
     for rm in result:
         resource_metadata = ResourceMetadata()
-        resource_metadata.id = rm.resource_id
-        resource_metadata.description = rm.description
-        resource_metadata.cardinality = rm.cardinality
-        resource_metadata.node_type = rm.node_type
-        if rm.testbed:
+        if rm.resource_id:
+            resource_metadata.id = rm.resource_id
+            resource_metadata.description = rm.description
+            resource_metadata.cardinality = rm.cardinality
+            resource_metadata.node_type = rm.node_type
             resource_metadata.testbed = list(TESTBED_MAPPING.keys())[list(TESTBED_MAPPING.values()).index(rm.testbed)]
-        save(resource_metadata, ResourceMetadata)
+            save(resource_metadata, ResourceMetadata)
 
     return result
 

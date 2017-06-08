@@ -9,8 +9,8 @@ from cork import Cork
 
 import eu.softfire.tub.exceptions.exceptions as exceptions
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.CoreManagers import get_resources_dict, get_images, Experiment, \
-    get_experiment_dict, create_user_info
+from eu.softfire.tub.core.CoreManagers import get_resources_dict, Experiment, \
+    get_experiment_dict, create_user_info, get_other_resources
 from eu.softfire.tub.core.calendar import CalendarManager
 from eu.softfire.tub.core.certificate import CertificateGenerator
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
@@ -246,10 +246,13 @@ def login_form():
 @authorize(role="experimenter", fail_redirect='/sorry_page')
 def login_form():
     """Serve experimenter form"""
+    images, networks, flavours = get_other_resources()
     return dict(
         current_user=aaa.current_user,
         resources=get_resources_dict(),
-        images=get_images(),
+        images=images,
+        networks=networks,
+        flavours=flavours,
         experiment_id="",
         experiment_resources=get_experiment_dict(aaa.current_user.username),
     )
