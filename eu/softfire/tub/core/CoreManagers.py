@@ -415,28 +415,38 @@ def provide_resources(username):
     logger.debug("Received deploy resources from user %s" % un)
     logger.debug("Received deploy resources %s" % experiment_to_deploy.name)
 
-    for res_to_deploy in experiment_to_deploy.resources:
-        for manager_name, node_types in MAPPING_MANAGERS.items():
-            if res_to_deploy.node_type in node_types:
-                stub = get_stub_from_manager_name(manager_name)
-                response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
-                                                                    payload=res_to_deploy.value,
-                                                                    user_info=user_info))
+    manager_ordered = get_config('system', 'deployment-order', '').split(';')
+    remaining_managers = set(list(MAPPING_MANAGERS.keys())) - set(manager_ordered)
+    for manager_name in manager_ordered:
+        _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
 
-                for ur in experiment_to_deploy.resources:
-                    if ur.resource_id == res_to_deploy.resource_id:
-                        if response.result < 0:
-                            logger.error(
-                                "provide resources returned %d: %s" % (response.result, response.error_message))
-                            # raise RpcFailedCall(
-                            #     "provide resources returned %d: %s" % (response.result, response.error_message))
-                            ur.status = ResourceStatus.ERROR.value
-                            continue
-                        ur.value = ""
-                        for res in response.provide_resource.resources:
-                            logger.debug("Received: %s" % str(res.content))
-                            ur.value += res.content
-                        ur.status = ResourceStatus.DEPLOYED.value
+    for manager_name in remaining_managers:
+        _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
+
+
+def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info):
+    stub = get_stub_from_manager_name(manager_name)
+    for res_to_deploy in experiment_to_deploy.resources:
+        node_types = MAPPING_MANAGERS.get(manager_name)
+        if res_to_deploy.node_type in node_types:
+            response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
+                                                                payload=res_to_deploy.value,
+                                                                user_info=user_info))
+
+            for ur in experiment_to_deploy.resources:
+                if ur.resource_id == res_to_deploy.resource_id:
+                    if response.result < 0:
+                        logger.error(
+                            "provide resources returned %d: %s" % (response.result, response.error_message))
+                        # raise RpcFailedCall(
+                        #     "provide resources returned %d: %s" % (response.result, response.error_message))
+                        ur.status = ResourceStatus.ERROR.value
+                        continue
+                    ur.value = ""
+                    for res in response.provide_resource.resources:
+                        logger.debug("Received: %s" % str(res.content))
+                        ur.value += res.content
+                    ur.status = ResourceStatus.DEPLOYED.value
 
 
 def release_resources(username):
