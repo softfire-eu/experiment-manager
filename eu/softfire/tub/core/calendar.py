@@ -1,6 +1,6 @@
 from eu.softfire.tub.entities.entities import UsedResource, ResourceStatus, ResourceMetadata
 from eu.softfire.tub.entities.repositories import find
-from eu.softfire.tub.exceptions.exceptions import ResourceAlreadyBooked
+from eu.softfire.tub.exceptions.exceptions import ResourceAlreadyBooked, ExperimentValidationError
 
 
 class CalendarManager(object):
@@ -58,3 +58,25 @@ class CalendarManager(object):
                 })
 
         return result
+
+    @classmethod
+    def check_overlapping_resources(cls, used_resources: list):
+        for ur_to_check in used_resources:
+            counter = 1
+            for other_res in used_resources:
+                if other_res != ur_to_check:
+                    if _time_overlap(ur_to_check.start_date, ur_to_check.end_date, other_res.start_date,
+                                     other_res.end_date):
+                        counter += 1
+            if counter > find(ResourceMetadata, _id=ur_to_check.resource_id).cardinality:
+                raise ExperimentValidationError(
+                    "Trying to book %d resources of resource_id %s" % (counter, ur_to_check.resource_id))
+
+
+def _time_overlap(start_date_src, end_date_src, start_date_dst, end_date_dst):
+    overlap = (min(end_date_src, end_date_dst) - max(start_date_src, start_date_dst))
+    days = overlap.days + 1
+    hours, remainder = divmod(overlap.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    hours += days * 24
+    return hours > 0 or minutes > 0, seconds > 0
