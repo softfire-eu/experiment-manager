@@ -7,5 +7,7 @@ where the runner script is in /usr/bin (or wherever)
 """
 
 import eu.softfire.tub.main.ExperimentManager as em
-
-em.start_app()
+if __name__ == '__main__':
+    em.start_app()
+else:
+    application = em.application
