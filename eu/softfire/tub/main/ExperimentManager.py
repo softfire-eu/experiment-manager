@@ -7,19 +7,27 @@ from eu.softfire.tub.main import configuration
 from eu.softfire.tub.messaging.MessagingAgent import receive_forever
 from eu.softfire.tub.utils.utils import get_logger, get_config
 
+logger = get_logger(__name__)
 
-def start(argv):
-    """
-    Start the ExperimentManager
-    """
-    logger = get_logger(__name__)
-    executor = ProcessPoolExecutor(3)
-    loop = asyncio.get_event_loop()
-    asyncio.ensure_future(loop.run_in_executor(executor, receive_forever))
-    asyncio.ensure_future(loop.run_in_executor(executor, api.start))
-    t = configuration.init_sys()
+
+def _setup():
+    e = ProcessPoolExecutor(3)
+    l = asyncio.get_event_loop()
     logger.info("Starting Experiment Manager.")
+    asyncio.ensure_future(l.run_in_executor(e, receive_forever))
+    return l, e
 
+
+loop, executor = _setup()
+application = api.app
+
+
+def start_app():
+    """
+        Start the ExperimentManager from as application
+    """
+    asyncio.ensure_future(loop.run_in_executor(executor, api.start_listening))
+    t = configuration.init_sys()
     try:
         loop.run_forever()
     except KeyboardInterrupt:

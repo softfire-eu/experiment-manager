@@ -315,9 +315,6 @@ def error_translation(func):
         except FileNotFoundError:
             traceback.print_exc()
             bottle.abort(404, "File not found in your request")
-            # except:
-            #     traceback.print_exc()
-            #     bottle.abort(500, "Ups, an internal error occurred, please report to us the procedure and we will fix it")
 
     return wrapper
 
@@ -355,10 +352,9 @@ def add_authorized_experimenter(username):
         f.write(json.dumps(authorized_exp))
 
 
-def start():
+def setup_app() -> (SessionMiddleware, int, bool):
     bottle.debug(True)
-    port = get_config(section='api', key='port', default=8080)
-    app = bottle.app()
+    p = get_config(section='api', key='port', default=8080)
     bottle.install(error_translation)
     session_opts = {
         'session.cookie_expires': True,
@@ -368,7 +364,14 @@ def start():
         'session.type': 'cookie',
         'session.validate_key': True,
     }
-    app = SessionMiddleware(app, session_opts)
-    quiet_bottle = get_config('api', 'quiet', 'true').lower() == 'true'
-    logger.debug("Bootlepy quiet mode: %s" % quiet_bottle)
+    a = SessionMiddleware(bottle.app(), session_opts)
+    qb = get_config('api', 'quiet', 'true').lower() == 'true'
+    logger.debug("Bootlepy quiet mode: %s" % qb)
+    return a, p, qb
+
+
+app, port, quiet_bottle = setup_app()
+
+
+def start_listening():
     bottle.run(app=app, quiet=quiet_bottle, port=port, host='0.0.0.0')
