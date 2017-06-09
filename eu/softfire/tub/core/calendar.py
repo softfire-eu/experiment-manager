@@ -68,7 +68,8 @@ class CalendarManager(object):
                     if _time_overlap(ur_to_check.start_date, ur_to_check.end_date, other_res.start_date,
                                      other_res.end_date):
                         counter += 1
-            if counter > find(ResourceMetadata, _id=ur_to_check.resource_id).cardinality:
+            cardinality = find(ResourceMetadata, _id=ur_to_check.resource_id).cardinality
+            if 0 < cardinality < counter:
                 raise ExperimentValidationError(
                     "Trying to book %d resources of resource_id %s" % (counter, ur_to_check.resource_id))
 
