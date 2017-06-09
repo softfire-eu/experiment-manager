@@ -26,7 +26,8 @@ def receive_forever():
         while True:
             time.sleep(_ONE_DAY_IN_SECONDS)
     except KeyboardInterrupt:
-        server.stop(0)
+        logger.debug("Stopping server")
+        server.stop(True)
 
 
 class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):

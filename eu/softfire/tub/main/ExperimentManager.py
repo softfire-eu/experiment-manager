@@ -11,6 +11,10 @@ logger = get_logger(__name__)
 
 
 def _setup():
+    """
+    Starts gRPC server in asyncio loop
+    :return: loop and executor
+    """
     e = ProcessPoolExecutor(3)
     l = asyncio.get_event_loop()
     logger.info("Starting Experiment Manager.")
@@ -24,7 +28,7 @@ application = api.app
 
 def start_app():
     """
-        Start the ExperimentManager from as application
+        Start the ExperimentManager as application
     """
     asyncio.ensure_future(loop.run_in_executor(executor, api.start_listening))
     t = configuration.init_sys()
