@@ -9,10 +9,9 @@ from cork import Cork
 
 import eu.softfire.tub.exceptions.exceptions as exceptions
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.CoreManagers import get_resources_dict, Experiment, \
-    get_experiment_dict, create_user_info, get_other_resources
 from eu.softfire.tub.core.calendar import CalendarManager
-from eu.softfire.tub.core.certificate import CertificateGenerator
+from eu.softfire.tub.core.CoreManagers import get_resources_dict, Experiment, \
+    get_experiment_dict, create_user_info, add_resource, get_other_resources
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -68,6 +67,19 @@ def book_resources():
         bottle.redirect('/experimenter')
     logger.debug(("got body: %s" % request.body.read()))
     raise FileNotFoundError("File not found in your request")
+
+
+@post('/add_resource')
+@authorize(role='experimenter')
+def create_resource():
+    resource_id = request.forms.get('id')
+    node_type = request.forms.get('node_type')
+    cardinality = request.forms.get('cardinality')
+    description = request.forms.get('description')
+    testbed = request.forms.get('testbed')
+    upload = request.files.get('upload')
+    add_resource(resource_id, node_type, cardinality, description, testbed, upload)
+    bottle.redirect('/experimenter')
 
 
 #################

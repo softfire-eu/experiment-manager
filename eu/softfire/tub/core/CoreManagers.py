@@ -4,6 +4,7 @@ import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta, datetime
+from bottle import FileUpload
 
 import dateparser
 import grpc
@@ -116,6 +117,45 @@ def _start_termination_thread_for_res(res):
     thread.start()
 
 
+def add_resource(id, node_type, cardinality, description, testbed, file=None):
+    """
+    Creates a new ResourceMetadata object and stores it in the database.
+    If the file parameter is not None, it is expected to be of type FileUpload from the bottle module.
+    This file is stored where the available NSDs reside (/etc/softfire/experiment-nsd-csar),
+    named '<resource_metadata_id>.csar'.
+
+    :param id:
+    :param node_type:
+    :param cardinality:
+    :param description:
+    :param testbed:
+    :param file:
+    :return: the ResourceMetadata ID
+    """
+    logger.debug('Add new resource')
+    resource_metadata = ResourceMetadata()
+    resource_metadata.id = id
+    resource_metadata.description = description
+    resource_metadata.cardinality = cardinality
+    resource_metadata.node_type = node_type
+    resource_metadata.testbed = testbed
+
+    if file:
+        logger.debug('File is provided')
+        nsd_csar_location = get_config('system', 'temp-csar-location',
+                                       '/etc/softfire/experiment-nsd-csar')
+        if not os.path.exists(nsd_csar_location):
+            os.makedirs(nsd_csar_location)
+
+        if type(file) == "FileUpload":  # method call comes directly from api
+            logger.debug('Save file as {}/{}'.format(nsd_csar_location.rstrip('/'), '%s.csar' % id))
+            file.save('{}/{}'.format(nsd_csar_location.rstrip('/'), '%s.csar' % id))
+
+    save(resource_metadata, ResourceMetadata)
+    logger.debug('Saved ResourceMetadata with ID: %s' % id)
+    return resource_metadata.id
+
+
 class Experiment(object):
     END_DATE = 'end-date'
     START_DATE = 'start-date'
@@ -147,6 +187,7 @@ class Experiment(object):
                 self.duration = self.end_date - self.start_date
                 logger.debug("Experiment duration %s" % self.duration)
             if filename.startswith("Files/") and filename.endswith('.csar'):
+
                 experiment_nsd_csar_location = get_config('system', 'temp-csar-location',
                                                           '/etc/softfire/experiment-nsd-csar')
                 if not os.path.exists(experiment_nsd_csar_location):
@@ -159,8 +200,40 @@ class Experiment(object):
                 )
                 with open(nsd_file_location, 'wb+') as f:
                     f.write(data)
-
-        self._validate()
+        temp_ids = []
+        for node in self.topology_template.nodetemplates:
+            if node.type == 'NfvResource':
+                file_name = node.get_properties().get('file_name')
+                if file_name:
+                    file_name = file_name.value
+                if file_name and file_name.startswith("Files/") and file_name.endswith(".csar"):
+                    real_file_name = file_name[6:]
+                    tmp_file_location = '%s/%s' % (get_config(
+                        'system', 'temp-csar-location',
+                        '/etc/softfire/experiment-nsd-csar'
+                    ), real_file_name)
+                    # get the description
+                    zf = zipfile.ZipFile(tmp_file_location)
+                    yaml_file = zf.read('tosca-metadata/Metadata.yaml')
+                    if yaml_file:
+                        yaml_content = yaml.load(yaml_file)
+                        description = yaml_content.get('description')
+                    else:
+                        description = 'No description available'
+                    testbeds = node.get_properties().get('testbeds').value
+                    temp_ids.append(add_resource(
+                        node.get_properties().get('resource_id').value,
+                        "NfvResource",
+                        -1,
+                        description,
+                        list(testbeds.keys())[0]
+                    ))
+        try:
+            self._validate()
+        except:
+            for id in temp_ids:
+                delete(find(ResourceMetadata, _id=id))
+            raise
 
         exp = entities.Experiment()
         exp.id = "%s_%s" % (self.username, self.name)
@@ -219,7 +292,7 @@ class Experiment(object):
         threads = []
         for node in self.topology_template.nodetemplates:
             resource_id_ = node.get_properties()["resource_id"].value
-            if resource_id_ not in resource_ids:
+            if (resource_id_ not in resource_ids) and (node.type != 'NfvResource'):
                 raise ExperimentValidationError("resource id %s not allowed" % resource_id_)
 
             thread = ExceptionHandlerThread(target=_validate_resource, args=[node, self.username])
@@ -400,7 +473,8 @@ def provide_resources(username):
     logger.debug("Received deploy resources from user %s" % un)
     logger.debug("Received deploy resources %s" % experiment_to_deploy.name)
 
-    involved_managers = [man_name for ur in experiment_to_deploy.resources for man_name, node_types in MAPPING_MANAGERS.items() if ur.node_type in node_types]
+    involved_managers = [man_name for ur in experiment_to_deploy.resources for man_name, node_types in
+                         MAPPING_MANAGERS.items() if ur.node_type in node_types]
 
     manager_ordered = get_config('system', 'deployment-order', '').split(';')
     remaining_managers = set(list(MAPPING_MANAGERS.keys())) - set(manager_ordered)
@@ -438,7 +512,8 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
 
 
 def release_resources(username):
-    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
+    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username,
+                                                  username)  # TODO find by username??
     if len(experiments_to_delete) == 0:
         logger.error("No experiment to be deleted....")
         raise ExperimentNotFound("No experiment to be deleted....")
@@ -556,7 +631,7 @@ def get_experiment_dict(username):
 def get_resources_dict():
     res = []
     for rm in find(ResourceMetadata):
-        if rm.node_type != 'NfvImage':
+        if rm.node_type != 'NfvImage' and rm.node_type != 'NfvNetwork' and rm.node_type != 'NfvFlavor':
             tmp = {
                 'resource_id': rm.id,
                 'node_type': rm.node_type,
