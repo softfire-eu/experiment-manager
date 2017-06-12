@@ -4,7 +4,6 @@ import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta, datetime
-from bottle import FileUpload
 
 import dateparser
 import grpc
@@ -512,8 +511,7 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
 
 
 def release_resources(username):
-    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username,
-                                                  username)  # TODO find by username??
+    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
     if len(experiments_to_delete) == 0:
         logger.error("No experiment to be deleted....")
         raise ExperimentNotFound("No experiment to be deleted....")
