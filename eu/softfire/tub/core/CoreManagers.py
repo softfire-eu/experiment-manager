@@ -8,6 +8,7 @@ from datetime import timedelta, datetime
 import dateparser
 import grpc
 import yaml
+from bottle import FileUpload
 from grpc._channel import _Rendezvous
 from toscaparser.tosca_template import ToscaTemplate
 
@@ -146,7 +147,7 @@ def add_resource(id, node_type, cardinality, description, testbed, file=None):
         if not os.path.exists(nsd_csar_location):
             os.makedirs(nsd_csar_location)
 
-        if type(file) == "FileUpload":  # method call comes directly from api
+        if isinstance(file, FileUpload):  # method call comes directly from api
             logger.debug('Save file as {}/{}'.format(nsd_csar_location.rstrip('/'), '%s.csar' % id))
             file.save('{}/{}'.format(nsd_csar_location.rstrip('/'), '%s.csar' % id))
 
