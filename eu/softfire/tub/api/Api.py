@@ -81,7 +81,7 @@ def create_resource():
     description = request.forms.get('description')
     testbed = request.forms.get('testbed')
     upload = request.files.get('upload')
-    add_resource(None, node_type, cardinality, description, testbed, upload)
+    add_resource(resource_id, node_type, cardinality, description, testbed, upload)
     bottle.redirect('/experimenter')
 
 
