@@ -4,6 +4,7 @@ import traceback
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta, datetime
+from bottle import FileUpload
 
 import dateparser
 import grpc
@@ -116,25 +117,42 @@ def _start_termination_thread_for_res(res):
     thread.start()
 
 
-def add_resource(resource_id, testbed, csar_file_path):
+def add_resource(id, node_type, cardinality, description, testbed, file=None):
     """
     Creates a new ResourceMetadata object and stores it in the database.
-    :param csar_file_path:
+    If the file parameter is not None, it is expected to be of type FileUpload from the bottle module.
+    This file is stored where the available NSDs reside (/etc/softfire/experiment-nsd-csar),
+    named '<resource_metadata_id>.csar'.
+
+    :param id:
+    :param node_type:
+    :param cardinality:
+    :param description:
     :param testbed:
-    :param resource_id:
-    :param node:
-    :return: resource metadata id
+    :param file:
+    :return: the ResourceMetadata ID
     """
+    logger.debug('Add new resource')
     resource_metadata = ResourceMetadata()
-    zf = zipfile.ZipFile(csar_file_path, 'r')
-    metadata_file = zf.read('tosca-metadata/Metadata.yaml')
-    metadata_dict = yaml.load(metadata_file)
-    resource_metadata.description = metadata_dict.get('description')
-    resource_metadata.cardinality = -1
-    resource_metadata.node_type = "NfvResource"
+    resource_metadata.id = id
+    resource_metadata.description = description
+    resource_metadata.cardinality = cardinality
+    resource_metadata.node_type = node_type
     resource_metadata.testbed = testbed
-    resource_metadata.id = resource_id
+
+    if file:
+        logger.debug('File is provided')
+        nsd_csar_location = get_config('system', 'temp-csar-location',
+                                       '/etc/softfire/experiment-nsd-csar')
+        if not os.path.exists(nsd_csar_location):
+            os.makedirs(nsd_csar_location)
+
+        if type(file) == "FileUpload":  # method call comes directly from api
+            logger.debug('Save file as {}/{}'.format(nsd_csar_location.rstrip('/'), '%s.csar' % id))
+            file.save('{}/{}'.format(nsd_csar_location.rstrip('/'), '%s.csar' % id))
+
     save(resource_metadata, ResourceMetadata)
+    logger.debug('Saved ResourceMetadata with ID: %s' % id)
     return resource_metadata.id
 
 
@@ -194,11 +212,21 @@ class Experiment(object):
                         'system', 'temp-csar-location',
                         '/etc/softfire/experiment-nsd-csar'
                     ), real_file_name)
+                    # get the description
+                    zf = zipfile.ZipFile(tmp_file_location)
+                    yaml_file = zf.read('tosca-metadata/Metadata.yaml')
+                    if yaml_file:
+                        yaml_content = yaml.load(yaml_file)
+                        description = yaml_content.get('description')
+                    else:
+                        description = 'No description available'
                     testbeds = node.get_properties().get('testbeds').value
                     temp_ids.append(add_resource(
                         node.get_properties().get('resource_id').value,
-                        list(testbeds.keys())[0],
-                        tmp_file_location
+                        "NfvResource",
+                        -1,
+                        description,
+                        list(testbeds.keys())[0]
                     ))
         try:
             self._validate()
