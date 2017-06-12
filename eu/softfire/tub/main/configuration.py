@@ -61,6 +61,7 @@ def _is_man__running(man_ip, man_port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(2)
     result = sock.connect_ex((man_ip, int(man_port)))
+    sock.close()
     return result == 0
 
 
