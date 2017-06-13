@@ -29,7 +29,6 @@ setup(
     packages=packages,
     scripts=["experiment-manager"],
     install_requires=[
-        'asyncio',
         'tosca-parser',
         'bottle',
         'beaker',
