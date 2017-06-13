@@ -30,6 +30,18 @@ def receive_forever():
         server.stop(True)
 
 
+def unregister_endpoint(manager_endpoint_name: str) -> bool:
+    deleted = False
+    for manager_endpoint in find(ManagerEndpoint):
+        if manager_endpoint.name == manager_endpoint_name:
+            for resource_type in MAPPING_MANAGERS.get(manager_endpoint.name):
+                for rm in [rm for rm in find(ResourceMetadata) if rm.node_type == resource_type]:
+                    delete(rm)
+            delete(manager_endpoint)
+            deleted = True
+    return deleted
+
+
 class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
     def update_status(self, request, context):
         # logger.debug("Received request: %s" % request)
@@ -44,14 +56,11 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
 
     def unregister(self, request, context):
         logger.info("unregistering %s" % request.name)
-        for manager_endpoint in find(ManagerEndpoint):
-            if manager_endpoint.name == request.name:
-                for resource_type in MAPPING_MANAGERS.get(manager_endpoint.name):
-                    for rm in [rm for rm in find(ResourceMetadata) if rm.node_type == resource_type]:
-                        delete(rm)
-                delete(manager_endpoint)
-                return messages_pb2.ResponseMessage(result=0)
-        return messages_pb2.ResponseMessage(result=1, error_message="manager endpoint not found")
+        deleted = unregister_endpoint(request.name)
+        if deleted:
+            return messages_pb2.ResponseMessage(result=0)
+        else:
+            return messages_pb2.ResponseMessage(result=1, error_message="manager endpoint not found")
 
     def register(self, request, context):
         logger.info("registering %s" % request.name)

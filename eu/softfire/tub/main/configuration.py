@@ -6,6 +6,7 @@ from cork import Cork
 from eu.softfire.tub.api import Api
 from eu.softfire.tub.entities.entities import Experimenter, ManagerEndpoint
 from eu.softfire.tub.entities.repositories import find, delete
+from eu.softfire.tub.messaging import MessagingAgent
 from eu.softfire.tub.utils.utils import get_config, get_logger, get_user_dict, write_user_dict
 
 logger = get_logger(__name__)
@@ -72,5 +73,5 @@ def check_endpoint():
             man_ip, man_port = endpoint.endpoint.split(':')
             if not _is_man__running(man_ip, man_port):
                 logger.error("Manager %s on endpoint %s is not running" % (endpoint.name, endpoint.endpoint))
-                delete(endpoint)
+                MessagingAgent.unregister_endpoint(endpoint.name)
         stop.wait(int(get_config('system', 'manager-check-delay', '20')))
