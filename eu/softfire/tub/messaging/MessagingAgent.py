@@ -35,7 +35,7 @@ def unregister_endpoint(manager_endpoint_name: str) -> bool:
     for manager_endpoint in find(ManagerEndpoint):
         if manager_endpoint.name == manager_endpoint_name:
             for resource_type in MAPPING_MANAGERS.get(manager_endpoint.name):
-                for rm in [rm for rm in find(ResourceMetadata) if rm.node_type == resource_type]:
+                for rm in [rm for rm in find(ResourceMetadata) if rm.node_type.lower() == resource_type.lower()]:
                     delete(rm)
             delete(manager_endpoint)
             deleted = True
