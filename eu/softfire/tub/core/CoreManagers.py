@@ -230,10 +230,10 @@ class Experiment(object):
                     ))
         try:
             self._validate()
-        except:
+        except Exception as e:
             for id in temp_ids:
                 delete(find(ResourceMetadata, _id=id))
-            raise
+            raise ExperimentValidationError(e.args)
 
         exp = entities.Experiment()
         exp.id = "%s_%s" % (self.username, self.name)
@@ -403,8 +403,11 @@ def _validate_resource(node, username):
             try:
                 response = get_stub_from_manager_endpoint(manager_endpoint).execute(request_message)
             except Exception as e:
+                if hasattr(e, 'message'):
+                    raise RpcFailedCall(e.message)
                 raise RpcFailedCall(e.args)
-            if response.result < 0:
+
+            if response.result == messages_pb2.ERROR:
                 raise RpcFailedCall(response.error_message)
             return
 
