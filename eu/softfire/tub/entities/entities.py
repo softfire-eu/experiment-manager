@@ -58,7 +58,9 @@ class UsedResource(Base):
 
 class ResourceMetadata(Base):
     __tablename__ = "resource_metadata"
-
+    __mapper_args__ = {
+        'confirm_deleted_rows': False
+    }
     # id = Column(Integer, primary_key=True)
     id = Column(String(250), primary_key=True)
     node_type = Column(String(250), unique=False, nullable=False)
