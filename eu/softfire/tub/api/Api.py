@@ -44,6 +44,7 @@ def delete_resources():
 @authorize(role='experimenter')
 def refresh_resources():
     CoreManagers.refresh_resources(aaa.current_user.username)
+    CoreManagers.list_resources()
 
 
 @get('/get_status')
