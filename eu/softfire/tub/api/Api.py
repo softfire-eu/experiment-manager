@@ -50,7 +50,7 @@ def refresh_resources():
 @get('/get_status')
 @authorize(role='experimenter')
 def get_status():
-    experiment_dict = CoreManagers.get_experiment_dict(aaa.current_user.username)
+    _, experiment_dict = CoreManagers.get_experiment_dict(aaa.current_user.username)
     bottle.response.headers['Content-Type'] = 'application/json'
     return json.dumps(experiment_dict)
 
@@ -261,14 +261,16 @@ def login_form():
 def login_form():
     """Serve experimenter form"""
     images, networks, flavours = get_other_resources()
+    exp_name, experiment_dict = get_experiment_dict(aaa.current_user.username)
     return dict(
         current_user=aaa.current_user,
         resources=get_resources_dict(),
+        user_resources=get_resources_dict(aaa.current_user.username),
         images=images,
         networks=networks,
         flavours=flavours,
-        experiment_id="",
-        experiment_resources=get_experiment_dict(aaa.current_user.username),
+        experiment_id=exp_name,
+        experiment_resources=experiment_dict,
     )
 
 
