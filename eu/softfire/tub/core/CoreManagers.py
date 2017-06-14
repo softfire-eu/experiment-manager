@@ -81,7 +81,7 @@ def create_user(username, password, role='experimenter'):
         try:
             user_info = get_stub_from_manager_name(man).create_user(user_info)
             logger.info("Manager %s create user finished, new UserInfo: %s" % (man, user_info))
-        except ManagerNotFound as e:
+        except ManagerNotFound:
             traceback.print_exc()
             logger.error("one of the manager is not register and need to create user")
     logger.info("Created user, project and tenant on the NFV Resource Manager")
@@ -635,8 +635,10 @@ def get_other_resources():
 
 def get_experiment_dict(username):
     res = []
+    exp_name = "Your Experiment"
     for ex in find(entities.Experiment):
         if ex.username == username:
+            exp_name += ": %s" % ex.name
             for ur in ex.resources:
                 tmp = {
                     'resource_id': ur.resource_id,
@@ -644,27 +646,33 @@ def get_experiment_dict(username):
                     'value': ur.value
                 }
                 res.append(tmp)
-    return res
+    return exp_name, res
 
 
-def get_resources_dict():
+def get_resources_dict(username=None):
     res = []
     for rm in find(ResourceMetadata):
         if rm.node_type != 'NfvImage' and rm.node_type != 'NfvNetwork' and rm.node_type != 'NfvFlavor':
-            tmp = {
-                'resource_id': rm.id,
-                'node_type': rm.node_type,
-                'description': rm.description,
-                'testbed': rm.testbed,
-            }
-            if rm.cardinality < 0:
-                tmp['cardinality'] = 'infinite'
+            if username:
+                if username == rm.user:
+                    res.append(_get_resource_dict_from_rm(rm))
             else:
-                tmp['cardinality'] = rm.cardinality
-
-            res.append(tmp)
-
+                res.append(_get_resource_dict_from_rm(rm))
     return res
+
+
+def _get_resource_dict_from_rm(rm):
+    tmp = {
+        'resource_id': rm.id,
+        'node_type': rm.node_type,
+        'description': rm.description,
+        'testbed': rm.testbed,
+    }
+    if rm.cardinality < 0:
+        tmp['cardinality'] = 'infinite'
+    else:
+        tmp['cardinality'] = rm.cardinality
+    return tmp
 
 
 def refresh_resources(username, manager_name=None):
@@ -700,12 +708,12 @@ def refresh_resources(username, manager_name=None):
 
     for rm in result:
         resource_metadata = ResourceMetadata()
-        if rm.resource_id and (rm.user == None or rm.user == username):
+        if rm.resource_id and (not hasattr(rm, 'user') or rm.user == username):
             resource_metadata.id = rm.resource_id
             resource_metadata.description = rm.description
             resource_metadata.cardinality = rm.cardinality
             resource_metadata.node_type = rm.node_type
-            if rm.user:
+            if hasattr(rm, 'user') and rm.user:
                 resource_metadata.user = rm.user
             resource_metadata.testbed = list(TESTBED_MAPPING.keys())[list(TESTBED_MAPPING.values()).index(rm.testbed)]
             save(resource_metadata, ResourceMetadata)
