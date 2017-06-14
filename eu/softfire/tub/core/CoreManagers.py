@@ -414,7 +414,7 @@ def _validate_resource(node, username):
     raise ManagerNotFound("manager handling resource %s was not found" % node.type)
 
 
-def list_resources(manager_name=None, _id=None):
+def list_resources(manager_name=None):
     managers = []
     if manager_name is None:
         for man in find(ManagerEndpoint):
