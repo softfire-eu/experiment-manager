@@ -1,13 +1,11 @@
 import socket
 import threading
 
-from cork import Cork
-
 from eu.softfire.tub.api import Api
 from eu.softfire.tub.entities.entities import Experimenter, ManagerEndpoint
-from eu.softfire.tub.entities.repositories import find, delete
+from eu.softfire.tub.entities.repositories import find
 from eu.softfire.tub.messaging import MessagingAgent
-from eu.softfire.tub.utils.utils import get_config, get_logger, get_user_dict, write_user_dict
+from eu.softfire.tub.utils.utils import get_config, get_logger
 
 logger = get_logger(__name__)
 
@@ -15,9 +13,8 @@ stop = threading.Event()
 
 
 def init_sys():
-    aaa = Cork(get_config("api", "cork-files-path", "/etc/softfire/users"))
     users_in_db = find(Experimenter)
-    usernames_cork = [u[0] for u in aaa.list_users()]
+    usernames_cork = [u[0] for u in Api.aaa.list_users()]
     usernames_db = [u.username for u in users_in_db]
     print("""
     
@@ -51,7 +48,7 @@ def init_sys():
             if u != 'admin':
                 logger.debug("Removing user %s" % u)
                 Api.aaa.delete_user(u)
-    usernames_cork = [u[0] for u in aaa.list_users()]
+    usernames_cork = [u[0] for u in Api.aaa.list_users()]
     logger.debug("user in Cork: %s" % len(usernames_cork))
     t = threading.Thread(target=check_endpoint)
     t.start()
