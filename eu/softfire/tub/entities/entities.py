@@ -63,10 +63,13 @@ class ResourceMetadata(Base):
     }
     # id = Column(Integer, primary_key=True)
     id = Column(String(250), primary_key=True)
+    user = relationship("Experimenter", cascade="all")
+    user = Column(String(250), nullable=True)
     node_type = Column(String(250), unique=False, nullable=False)
     cardinality = Column(Integer, nullable=False)
     description = Column(String(2500), nullable=False)
     testbed = Column(String(250), unique=False, nullable=True)
+    properties = Column(PickleType) # used for specific properties of the resources (e.g. csar file name)
 
 
 class ResourceStatus(Enum):

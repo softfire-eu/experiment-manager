@@ -117,12 +117,12 @@ def _start_termination_thread_for_res(res):
     thread.start()
 
 
-def add_resource(id, node_type, cardinality, description, testbed, file=None):
+def add_resource(username, id, node_type, cardinality, description, testbed, file=None):
     """
     Creates a new ResourceMetadata object and stores it in the database.
-    If the file parameter is not None, it is expected to be of type FileUpload from the bottle module.
-    This file is stored where the available NSDs reside (/etc/softfire/experiment-nsd-csar),
-    named '<resource_metadata_id>.csar'.
+    If the file parameter is not None, it is expected to be of type FileUpload from the bottle module or str.
+    In the former case the file is stored where the available NSDs reside (/etc/softfire/experiment-nsd-csar).
+    In the latter case the file parameter should contain the file name so it can be added to the ResourceMetadata.
 
     :param id:
     :param node_type:
@@ -134,22 +134,28 @@ def add_resource(id, node_type, cardinality, description, testbed, file=None):
     """
     logger.debug('Add new resource')
     resource_metadata = ResourceMetadata()
+    resource_metadata.user = username
     resource_metadata.id = id
     resource_metadata.description = description
     resource_metadata.cardinality = cardinality
     resource_metadata.node_type = node_type
     resource_metadata.testbed = testbed
+    resource_metadata.properties = {}
 
     if file:
-        logger.debug('File is provided')
-        nsd_csar_location = get_config('system', 'temp-csar-location',
-                                       '/etc/softfire/experiment-nsd-csar')
-        if not os.path.exists(nsd_csar_location):
-            os.makedirs(nsd_csar_location)
-
         if isinstance(file, FileUpload):  # method call comes directly from api
-            logger.debug('Save file as {}/{}'.format(nsd_csar_location.rstrip('/'), '%s.csar' % id))
-            file.save('{}/{}'.format(nsd_csar_location.rstrip('/'), '%s.csar' % id))
+            logger.debug('File is provided')
+            nsd_csar_location = get_config('system', 'temp-csar-location',
+                                           '/etc/softfire/experiment-nsd-csar').rstrip('/')
+            nsd_csar_location = '{}/{}'.format(nsd_csar_location, username)
+            if not os.path.exists(nsd_csar_location):
+                os.makedirs(nsd_csar_location)
+            logger.debug('Save file as {}/{}'.format(nsd_csar_location, '%s.csar' % file.name))
+            file.save('{}/{}'.format(nsd_csar_location, '%s.csar' % file.name), overwrite=True)
+            resource_metadata.properties['nsd_file_name'] = file.name
+        elif isinstance(file, str):  # only the file name is provided
+            logger.debug('File name is provided')
+            resource_metadata.properties['nsd_file_name'] = file
 
     save(resource_metadata, ResourceMetadata)
     logger.debug('Saved ResourceMetadata with ID: %s' % id)
@@ -190,12 +196,14 @@ class Experiment(object):
 
                 experiment_nsd_csar_location = get_config('system', 'temp-csar-location',
                                                           '/etc/softfire/experiment-nsd-csar')
+
+                experiment_nsd_csar_location = '{}/{}'.format(experiment_nsd_csar_location.rstrip('/'), username)
                 if not os.path.exists(experiment_nsd_csar_location):
                     os.makedirs(experiment_nsd_csar_location)
                 data = zf.read(filename)
 
                 nsd_file_location = "%s/%s" % (
-                    get_config('system', 'temp-csar-location', '/etc/softfire/experiment-nsd-csar'),
+                    experiment_nsd_csar_location,
                     filename.split('/')[-1]
                 )
                 with open(nsd_file_location, 'wb+') as f:
@@ -208,10 +216,10 @@ class Experiment(object):
                     file_name = file_name.value
                 if file_name and file_name.startswith("Files/") and file_name.endswith(".csar"):
                     real_file_name = file_name[6:]
-                    tmp_file_location = '%s/%s' % (get_config(
+                    tmp_file_location = '{}/{}/{}'.format(get_config(
                         'system', 'temp-csar-location',
                         '/etc/softfire/experiment-nsd-csar'
-                    ), real_file_name)
+                    ).rstrip('/'), username, real_file_name)
                     # get the description
                     zf = zipfile.ZipFile(tmp_file_location)
                     yaml_file = zf.read('tosca-metadata/Metadata.yaml')
@@ -222,11 +230,13 @@ class Experiment(object):
                         description = 'No description available'
                     testbeds = node.get_properties().get('testbeds').value
                     temp_ids.append(add_resource(
+                        username,
                         node.get_properties().get('resource_id').value,
                         "NfvResource",
                         -1,
                         description,
-                        list(testbeds.keys())[0]
+                        list(testbeds.keys())[0],
+                        real_file_name
                     ))
         try:
             self._validate()
@@ -295,7 +305,8 @@ class Experiment(object):
             if (resource_id_ not in resource_ids) and (node.type != 'NfvResource'):
                 raise ExperimentValidationError("resource id %s not allowed" % resource_id_)
 
-            thread = ExceptionHandlerThread(target=_validate_resource, args=[node, self.username])
+            resource_metadata = find(ResourceMetadata, resource_id_)
+            thread = ExceptionHandlerThread(target=_validate_resource, args=[node, self.username, resource_metadata])
             threads.append(thread)
             thread.start()
         for t in threads:
@@ -394,9 +405,12 @@ def get_stub_from_manager_endpoint(manager_endpoint):
     return messages_pb2_grpc.ManagerAgentStub(channel)
 
 
-def _validate_resource(node, username):
+def _validate_resource(node, username, request_metadata):
     for manager_endpoint in find(ManagerEndpoint):
         if node.type in MAPPING_MANAGERS.get(manager_endpoint.name):
+            if request_metadata and request_metadata.properties and request_metadata.properties.get('nsd_file_name'):
+                nsd_file_name = request_metadata.properties.get('nsd_file_name')
+                node.entity_tpl.get('properties')['file_name'] = 'Files/%s' % nsd_file_name
             request_message = messages_pb2.RequestMessage(method=messages_pb2.VALIDATE_RESOURCES,
                                                           payload=yaml.dump(node.entity_tpl),
                                                           user_info=get_user_info(username))
@@ -414,7 +428,7 @@ def _validate_resource(node, username):
     raise ManagerNotFound("manager handling resource %s was not found" % node.type)
 
 
-def list_resources(manager_name=None):
+def list_resources(username=None, manager_name=None):
     managers = []
     if manager_name is None:
         for man in find(ManagerEndpoint):
@@ -440,13 +454,16 @@ def list_resources(manager_name=None):
                 delete(rm)
 
     for rm in result:
-        resource_metadata = ResourceMetadata()
-        resource_metadata.id = rm.resource_id
-        resource_metadata.description = rm.description
-        resource_metadata.cardinality = rm.cardinality
-        resource_metadata.node_type = rm.node_type
-        resource_metadata.testbed = _get_testbed_string(rm.testbed)
-        save(resource_metadata, ResourceMetadata)
+        if username is None or rm.user == username:
+            resource_metadata = ResourceMetadata()
+            if username:
+                resource_metadata.user = username
+            resource_metadata.id = rm.resource_id
+            resource_metadata.description = rm.description
+            resource_metadata.cardinality = rm.cardinality
+            resource_metadata.node_type = rm.node_type
+            resource_metadata.testbed = _get_testbed_string(rm.testbed)
+            save(resource_metadata, ResourceMetadata)
 
     return result
 
@@ -683,11 +700,13 @@ def refresh_resources(username, manager_name=None):
 
     for rm in result:
         resource_metadata = ResourceMetadata()
-        if rm.resource_id:
+        if rm.resource_id and (rm.user == None or rm.user == username):
             resource_metadata.id = rm.resource_id
             resource_metadata.description = rm.description
             resource_metadata.cardinality = rm.cardinality
             resource_metadata.node_type = rm.node_type
+            if rm.user:
+                resource_metadata.user = rm.user
             resource_metadata.testbed = list(TESTBED_MAPPING.keys())[list(TESTBED_MAPPING.values()).index(rm.testbed)]
             save(resource_metadata, ResourceMetadata)
 
