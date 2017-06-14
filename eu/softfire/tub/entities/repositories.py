@@ -57,7 +57,7 @@ def save(entity, _clazz=None):
                 else:
                     if found:
                         delete(found)
-        except NoResultFound as nrf:
+        except NoResultFound:
             pass
 
     with get_db_session() as se:
