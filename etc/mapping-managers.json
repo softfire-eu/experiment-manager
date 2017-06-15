@@ -1,17 +1,17 @@
 {
-    'sdn-manager': [
-        'SdnResource'
-    ],
-    'nfv-manager': [
-        'NfvResource'
-    ],
-    'monitoring-manager': [
-        'MonitoringResource'
-    ],
-    'security-manager': [
-        'SecurityResource'
-    ],
-    'physical-device-manager': [
-        'PhysicalResource'
-    ]
+  "sdn-manager": [
+    "SdnResource"
+  ],
+  "nfv-manager": [
+    "NfvResource"
+  ],
+  "monitoring-manager": [
+    "MonitoringResource"
+  ],
+  "security-manager": [
+    "SecurityResource"
+  ],
+  "physical-device-manager": [
+    "PhysicalResource"
+  ]
 }
