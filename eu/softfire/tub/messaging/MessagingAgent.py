@@ -6,7 +6,7 @@ import grpc
 from eu.softfire.tub.core import CoreManagers
 from eu.softfire.tub.core.CoreManagers import list_resources, MAPPING_MANAGERS
 from eu.softfire.tub.entities.entities import ManagerEndpoint, ResourceMetadata
-from eu.softfire.tub.entities.repositories import save, find, delete
+from eu.softfire.tub.entities.repositories import save, find, delete, find_by_element_value
 from eu.softfire.tub.messaging.grpc import messages_pb2
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc
 from eu.softfire.tub.utils.utils import get_logger, get_config
@@ -64,6 +64,10 @@ class RegistrationAgent(messages_pb2_grpc.RegistrationServiceServicer):
 
     def register(self, request, context):
         logger.info("registering %s" % request.name)
+        old_managers = find_by_element_value(ManagerEndpoint, ManagerEndpoint.name, request.name)
+        for old_man in old_managers:
+            delete(old_man)
+            logger.debug("Removed old manager endpoint: %s:%s" % (old_man.name, old_man.endpoint))
         manager_endpoint = ManagerEndpoint()
         manager_endpoint.name = request.name
         manager_endpoint.endpoint = request.endpoint

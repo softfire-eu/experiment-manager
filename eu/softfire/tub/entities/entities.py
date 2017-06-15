@@ -11,7 +11,7 @@ class ManagerEndpoint(Base):
     __tablename__ = "manager_endpoint"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
+    name = Column(String(250), nullable=False, unique=True)
     endpoint = Column(String(250), nullable=False)
 
 
