@@ -20,31 +20,14 @@ from eu.softfire.tub.entities.repositories import save, find, delete, get_user_i
 from eu.softfire.tub.exceptions.exceptions import ExperimentValidationError, ManagerNotFound, RpcFailedCall, \
     ResourceNotFound, ExperimentNotFound
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc, messages_pb2
-from eu.softfire.tub.utils.utils import get_logger, ExceptionHandlerThread, TimerTerminationThread, get_config
+from eu.softfire.tub.utils.utils import get_logger, ExceptionHandlerThread, TimerTerminationThread, get_config, \
+    get_mapping_managers
 
 logger = get_logger('eu.softfire.tub.core')
 
 REFRESH_RES_NODE_TYPES = [
     "NfvImage"
 ]
-
-MAPPING_MANAGERS = {
-    'sdn-manager': [
-        'SdnResource'
-    ],
-    'nfv-manager': [
-        'NfvResource'
-    ],
-    'monitoring-manager': [
-        'MonitoringNode'
-    ],
-    'security-manager': [
-        'SecurityResource'
-    ],
-    'physical-device-manager': [
-        'PhysicalResource'
-    ]
-}
 
 TESTBED_MAPPING = {
     'fokus': messages_pb2.FOKUS,
@@ -286,7 +269,7 @@ class Experiment(object):
     def get_nodes(self, manager_name):
         nodes = []
         for node in self.topology_template.nodetemplates:
-            if node.type in MAPPING_MANAGERS[manager_name]:
+            if node.type in get_mapping_managers()[manager_name]:
                 nodes.append(node)
         return nodes
 
@@ -354,7 +337,7 @@ class Experiment(object):
 def _release_used_resource(res: entities.UsedResource):
     exp = find(entities.Experiment, _id=res.parent_id)
     user_info = get_user_info(exp.username)
-    for man, node_types in MAPPING_MANAGERS.items():
+    for man, node_types in get_mapping_managers().items():
         if res.node_type in node_types:
             response = get_stub_from_manager_name(man).execute(
                 messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
@@ -407,7 +390,7 @@ def get_stub_from_manager_endpoint(manager_endpoint):
 
 def _validate_resource(node, username, request_metadata):
     for manager_endpoint in find(ManagerEndpoint):
-        if node.type in MAPPING_MANAGERS.get(manager_endpoint.name):
+        if node.type in get_mapping_managers().get(manager_endpoint.name):
             if request_metadata and request_metadata.properties and request_metadata.properties.get('nsd_file_name'):
                 nsd_file_name = request_metadata.properties.get('nsd_file_name')
                 node.entity_tpl.get('properties')['file_name'] = 'Files/%s' % nsd_file_name
@@ -494,10 +477,10 @@ def provide_resources(username):
     logger.debug("Received deploy resources %s" % experiment_to_deploy.name)
 
     involved_managers = [man_name for ur in experiment_to_deploy.resources for man_name, node_types in
-                         MAPPING_MANAGERS.items() if ur.node_type in node_types]
+                         get_mapping_managers().items() if ur.node_type in node_types]
 
     manager_ordered = get_config('system', 'deployment-order', '').split(';')
-    remaining_managers = set(list(MAPPING_MANAGERS.keys())) - set(manager_ordered)
+    remaining_managers = set(list(get_mapping_managers().keys())) - set(manager_ordered)
     for manager_name in manager_ordered:
         if manager_name in involved_managers:
             _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
@@ -510,7 +493,7 @@ def provide_resources(username):
 def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info):
     stub = get_stub_from_manager_name(manager_name)
     for ur_to_deploy in experiment_to_deploy.resources:
-        node_types = MAPPING_MANAGERS.get(manager_name)
+        node_types = get_mapping_managers().get(manager_name)
         if ur_to_deploy.node_type in node_types:
             response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
                                                                 payload=ur_to_deploy.value,
@@ -547,7 +530,7 @@ def _release_all_experiment_resources(experiment_to_delete, username):
     user_info = get_user_info(username)
     used_resources = experiment_to_delete.resources
     managers = [man_name
-                for man_name, node_types in MAPPING_MANAGERS.items()
+                for man_name, node_types in get_mapping_managers().items()
                 for ur in used_resources
                 if ur.node_type in node_types]
     threads = []
@@ -567,7 +550,7 @@ def _release_resource_for_manager(manager_name, used_resources, user_info):
     try:
 
         for ur in used_resources:
-            if ur.node_type in MAPPING_MANAGERS.get(manager_name):
+            if ur.node_type in get_mapping_managers().get(manager_name):
                 if ur.value:
                     response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.RELEASE_RESOURCES,
                                                                         payload=ur.value,
@@ -576,7 +559,7 @@ def _release_resource_for_manager(manager_name, used_resources, user_info):
                         logger.error("release resources returned %d: %s" % (response.result, response.error_message))
                         raise RpcFailedCall(
                             "provide resources returned %d: %s" % (response.result, response.error_message))
-                    for u in [u for u in used_resources if u.node_type in MAPPING_MANAGERS.get(manager_name)]:
+                    for u in [u for u in used_resources if u.node_type in get_mapping_managers().get(manager_name)]:
                         logger.info("deleting %s" % u.name)
                         delete(u)
     except _Rendezvous:
@@ -735,7 +718,7 @@ def update_experiment(username, manager_name, resources):
     index = 0
 
     for ur in experiment.resources:
-        if ur.node_type in MAPPING_MANAGERS.get(manager_name):
+        if ur.node_type in get_mapping_managers().get(manager_name):
             ur.value = json.dumps(json.loads(resources[index].content))
             index += 1
 
