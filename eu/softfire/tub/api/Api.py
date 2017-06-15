@@ -9,9 +9,9 @@ from cork import Cork
 
 import eu.softfire.tub.exceptions.exceptions as exceptions
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.calendar import CalendarManager
 from eu.softfire.tub.core.CoreManagers import get_resources_dict, Experiment, \
     get_experiment_dict, create_user_info, add_resource, get_other_resources
+from eu.softfire.tub.core.calendar import CalendarManager
 from eu.softfire.tub.core.certificate import CertificateGenerator
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
@@ -296,7 +296,7 @@ def server_static(filename):
     """ route to the css and static files"""
     if ".." in filename:
         return HTTPError(status=403)
-    return bottle.static_file(filename, root='%s/../../../../static' % os.path.dirname(os.path.realpath(__file__)))
+    return bottle.static_file(filename, root='%s/static' % get_config('api', 'view-path', '/etc/softfire/views'))
 
 
 #########

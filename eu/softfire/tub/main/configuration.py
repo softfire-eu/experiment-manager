@@ -16,7 +16,8 @@ def init_sys():
     users_in_db = find(Experimenter)
     usernames_cork = [u[0] for u in Api.aaa.list_users()]
     usernames_db = [u.username for u in users_in_db]
-    print("""
+    try:
+        print("""
     
                                                     ███████╗ ██████╗ ███████╗████████╗███████╗██╗██████╗ ███████╗                                           
                                                     ██╔════╝██╔═══██╗██╔════╝╚══██╔══╝██╔════╝██║██╔══██╗██╔════╝                                           
@@ -40,6 +41,8 @@ def init_sys():
     ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝       ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝     
     
 """)
+    except:
+        pass
     logger.debug("user in the DB: %s" % len(usernames_db))
     logger.debug("user in Cork: %s" % len(usernames_cork))
     if len(usernames_cork) > len(usernames_db) + 1:
