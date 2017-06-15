@@ -52,7 +52,7 @@ class CertificateGenerator(object):
         with open(get_config('system', 'openvpn-template-location', '/etc/softfire/template_openvpn.tpl'), 'r') as f:
             self.openvpn_config_tpl = f.read()
 
-    def generate(self, passphrase=None, common_name=None, days=DEFAULT_CERT_VALIDITY):
+    def generate(self, passphrase: str = None, common_name=None, days=DEFAULT_CERT_VALIDITY):
         k = crypto.PKey()
         k.generate_key(crypto.TYPE_RSA, self.key_length)
 
@@ -68,7 +68,7 @@ class CertificateGenerator(object):
         cert.sign(self.ca_key, self.digest)
 
         self.certificate = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k, passphrase=passphrase.encode())
+        self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k, cipher="DES-EDE3-CBC", passphrase=passphrase.encode())
         return self
 
     def _add_extensions(self, cert):
