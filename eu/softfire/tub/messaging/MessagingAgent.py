@@ -4,12 +4,12 @@ from concurrent import futures
 import grpc
 
 from eu.softfire.tub.core import CoreManagers
-from eu.softfire.tub.core.CoreManagers import list_resources, MAPPING_MANAGERS
+from eu.softfire.tub.core.CoreManagers import list_resources
 from eu.softfire.tub.entities.entities import ManagerEndpoint, ResourceMetadata
 from eu.softfire.tub.entities.repositories import save, find, delete, find_by_element_value
 from eu.softfire.tub.messaging.grpc import messages_pb2
 from eu.softfire.tub.messaging.grpc import messages_pb2_grpc
-from eu.softfire.tub.utils.utils import get_logger, get_config
+from eu.softfire.tub.utils.utils import get_logger, get_config, get_mapping_managers
 
 logger = get_logger('eu.softfire.tub.messaging')
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
@@ -34,7 +34,7 @@ def unregister_endpoint(manager_endpoint_name: str) -> bool:
     deleted = False
     for manager_endpoint in find(ManagerEndpoint):
         if manager_endpoint.name == manager_endpoint_name:
-            for resource_type in MAPPING_MANAGERS.get(manager_endpoint.name):
+            for resource_type in get_mapping_managers().get(manager_endpoint.name):
                 for rm in [rm for rm in find(ResourceMetadata) if rm.node_type.lower() == resource_type.lower()]:
                     delete(rm)
             delete(manager_endpoint)
