@@ -290,7 +290,8 @@ def sorry_page():
     return '<p>Sorry, you are not authorized to perform this action</p>'
 
 
-@bottle.route('/static/<filename>')
+
+@bottle.route('/static/<filename:path>')
 # @authorize(role="experimenter", fail_redirect='/sorry_page')
 def server_static(filename):
     """ route to the css and static files"""
