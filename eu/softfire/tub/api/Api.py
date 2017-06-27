@@ -176,7 +176,8 @@ def register():
 
 
 @bottle.post('/certificates')
-@authorize(role='admin')
+#@authorize(role='admin')
+@authorize(role='portal')
 def get_certificate():
     username = post_get('username')
     if not username:
@@ -195,7 +196,7 @@ def get_certificate():
 
 
 @bottle.post('/create_user')
-@authorize(role='admin')
+@authorize(role='portal')
 def create_user():
     password = postd().password
     role = postd().role
@@ -206,7 +207,7 @@ def create_user():
 
 
 @bottle.post('/delete_user')
-@authorize(role='admin')
+@authorize(role='portal')
 def delete_user():
     username = post_get('username')
     CoreManagers.delete_user(username)
