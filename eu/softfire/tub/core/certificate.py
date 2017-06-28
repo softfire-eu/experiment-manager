@@ -52,7 +52,7 @@ class CertificateGenerator(object):
         with open(get_config('system', 'openvpn-template-location', '/etc/softfire/template_openvpn.tpl'), 'r') as f:
             self.openvpn_config_tpl = f.read()
 
-    def generate(self, passphrase: str = None, common_name=None, days=DEFAULT_CERT_VALIDITY):
+    def generate(self, passphrase: str = None, common_name=None, days=DEFAULT_CERT_VALIDITY, is_server=False):
         k = crypto.PKey()
         k.generate_key(crypto.TYPE_RSA, self.key_length)
 
@@ -64,14 +64,17 @@ class CertificateGenerator(object):
         cert.gmtime_adj_notAfter(int(datetime.timedelta(days=days).total_seconds()))
         cert.set_issuer(self.ca_cert.get_subject())
         cert.set_pubkey(k)
-        cert = self._add_extensions(cert)
+        cert = self._add_extensions(cert, is_server)
         cert.sign(self.ca_key, self.digest)
 
         self.certificate = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k, cipher="DES-EDE3-CBC", passphrase=passphrase.encode())
+        if passphrase:
+            self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k, cipher="DES-EDE3-CBC", passphrase=passphrase.encode())
+        else:
+            self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k)
         return self
 
-    def _add_extensions(self, cert):
+    def _add_extensions(self, cert, is_server=False):
         """
         (internal use only)
         adds x509 extensions to ``cert``
@@ -83,6 +86,8 @@ class CertificateGenerator(object):
         ext.append(crypto.X509Extension(b'keyUsage',
                                         CERT_KEYUSAGE_CRITICAL,
                                         bytes_compat(CERT_KEYUSAGE_VALUE)))
+        if is_server:
+            ext.append(crypto.X509Extension(b'extendedKeyUsage', False, b'serverAuth'))
         issuer_cert = self.ca_cert
         ext.append(crypto.X509Extension(b'subjectKeyIdentifier',
                                         False,
@@ -109,12 +114,20 @@ class CertificateGenerator(object):
 
 if __name__ == '__main__':
     cert_gen = CertificateGenerator()
-    cert_gen.generate(passphrase='123456', common_name="foobar", days=1)
-    print(cert_gen.get_openvpn_config())
-    print("")
-    print("")
-    print("")
-    print("")
-
-    output = subprocess.check_output(['openssl', 'x509', '-noout', '-text'], input=cert_gen.certificate).decode('utf-8')
-    print(output)
+    try:
+        cert_gen.generate(passphrase='123456', common_name="user1", days=5)
+        print(cert_gen.get_openvpn_config())
+        print("")
+    except:
+        pass
+    try:
+        cert_gen.generate(common_name="temp-vpn-srv", days=5, is_server=True)
+        print(cert_gen.certificate.decode("utf-8"), cert_gen.private_key.decode("utf-8"))
+        print("")
+    except:
+        pass
+    if cert_gen.certificate:
+        print("")
+        print("")
+        output = subprocess.check_output(['openssl', 'x509', '-noout', '-text'], input=cert_gen.certificate).decode('utf-8')
+        print(output)
