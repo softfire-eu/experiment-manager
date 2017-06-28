@@ -1,3 +1,4 @@
+import os
 import socket
 import threading
 
@@ -16,33 +17,8 @@ def init_sys():
     users_in_db = find(Experimenter)
     usernames_cork = [u[0] for u in Api.aaa.list_users()]
     usernames_db = [u.username for u in users_in_db]
-    try:
-        print("""
-    
-                                                    ███████╗ ██████╗ ███████╗████████╗███████╗██╗██████╗ ███████╗                                           
-                                                    ██╔════╝██╔═══██╗██╔════╝╚══██╔══╝██╔════╝██║██╔══██╗██╔════╝                                           
-                                                    ███████╗██║   ██║█████╗     ██║   █████╗  ██║██████╔╝█████╗                                             
-                                                    ╚════██║██║   ██║██╔══╝     ██║   ██╔══╝  ██║██╔══██╗██╔══╝                                             
-                                                    ███████║╚██████╔╝██║        ██║   ██║     ██║██║  ██║███████╗                                           
-                                                    ╚══════╝ ╚═════╝ ╚═╝        ╚═╝   ╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝                                           
-                                                                                                                                                            
-                                                                                                                                                            
-                                                                                                                                                            
-█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗█████╗
-╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝╚════╝
-                                                                                                                                                            
-                                                                                                                                                            
-                                                                                                                                                            
-    ███████╗██╗  ██╗██████╗ ███████╗██████╗ ██╗███╗   ███╗███████╗███╗   ██╗████████╗    ███╗   ███╗ █████╗ ███╗   ██╗ █████╗  ██████╗ ███████╗██████╗      
-    ██╔════╝╚██╗██╔╝██╔══██╗██╔════╝██╔══██╗██║████╗ ████║██╔════╝████╗  ██║╚══██╔══╝    ████╗ ████║██╔══██╗████╗  ██║██╔══██╗██╔════╝ ██╔════╝██╔══██╗     
-    █████╗   ╚███╔╝ ██████╔╝█████╗  ██████╔╝██║██╔████╔██║█████╗  ██╔██╗ ██║   ██║       ██╔████╔██║███████║██╔██╗ ██║███████║██║  ███╗█████╗  ██████╔╝     
-    ██╔══╝   ██╔██╗ ██╔═══╝ ██╔══╝  ██╔══██╗██║██║╚██╔╝██║██╔══╝  ██║╚██╗██║   ██║       ██║╚██╔╝██║██╔══██║██║╚██╗██║██╔══██║██║   ██║██╔══╝  ██╔══██╗     
-    ███████╗██╔╝ ██╗██║     ███████╗██║  ██║██║██║ ╚═╝ ██║███████╗██║ ╚████║   ██║       ██║ ╚═╝ ██║██║  ██║██║ ╚████║██║  ██║╚██████╔╝███████╗██║  ██║     
-    ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝       ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝     
-    
-""")
-    except:
-        pass
+    if get_config('system', 'banner-file', '') != '':
+        __print_banner(get_config('system', 'banner-file', ''))
     logger.debug("user in the DB: %s" % len(usernames_db))
     logger.debug("user in Cork: %s" % len(usernames_cork))
     if len(usernames_cork) > len(usernames_db) + 1:
@@ -75,3 +51,12 @@ def check_endpoint():
                 logger.error("Manager %s on endpoint %s is not running" % (endpoint.name, endpoint.endpoint))
                 MessagingAgent.unregister_endpoint(endpoint.name)
         stop.wait(int(get_config('system', 'manager-check-delay', '20')))
+
+
+def __print_banner(banner_file_path):
+    if not os.path.isfile(banner_file_path):
+        logger.error('Not printing banner since the file {} does not exist.'.format(banner_file_path))
+        return
+    with open(banner_file_path, 'r') as banner_file:
+        banner = banner_file.read()
+        print(banner)
