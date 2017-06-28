@@ -1,3 +1,4 @@
+import datetime
 import os
 import socket
 import threading
@@ -53,7 +54,7 @@ def __initialize_cork_user(username, role, password):
         'hash': cork._hash(username, password),
         'email_addr': username + '@localhost.local',
         'desc': username + ' test user',
-        'creation_date': time.time()
+        'creation_date': '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
     }
     cork._store.users[username] = user_cork
     cork._store.save_users()
