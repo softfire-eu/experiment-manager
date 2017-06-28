@@ -46,7 +46,7 @@ class Experiment(Base):
 class UsedResource(Base):
     __tablename__ = "used_resource"
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False, unique=True)
+    name = Column(String(250), nullable=False, unique=False)
     resource_id = Column(String(250), nullable=False, unique=False)
     parent_id = Column(String(250), ForeignKey('experiment.id'))
     status = Column(Integer, nullable=False)
@@ -63,7 +63,7 @@ class ResourceMetadata(Base):
     }
     # id = Column(Integer, primary_key=True)
     id = Column(String(250), primary_key=True)
-    user = Column(String(250), nullable=True)
+    user = Column(String(250), primary_key=True)
     node_type = Column(String(250), unique=False, nullable=False)
     cardinality = Column(Integer, nullable=False)
     description = Column(String(2500), nullable=False)

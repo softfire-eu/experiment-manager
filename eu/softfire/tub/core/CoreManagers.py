@@ -116,6 +116,8 @@ def add_resource(username, id, node_type, cardinality, description, testbed, fil
     :return: the ResourceMetadata ID
     """
     logger.debug('Add new resource')
+    if username is None or username == '':
+        raise Exception('Username must not be None or empty.')
     resource_metadata = ResourceMetadata()
     resource_metadata.user = username
     resource_metadata.id = id
@@ -411,7 +413,7 @@ def _validate_resource(node, username, request_metadata):
     raise ManagerNotFound("manager handling resource %s was not found" % node.type)
 
 
-def list_resources(username=None, manager_name=None):
+def list_resources(username='', manager_name=None):
     managers = []
     if manager_name is None:
         for man in find(ManagerEndpoint):
@@ -437,9 +439,9 @@ def list_resources(username=None, manager_name=None):
                 delete(rm)
 
     for rm in result:
-        if username is None or rm.user == username:
+        if username == '' or rm.user == username:
             resource_metadata = ResourceMetadata()
-            if username:
+            if not username is None:
                 resource_metadata.user = username
             resource_metadata.id = rm.resource_id
             resource_metadata.description = rm.description
