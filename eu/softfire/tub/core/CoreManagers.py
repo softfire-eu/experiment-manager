@@ -709,8 +709,8 @@ def refresh_resources(username, manager_name=None):
 def get_used_resources_by_experimenter(exp_name):
     res = []
     for ur in find(UsedResource):
-        experimenter = find(Experimenter, ur.parent_id)
-        if experimenter is not None and experimenter.name == exp_name:
+        experiment = find(Experiment, ur.parent_id)
+        if not experiment is None and experiment.username == exp_name:
             res.append(ur)
     return res
 
