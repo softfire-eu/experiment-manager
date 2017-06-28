@@ -1,9 +1,12 @@
 import os
 import socket
 import threading
+import time
+
+from cork import Cork
 
 from eu.softfire.tub.api import Api
-from eu.softfire.tub.entities.entities import Experimenter, ManagerEndpoint
+from eu.softfire.tub.entities.entities import ManagerEndpoint
 from eu.softfire.tub.entities.repositories import find
 from eu.softfire.tub.messaging import MessagingAgent
 from eu.softfire.tub.utils.utils import get_config, get_logger
@@ -14,24 +17,47 @@ stop = threading.Event()
 
 
 def init_sys():
-    users_in_db = find(Experimenter)
-    usernames_cork = [u[0] for u in Api.aaa.list_users()]
-    usernames_db = [u.username for u in users_in_db]
     if get_config('system', 'banner-file', '') != '':
         __print_banner(get_config('system', 'banner-file', ''))
-    logger.debug("user in the DB: %s" % len(usernames_db))
-    logger.debug("user in Cork: %s" % len(usernames_cork))
-    if len(usernames_cork) > len(usernames_db) + 1:
-        usernames_to_delete = set(usernames_cork) - set(usernames_db)
-        for u in usernames_to_delete:
-            if u != 'admin':
-                logger.debug("Removing user %s" % u)
-                Api.aaa.delete_user(u)
+
+    # check if cork users and roles exist and create them if not
     usernames_cork = [u[0] for u in Api.aaa.list_users()]
-    logger.debug("user in Cork: %s" % len(usernames_cork))
+    roles_cork = [r[0] for r in Api.aaa.list_roles()]
+    if 'portal' not in roles_cork:
+        __initialize_cork_role('portal', 70)
+    if 'admin' not in roles_cork:
+        __initialize_cork_role('admin', 100)
+    if 'experimenter' not in roles_cork:
+        __initialize_cork_role('experimenter', 60)
+    if 'admin' not in usernames_cork:
+        __initialize_cork_user('admin', 'admin', get_config('system', 'admin-password', 'softfire'))
+    if 'portal' not in usernames_cork:
+        __initialize_cork_user('portal', 'portal', get_config('system', 'portal-password', 'softfire'))
+
     t = threading.Thread(target=check_endpoint)
     t.start()
     return t
+
+
+def __initialize_cork_role(role_name, role_level):
+    cork = Cork(directory=get_config("api", "cork-files-path", "/etc/softfire/users"), initialize=False)
+    cork._store.roles[role_name] = role_level
+    cork._store.save_roles()
+    logger.debug('Created cork role: {} with level {}.'.format(role_name, role_level))
+
+
+def __initialize_cork_user(username, role, password):
+    cork = Cork(directory=get_config("api", "cork-files-path", "/etc/softfire/users"), initialize=False)
+    user_cork = {
+        'role': role,
+        'hash': cork._hash(username, password),
+        'email_addr': username + '@localhost.local',
+        'desc': username + ' test user',
+        'creation_date': time.time()
+    }
+    cork._store.users[username] = user_cork
+    cork._store.save_users()
+    logger.debug('Created cork user {} with role {}.'.format(username, role))
 
 
 def _is_man__running(man_ip, man_port):
