@@ -218,7 +218,7 @@ def delete_user():
 @bottle.post('/create_role')
 @authorize(role='admin')
 def create_role():
-    aaa.create_role(post_get('role'), post_get('level'))
+    aaa.create_role(post_get('role'), int(post_get('level')))
     return dict(ok=True, msg='')
 
 
