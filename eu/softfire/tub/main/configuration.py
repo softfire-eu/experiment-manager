@@ -25,9 +25,9 @@ def init_sys():
     usernames_cork = [u[0] for u in Api.aaa.list_users()]
     roles_cork = [r[0] for r in Api.aaa.list_roles()]
     if 'portal' not in roles_cork:
-        __initialize_cork_role('portal', 70)
+        __initialize_cork_role('portal', 100)
     if 'admin' not in roles_cork:
-        __initialize_cork_role('admin', 100)
+        __initialize_cork_role('admin', 101)
     if 'experimenter' not in roles_cork:
         __initialize_cork_role('experimenter', 60)
     if 'admin' not in usernames_cork:
