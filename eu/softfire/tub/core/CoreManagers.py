@@ -702,6 +702,8 @@ def refresh_resources(username, manager_name=None):
             resource_metadata.node_type = rm.node_type
             if hasattr(rm, 'user') and rm.user:
                 resource_metadata.user = rm.user
+            else:
+                resource_metadata.user = ''
             resource_metadata.testbed = list(TESTBED_MAPPING.keys())[list(TESTBED_MAPPING.values()).index(rm.testbed)]
             save(resource_metadata, ResourceMetadata)
 

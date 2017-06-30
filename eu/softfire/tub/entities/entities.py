@@ -68,7 +68,8 @@ class ResourceMetadata(Base):
     cardinality = Column(Integer, nullable=False)
     description = Column(String(2500), nullable=False)
     testbed = Column(String(250), unique=False, nullable=True)
-    properties = Column(PickleType) # used for specific properties of the resources (e.g. csar file name)
+    properties = Column(PickleType,
+                        nullable=True)  # used for specific properties of the resources (e.g. csar file name)
 
 
 class ResourceStatus(Enum):
