@@ -628,6 +628,7 @@ def get_experiment_dict(username):
                 tmp = {
                     'resource_id': ur.resource_id,
                     'used_resource_id': ur.id,
+                    'node_type': ur.node_type,
                     'status': ResourceStatus.from_int_to_enum(ur.status).name,
                     'value': ur.value
                 }
