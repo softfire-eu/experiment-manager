@@ -64,7 +64,7 @@ class CalendarManager(object):
         for ur_to_check in used_resources:
             counter = 1
             for other_res in used_resources:
-                if other_res != ur_to_check:
+                if other_res != ur_to_check and other_res.node_type == ur_to_check.node_type:
                     if _time_overlap(ur_to_check.start_date, ur_to_check.end_date, other_res.start_date,
                                      other_res.end_date):
                         counter += 1
