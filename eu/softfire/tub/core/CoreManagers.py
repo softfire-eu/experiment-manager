@@ -502,12 +502,13 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
                                                                 user_info=user_info))
             for ur in experiment_to_deploy.resources:
                 if ur.id == ur_to_deploy.id:
-                    if response.result < 0:
+                    if response.result == messages_pb2.ERROR:
                         logger.error(
                             "provide resources returned %d: %s" % (response.result, response.error_message))
                         # raise RpcFailedCall(
                         #     "provide resources returned %d: %s" % (response.result, response.error_message))
                         ur.status = ResourceStatus.ERROR.value
+                        ur.value = response.error_message
                         continue
                     ur.value = ""
                     for res in response.provide_resource.resources:
