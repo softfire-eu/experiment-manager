@@ -627,6 +627,7 @@ def get_experiment_dict(username):
             for ur in ex.resources:
                 tmp = {
                     'resource_id': ur.resource_id,
+                    'used_resource_id': ur.id,
                     'status': ResourceStatus.from_int_to_enum(ur.status).name,
                     'value': ur.value
                 }
