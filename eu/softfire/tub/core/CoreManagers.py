@@ -732,7 +732,7 @@ def update_experiment(username, manager_name, resources):
             for ur in experiment.resources:
                 val_dict = json.loads(ur.value)
                 # TODO pass also the id!
-                if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.ge('id') == new_res_dict.get(
+                if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get('id') == new_res_dict.get(
                             'id'):
                     ur.value = json.dumps(new_res_dict)
     except:
