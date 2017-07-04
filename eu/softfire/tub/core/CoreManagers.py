@@ -469,8 +469,12 @@ def provide_resources(username):
         logger.error("No experiment to be deployed....")
         raise ExperimentNotFound("No experiment to be deployed....")
     experiment_to_deploy = experiments_to_deploy[0]
-    if len([ur for ur in experiment_to_deploy.resources if
-            ur.status in [entities.ResourceStatus.ERROR, entities.ResourceStatus.DEPLOYED]]):
+
+    res_in_error_or_deployed = 0
+    for ur in experiment_to_deploy.resources:
+        if ur.status in [entities.ResourceStatus.ERROR.value, entities.ResourceStatus.DEPLOYED.value]:
+            res_in_error_or_deployed += 1
+    if res_in_error_or_deployed > 0:
         logger.error("Deploying a resource in error or deployed state....")
         raise ExperimentValidationError(
             "You cannot deploy a resource in error or deployed state. Please delete it first")
