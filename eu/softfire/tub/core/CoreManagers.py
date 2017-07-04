@@ -721,12 +721,18 @@ def get_used_resources_by_experimenter(exp_name):
 
 def update_experiment(username, manager_name, resources):
     experiment = find_by_element_value(entities.Experiment, entities.Experiment.username, username)[0]
-    index = 0
-
-    for ur in experiment.resources:
-        if ur.node_type in get_mapping_managers().get(manager_name):
-            ur.value = json.dumps(json.loads(resources[index].content))
-            index += 1
+    try:
+        for new_res in resources:
+            new_res_dict = json.loads(new_res.content)
+            for ur in experiment.resources:
+                val_dict = json.loads(ur.value)
+                # TODO pass also the id!
+                if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.ge('id') == new_res_dict.get(
+                            'id'):
+                    ur.value = json.dumps(new_res_dict)
+    except:
+        traceback.print_exc()
+        logger.warning("error while uploading")
 
 
 def list_managers():
