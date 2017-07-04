@@ -466,10 +466,14 @@ def _execute_rpc_list_res(manager):
 def provide_resources(username):
     experiments_to_deploy = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
     if len(experiments_to_deploy) == 0:
-        logger.error("No experiment to be deleted....")
+        logger.error("No experiment to be deployed....")
         raise ExperimentNotFound("No experiment to be deployed....")
     experiment_to_deploy = experiments_to_deploy[0]
-
+    if len([ur for ur in experiment_to_deploy.resources if
+            ur.status in [entities.ResourceStatus.ERROR, entities.ResourceStatus.DEPLOYED]]):
+        logger.error("Deploying a resource in error or deployed state....")
+        raise ExperimentValidationError(
+            "You cannot deploy a resource in error or deployed state. Please delete it first")
     user_info = get_user_info(username)
     if hasattr(user_info, 'name'):
         un = user_info.name
