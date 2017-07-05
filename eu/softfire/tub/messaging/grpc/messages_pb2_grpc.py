@@ -5,6 +5,8 @@ import eu.softfire.tub.messaging.grpc.messages_pb2 as messages__pb2
 
 
 class RegistrationServiceStub(object):
+  # missing associated documentation comment in .proto file
+  pass
 
   def __init__(self, channel):
     """Constructor.
@@ -30,18 +32,26 @@ class RegistrationServiceStub(object):
 
 
 class RegistrationServiceServicer(object):
+  # missing associated documentation comment in .proto file
+  pass
 
   def register(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
   def unregister(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
   def update_status(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
@@ -71,6 +81,8 @@ def add_RegistrationServiceServicer_to_server(servicer, server):
 
 
 class ManagerAgentStub(object):
+  # missing associated documentation comment in .proto file
+  pass
 
   def __init__(self, channel):
     """Constructor.
@@ -93,21 +105,53 @@ class ManagerAgentStub(object):
         request_serializer=messages__pb2.UserInfo.SerializeToString,
         response_deserializer=messages__pb2.UserInfo.FromString,
         )
+    self.delete_user = channel.unary_unary(
+        '/ManagerAgent/delete_user',
+        request_serializer=messages__pb2.UserInfo.SerializeToString,
+        response_deserializer=messages__pb2.Empty.FromString,
+        )
+    self.heartbeat = channel.unary_unary(
+        '/ManagerAgent/heartbeat',
+        request_serializer=messages__pb2.Empty.SerializeToString,
+        response_deserializer=messages__pb2.Empty.FromString,
+        )
 
 
 class ManagerAgentServicer(object):
+  # missing associated documentation comment in .proto file
+  pass
 
   def execute(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
   def refresh_resources(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
   def create_user(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def delete_user(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def heartbeat(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
@@ -129,6 +173,16 @@ def add_ManagerAgentServicer_to_server(servicer, server):
           servicer.create_user,
           request_deserializer=messages__pb2.UserInfo.FromString,
           response_serializer=messages__pb2.UserInfo.SerializeToString,
+      ),
+      'delete_user': grpc.unary_unary_rpc_method_handler(
+          servicer.delete_user,
+          request_deserializer=messages__pb2.UserInfo.FromString,
+          response_serializer=messages__pb2.Empty.SerializeToString,
+      ),
+      'heartbeat': grpc.unary_unary_rpc_method_handler(
+          servicer.heartbeat,
+          request_deserializer=messages__pb2.Empty.FromString,
+          response_serializer=messages__pb2.Empty.SerializeToString,
       ),
   }
   generic_handler = grpc.method_handlers_generic_handler(

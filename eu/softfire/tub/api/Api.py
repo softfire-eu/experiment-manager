@@ -10,7 +10,7 @@ from cork import Cork
 import eu.softfire.tub.exceptions.exceptions as exceptions
 from eu.softfire.tub.core import CoreManagers
 from eu.softfire.tub.core.CoreManagers import get_resources_dict, Experiment, \
-    get_experiment_dict, create_user_info, add_resource, get_other_resources
+    get_experiment_dict, add_resource, get_other_resources
 from eu.softfire.tub.core.calendar import CalendarManager
 from eu.softfire.tub.core.certificate import CertificateGenerator
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
@@ -201,7 +201,7 @@ def create_user():
     password = postd().password
     role = postd().role
     username = postd().username
-    create_user_info(username=username, password=password, role=role)
+    CoreManagers.create_user(username=username, password=password, role=role)
     aaa.create_user(username, role, password)
     return dict(ok=True, msg='Create user %s' % username)
 

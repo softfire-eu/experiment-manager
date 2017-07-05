@@ -20,9 +20,8 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='messages.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x0emessages.proto\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"U\n\rStatusMessage\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\x12\x10\n\x08username\x18\x02 \x01(\t\x12\x14\n\x0cmanager_name\x18\x03 \x01(\t\"X\n\x0eRequestMessage\x12\x17\n\x06method\x18\x01 \x01(\x0e\x32\x07.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\x12\x1c\n\tuser_info\x18\x03 \x01(\x0b\x32\t.UserInfo\"\xe8\x01\n\x0fResponseMessage\x12\x17\n\x06result\x18\x01 \x01(\x0e\x32\x07.Result\x12.\n\rlist_resource\x18\x02 \x01(\x0b\x32\x15.ListResourceResponseH\x00\x12\x34\n\x10provide_resource\x18\x03 \x01(\x0b\x32\x18.ProvideResourceResponseH\x00\x12\x34\n\x10refresh_resource\x18\x04 \x01(\x0b\x32\x18.RefreshResourceResponseH\x00\x12\x15\n\rerror_message\x18\x05 \x01(\tB\t\n\x07message\"<\n\x14ListResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"7\n\x17ProvideResourceResponse\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\"?\n\x17RefreshResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"\x7f\n\x10ResourceMetadata\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05\x12\x19\n\x07testbed\x18\x04 \x01(\x0e\x32\x08.Testbed\x12\x11\n\tnode_type\x18\x05 \x01(\t\"\xbc\x01\n\x08UserInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\x12\x15\n\rob_project_id\x18\x04 \x01(\t\x12\x36\n\x0ftestbed_tenants\x18\x05 \x03(\x0b\x32\x1d.UserInfo.TestbedTenantsEntry\x1a\x35\n\x13TestbedTenantsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\'\n\x08Resource\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t*b\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02\x12\x16\n\x12VALIDATE_RESOURCES\x10\x03*\x1b\n\x06Result\x12\x06\n\x02Ok\x10\x00\x12\t\n\x05\x45RROR\x10\x01*\x92\x01\n\x07Testbed\x12\n\n\x06SURREY\x10\x00\x12\t\n\x05\x46OKUS\x10\x01\x12\x06\n\x02\x44T\x10\x02\x12\x07\n\x03\x41\x44S\x10\x03\x12\x0c\n\x08\x45RICSSON\x10\x04\x12\x0e\n\nSURREY_DEV\x10\x05\x12\r\n\tFOKUS_DEV\x10\x06\x12\n\n\x06\x44T_DEV\x10\x07\x12\x0b\n\x07\x41\x44S_DEV\x10\x08\x12\x10\n\x0c\x45RICSSON_DEV\x10\t\x12\x07\n\x03\x41NY\x10\n2\xb2\x01\n\x13RegistrationService\x12\x30\n\x08register\x12\x10.RegisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x34\n\nunregister\x12\x12.UnregisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x33\n\rupdate_status\x12\x0e.StatusMessage\x1a\x10.ResponseMessage\"\x00\x32\x99\x01\n\x0cManagerAgent\x12.\n\x07\x65xecute\x12\x0f.RequestMessage\x1a\x10.ResponseMessage\"\x00\x12\x32\n\x11refresh_resources\x12\t.UserInfo\x1a\x10.ResponseMessage\"\x00\x12%\n\x0b\x63reate_user\x12\t.UserInfo\x1a\t.UserInfo\"\x00\x42\x02H\x03\x62\x06proto3')
+  serialized_pb=_b('\n\x0emessages.proto\"F\n\x0fRegisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\"3\n\x11UnregisterMessage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x10\n\x08\x65ndpoint\x18\x02 \x01(\t\"U\n\rStatusMessage\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\x12\x10\n\x08username\x18\x02 \x01(\t\x12\x14\n\x0cmanager_name\x18\x03 \x01(\t\"X\n\x0eRequestMessage\x12\x17\n\x06method\x18\x01 \x01(\x0e\x32\x07.Method\x12\x0f\n\x07payload\x18\x02 \x01(\t\x12\x1c\n\tuser_info\x18\x03 \x01(\x0b\x32\t.UserInfo\"\xe8\x01\n\x0fResponseMessage\x12\x17\n\x06result\x18\x01 \x01(\x0e\x32\x07.Result\x12.\n\rlist_resource\x18\x02 \x01(\x0b\x32\x15.ListResourceResponseH\x00\x12\x34\n\x10provide_resource\x18\x03 \x01(\x0b\x32\x18.ProvideResourceResponseH\x00\x12\x34\n\x10refresh_resource\x18\x04 \x01(\x0b\x32\x18.RefreshResourceResponseH\x00\x12\x15\n\rerror_message\x18\x05 \x01(\tB\t\n\x07message\"<\n\x14ListResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"7\n\x17ProvideResourceResponse\x12\x1c\n\tresources\x18\x01 \x03(\x0b\x32\t.Resource\"?\n\x17RefreshResourceResponse\x12$\n\tresources\x18\x01 \x03(\x0b\x32\x11.ResourceMetadata\"\x7f\n\x10ResourceMetadata\x12\x13\n\x0bresource_id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x13\n\x0b\x63\x61rdinality\x18\x03 \x01(\x05\x12\x19\n\x07testbed\x18\x04 \x01(\x0e\x32\x08.Testbed\x12\x11\n\tnode_type\x18\x05 \x01(\t\"\xbc\x01\n\x08UserInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x10\n\x08password\x18\x03 \x01(\t\x12\x15\n\rob_project_id\x18\x04 \x01(\t\x12\x36\n\x0ftestbed_tenants\x18\x05 \x03(\x0b\x32\x1d.UserInfo.TestbedTenantsEntry\x1a\x35\n\x13TestbedTenantsEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\'\n\x08Resource\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07\x63ontent\x18\x02 \x01(\t\"\x07\n\x05\x45mpty*b\n\x06Method\x12\x12\n\x0eLIST_RESOURCES\x10\x00\x12\x15\n\x11PROVIDE_RESOURCES\x10\x01\x12\x15\n\x11RELEASE_RESOURCES\x10\x02\x12\x16\n\x12VALIDATE_RESOURCES\x10\x03*\x1b\n\x06Result\x12\x06\n\x02Ok\x10\x00\x12\t\n\x05\x45RROR\x10\x01*\x92\x01\n\x07Testbed\x12\n\n\x06SURREY\x10\x00\x12\t\n\x05\x46OKUS\x10\x01\x12\x06\n\x02\x44T\x10\x02\x12\x07\n\x03\x41\x44S\x10\x03\x12\x0c\n\x08\x45RICSSON\x10\x04\x12\x0e\n\nSURREY_DEV\x10\x05\x12\r\n\tFOKUS_DEV\x10\x06\x12\n\n\x06\x44T_DEV\x10\x07\x12\x0b\n\x07\x41\x44S_DEV\x10\x08\x12\x10\n\x0c\x45RICSSON_DEV\x10\t\x12\x07\n\x03\x41NY\x10\n2\xb2\x01\n\x13RegistrationService\x12\x30\n\x08register\x12\x10.RegisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x34\n\nunregister\x12\x12.UnregisterMessage\x1a\x10.ResponseMessage\"\x00\x12\x33\n\rupdate_status\x12\x0e.StatusMessage\x1a\x10.ResponseMessage\"\x00\x32\xdc\x01\n\x0cManagerAgent\x12.\n\x07\x65xecute\x12\x0f.RequestMessage\x1a\x10.ResponseMessage\"\x00\x12\x32\n\x11refresh_resources\x12\t.UserInfo\x1a\x10.ResponseMessage\"\x00\x12%\n\x0b\x63reate_user\x12\t.UserInfo\x1a\t.UserInfo\"\x00\x12\"\n\x0b\x64\x65lete_user\x12\t.UserInfo\x1a\x06.Empty\"\x00\x12\x1d\n\theartbeat\x12\x06.Empty\x1a\x06.Empty\"\x00\x42\x02H\x03\x62\x06proto3')
 )
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 _METHOD = _descriptor.EnumDescriptor(
   name='Method',
@@ -49,8 +48,8 @@ _METHOD = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1100,
-  serialized_end=1198,
+  serialized_start=1109,
+  serialized_end=1207,
 )
 _sym_db.RegisterEnumDescriptor(_METHOD)
 
@@ -72,8 +71,8 @@ _RESULT = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1200,
-  serialized_end=1227,
+  serialized_start=1209,
+  serialized_end=1236,
 )
 _sym_db.RegisterEnumDescriptor(_RESULT)
 
@@ -131,8 +130,8 @@ _TESTBED = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   options=None,
-  serialized_start=1230,
-  serialized_end=1376,
+  serialized_start=1239,
+  serialized_end=1385,
 )
 _sym_db.RegisterEnumDescriptor(_TESTBED)
 
@@ -677,6 +676,30 @@ _RESOURCE = _descriptor.Descriptor(
   serialized_end=1098,
 )
 
+
+_EMPTY = _descriptor.Descriptor(
+  name='Empty',
+  full_name='Empty',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1100,
+  serialized_end=1107,
+)
+
 _STATUSMESSAGE.fields_by_name['resources'].message_type = _RESOURCE
 _REQUESTMESSAGE.fields_by_name['method'].enum_type = _METHOD
 _REQUESTMESSAGE.fields_by_name['user_info'].message_type = _USERINFO
@@ -710,9 +733,11 @@ DESCRIPTOR.message_types_by_name['RefreshResourceResponse'] = _REFRESHRESOURCERE
 DESCRIPTOR.message_types_by_name['ResourceMetadata'] = _RESOURCEMETADATA
 DESCRIPTOR.message_types_by_name['UserInfo'] = _USERINFO
 DESCRIPTOR.message_types_by_name['Resource'] = _RESOURCE
+DESCRIPTOR.message_types_by_name['Empty'] = _EMPTY
 DESCRIPTOR.enum_types_by_name['Method'] = _METHOD
 DESCRIPTOR.enum_types_by_name['Result'] = _RESULT
 DESCRIPTOR.enum_types_by_name['Testbed'] = _TESTBED
+_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 RegisterMessage = _reflection.GeneratedProtocolMessageType('RegisterMessage', (_message.Message,), dict(
   DESCRIPTOR = _REGISTERMESSAGE,
@@ -799,6 +824,13 @@ Resource = _reflection.GeneratedProtocolMessageType('Resource', (_message.Messag
   ))
 _sym_db.RegisterMessage(Resource)
 
+Empty = _reflection.GeneratedProtocolMessageType('Empty', (_message.Message,), dict(
+  DESCRIPTOR = _EMPTY,
+  __module__ = 'messages_pb2'
+  # @@protoc_insertion_point(class_scope:Empty)
+  ))
+_sym_db.RegisterMessage(Empty)
+
 
 DESCRIPTOR.has_options = True
 DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('H\003'))
@@ -815,6 +847,8 @@ try:
 
 
   class RegistrationServiceStub(object):
+    # missing associated documentation comment in .proto file
+    pass
 
     def __init__(self, channel):
       """Constructor.
@@ -840,18 +874,26 @@ try:
 
 
   class RegistrationServiceServicer(object):
+    # missing associated documentation comment in .proto file
+    pass
 
     def register(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.set_code(grpc.StatusCode.UNIMPLEMENTED)
       context.set_details('Method not implemented!')
       raise NotImplementedError('Method not implemented!')
 
     def unregister(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.set_code(grpc.StatusCode.UNIMPLEMENTED)
       context.set_details('Method not implemented!')
       raise NotImplementedError('Method not implemented!')
 
     def update_status(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.set_code(grpc.StatusCode.UNIMPLEMENTED)
       context.set_details('Method not implemented!')
       raise NotImplementedError('Method not implemented!')
@@ -881,6 +923,8 @@ try:
 
 
   class ManagerAgentStub(object):
+    # missing associated documentation comment in .proto file
+    pass
 
     def __init__(self, channel):
       """Constructor.
@@ -903,21 +947,53 @@ try:
           request_serializer=UserInfo.SerializeToString,
           response_deserializer=UserInfo.FromString,
           )
+      self.delete_user = channel.unary_unary(
+          '/ManagerAgent/delete_user',
+          request_serializer=UserInfo.SerializeToString,
+          response_deserializer=Empty.FromString,
+          )
+      self.heartbeat = channel.unary_unary(
+          '/ManagerAgent/heartbeat',
+          request_serializer=Empty.SerializeToString,
+          response_deserializer=Empty.FromString,
+          )
 
 
   class ManagerAgentServicer(object):
+    # missing associated documentation comment in .proto file
+    pass
 
     def execute(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.set_code(grpc.StatusCode.UNIMPLEMENTED)
       context.set_details('Method not implemented!')
       raise NotImplementedError('Method not implemented!')
 
     def refresh_resources(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.set_code(grpc.StatusCode.UNIMPLEMENTED)
       context.set_details('Method not implemented!')
       raise NotImplementedError('Method not implemented!')
 
     def create_user(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
+      context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+      context.set_details('Method not implemented!')
+      raise NotImplementedError('Method not implemented!')
+
+    def delete_user(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
+      context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+      context.set_details('Method not implemented!')
+      raise NotImplementedError('Method not implemented!')
+
+    def heartbeat(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.set_code(grpc.StatusCode.UNIMPLEMENTED)
       context.set_details('Method not implemented!')
       raise NotImplementedError('Method not implemented!')
@@ -940,6 +1016,16 @@ try:
             request_deserializer=UserInfo.FromString,
             response_serializer=UserInfo.SerializeToString,
         ),
+        'delete_user': grpc.unary_unary_rpc_method_handler(
+            servicer.delete_user,
+            request_deserializer=UserInfo.FromString,
+            response_serializer=Empty.SerializeToString,
+        ),
+        'heartbeat': grpc.unary_unary_rpc_method_handler(
+            servicer.heartbeat,
+            request_deserializer=Empty.FromString,
+            response_serializer=Empty.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
         'ManagerAgent', rpc_method_handlers)
@@ -952,11 +1038,19 @@ try:
     It is recommended to use the GA API (classes and functions in this
     file not marked beta) for all further purposes. This class was generated
     only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
+    # missing associated documentation comment in .proto file
+    pass
     def register(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
     def unregister(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
     def update_status(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
 
 
@@ -966,13 +1060,21 @@ try:
     It is recommended to use the GA API (classes and functions in this
     file not marked beta) for all further purposes. This class was generated
     only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
+    # missing associated documentation comment in .proto file
+    pass
     def register(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
       raise NotImplementedError()
     register.future = None
     def unregister(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
       raise NotImplementedError()
     unregister.future = None
     def update_status(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
       raise NotImplementedError()
     update_status.future = None
 
@@ -1033,11 +1135,27 @@ try:
     It is recommended to use the GA API (classes and functions in this
     file not marked beta) for all further purposes. This class was generated
     only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
+    # missing associated documentation comment in .proto file
+    pass
     def execute(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
     def refresh_resources(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
     def create_user(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
+      context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
+    def delete_user(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
+      context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
+    def heartbeat(self, request, context):
+      # missing associated documentation comment in .proto file
+      pass
       context.code(beta_interfaces.StatusCode.UNIMPLEMENTED)
 
 
@@ -1047,15 +1165,33 @@ try:
     It is recommended to use the GA API (classes and functions in this
     file not marked beta) for all further purposes. This class was generated
     only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0."""
+    # missing associated documentation comment in .proto file
+    pass
     def execute(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
       raise NotImplementedError()
     execute.future = None
     def refresh_resources(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
       raise NotImplementedError()
     refresh_resources.future = None
     def create_user(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
       raise NotImplementedError()
     create_user.future = None
+    def delete_user(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
+      raise NotImplementedError()
+    delete_user.future = None
+    def heartbeat(self, request, timeout, metadata=None, with_call=False, protocol_options=None):
+      # missing associated documentation comment in .proto file
+      pass
+      raise NotImplementedError()
+    heartbeat.future = None
 
 
   def beta_create_ManagerAgent_server(servicer, pool=None, pool_size=None, default_timeout=None, maximum_timeout=None):
@@ -1066,17 +1202,23 @@ try:
     generated only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0"""
     request_deserializers = {
       ('ManagerAgent', 'create_user'): UserInfo.FromString,
+      ('ManagerAgent', 'delete_user'): UserInfo.FromString,
       ('ManagerAgent', 'execute'): RequestMessage.FromString,
+      ('ManagerAgent', 'heartbeat'): Empty.FromString,
       ('ManagerAgent', 'refresh_resources'): UserInfo.FromString,
     }
     response_serializers = {
       ('ManagerAgent', 'create_user'): UserInfo.SerializeToString,
+      ('ManagerAgent', 'delete_user'): Empty.SerializeToString,
       ('ManagerAgent', 'execute'): ResponseMessage.SerializeToString,
+      ('ManagerAgent', 'heartbeat'): Empty.SerializeToString,
       ('ManagerAgent', 'refresh_resources'): ResponseMessage.SerializeToString,
     }
     method_implementations = {
       ('ManagerAgent', 'create_user'): face_utilities.unary_unary_inline(servicer.create_user),
+      ('ManagerAgent', 'delete_user'): face_utilities.unary_unary_inline(servicer.delete_user),
       ('ManagerAgent', 'execute'): face_utilities.unary_unary_inline(servicer.execute),
+      ('ManagerAgent', 'heartbeat'): face_utilities.unary_unary_inline(servicer.heartbeat),
       ('ManagerAgent', 'refresh_resources'): face_utilities.unary_unary_inline(servicer.refresh_resources),
     }
     server_options = beta_implementations.server_options(request_deserializers=request_deserializers, response_serializers=response_serializers, thread_pool=pool, thread_pool_size=pool_size, default_timeout=default_timeout, maximum_timeout=maximum_timeout)
@@ -1091,17 +1233,23 @@ try:
     generated only to ease transition from grpcio<0.15.0 to grpcio>=0.15.0"""
     request_serializers = {
       ('ManagerAgent', 'create_user'): UserInfo.SerializeToString,
+      ('ManagerAgent', 'delete_user'): UserInfo.SerializeToString,
       ('ManagerAgent', 'execute'): RequestMessage.SerializeToString,
+      ('ManagerAgent', 'heartbeat'): Empty.SerializeToString,
       ('ManagerAgent', 'refresh_resources'): UserInfo.SerializeToString,
     }
     response_deserializers = {
       ('ManagerAgent', 'create_user'): UserInfo.FromString,
+      ('ManagerAgent', 'delete_user'): Empty.FromString,
       ('ManagerAgent', 'execute'): ResponseMessage.FromString,
+      ('ManagerAgent', 'heartbeat'): Empty.FromString,
       ('ManagerAgent', 'refresh_resources'): ResponseMessage.FromString,
     }
     cardinalities = {
       'create_user': cardinality.Cardinality.UNARY_UNARY,
+      'delete_user': cardinality.Cardinality.UNARY_UNARY,
       'execute': cardinality.Cardinality.UNARY_UNARY,
+      'heartbeat': cardinality.Cardinality.UNARY_UNARY,
       'refresh_resources': cardinality.Cardinality.UNARY_UNARY,
     }
     stub_options = beta_implementations.stub_options(host=host, metadata_transformer=metadata_transformer, request_serializers=request_serializers, response_deserializers=response_deserializers, thread_pool=pool, thread_pool_size=pool_size)

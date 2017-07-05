@@ -14,6 +14,9 @@ def get_logger(name):
     return logging.getLogger(name)
 
 
+logger = get_logger(__name__)
+
+
 def get_config_parser():
     """
     Get the ConfigParser object containing the system configurations

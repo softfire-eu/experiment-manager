@@ -54,11 +54,6 @@ def _get_testbed_string(testbed_id):
 
 
 def create_user(username, password, role='experimenter'):
-    experimenter = Experimenter()
-    experimenter.username = username
-    experimenter.password = password
-    experimenter.role = role
-
     user_info = messages_pb2.UserInfo(name=username, password=password)
     for man in MANAGERS_CREATE_USER:
         try:
@@ -68,6 +63,11 @@ def create_user(username, password, role='experimenter'):
             traceback.print_exc()
             logger.error("one of the manager is not register and need to create user")
     logger.info("Created user, project and tenant on the NFV Resource Manager")
+
+    experimenter = Experimenter()
+    experimenter.username = username
+    experimenter.password = password
+    experimenter.role = role
 
     experimenter.testbed_tenants = {}
     experimenter.ob_project_id = user_info.ob_project_id
@@ -82,11 +82,27 @@ def create_user(username, password, role='experimenter'):
 def delete_user(username):
     for experimenter in find(Experimenter):
         if experimenter.username == username:
+            user_info = _create_user_info_from_experimenter(experimenter)
+            for man in MANAGERS_CREATE_USER:
+                try:
+                    get_stub_from_manager_name(man).delete_user(user_info)
+                    logger.info("Manager %s delete user finished")
+                except ManagerNotFound:
+                    traceback.print_exc()
+                    logger.error("one of the manager is not register and need to delete user")
             delete(experimenter)
 
 
-def create_user_info(username, password, role):
-    create_user(username, password, role)
+def _create_user_info_from_experimenter(experimenter: Experimenter) -> messages_pb2.UserInfo:
+    user_info = messages_pb2.UserInfo(
+        name=experimenter.username,
+        password=experimenter.password,
+        ob_project_id=experimenter.ob_project_id
+    )
+    # user_info.testbed_tenants = {}
+    for k, v in experimenter.testbed_tenants.items():
+        user_info.testbed_tenants[k] = v
+    return user_info
 
 
 def _start_termination_thread_for_res(res):
@@ -94,9 +110,8 @@ def _start_termination_thread_for_res(res):
     logger.debug("Type of res.end: %s" % type(res_end_date))
     days = (res_end_date - datetime.date(datetime.today()).today()).days
     thread = TimerTerminationThread(abs(days), _terminate_expired_resource, [res])
-    logger.debug("Days to the end of experiement: %s" % days)
+    logger.debug("Days to the end of experiment: %s" % days)
     logger.debug("Starting thread checking resource: %s " % res.id)
-    # thread = TimerTerminationThread(5, _terminate_expired_resource, [res])
     thread.start()
 
 
@@ -373,21 +388,6 @@ def _get_used_resource_from_node(node, username):
                     return ur
 
     raise ResourceNotFound('Resource with name %s  for user %s was not found' % (node.name, username))
-
-
-def get_stub_from_manager_name(manager_name):
-    for manager_endpoint in find(ManagerEndpoint):
-        if manager_endpoint.name == manager_name:
-            logger.debug("Getting stub for manager: %s" % manager_name)
-            return get_stub_from_manager_endpoint(manager_endpoint)
-    raise ManagerNotFound("No manager found for name %s" % manager_name)
-
-
-def get_stub_from_manager_endpoint(manager_endpoint):
-    endpoint = manager_endpoint.endpoint
-    logger.debug("looking for endpoint %s" % endpoint)
-    channel = grpc.insecure_channel(endpoint)
-    return messages_pb2_grpc.ManagerAgentStub(channel)
 
 
 def _validate_resource(node, username, request_metadata):
@@ -750,3 +750,18 @@ def list_managers():
 
 def list_experimenters():
     return [man.username for man in find(Experimenter)]
+
+
+def get_stub_from_manager_name(manager_name):
+    for manager_endpoint in find(ManagerEndpoint):
+        if manager_endpoint.name == manager_name:
+            logger.debug("Getting stub for manager: %s" % manager_name)
+            return get_stub_from_manager_endpoint(manager_endpoint)
+    raise ManagerNotFound("No manager found for name %s" % manager_name)
+
+
+def get_stub_from_manager_endpoint(manager_endpoint):
+    endpoint = manager_endpoint.endpoint
+    logger.debug("looking for endpoint %s" % endpoint)
+    channel = grpc.insecure_channel(endpoint)
+    return messages_pb2_grpc.ManagerAgentStub(channel)
