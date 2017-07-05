@@ -47,10 +47,12 @@ def refresh_resources():
     CoreManagers.list_resources()
 
 
+
 @get('/get_status')
 @authorize(role='experimenter')
 def get_status():
     _, experiment_dict = CoreManagers.get_experiment_dict(aaa.current_user.username)
+    experiment_dict = __format_experiment_dict(experiment_dict)
     bottle.response.headers['Content-Type'] = 'application/json'
     return json.dumps(experiment_dict)
 
@@ -263,6 +265,7 @@ def login_form():
     """Serve experimenter form"""
     images, networks, flavours = get_other_resources()
     exp_name, experiment_dict = get_experiment_dict(aaa.current_user.username)
+    experiment_dict = __format_experiment_dict(experiment_dict)
     return dict(
         current_user=aaa.current_user,
         resources=get_resources_dict(),
@@ -367,6 +370,69 @@ def add_authorized_experimenter(username):
         authorized_exp = json.loads(f.read().encode("utf-8"))
         authorized_exp[username] = True
         f.write(json.dumps(authorized_exp))
+
+
+def __format_experiment_dict(experiment):
+    """
+    Format the experiment value. In case an NSR is in the experiment value, only it's most important fields are
+    kept, so that the user is not confused by the amount of information.
+    :param experiment:
+    :return:
+    """
+    formatted_experiment = []
+    for resource in experiment:
+        if resource.get('node_type') == 'NfvResource' and resource.get('status') == 'DEPLOYED':
+            full_nsr = resource.get('value')
+            try:
+                full_nsr = json.loads(full_nsr)
+            except:
+                logger.warning('Could not parse NSR of resource: {}'.format(resource.get('resource_id')))
+                formatted_experiment.append(resource)
+                continue
+
+            formatted_nsr = {}
+
+            for key in ['name', 'version', 'status']:
+                value = full_nsr.get(key)
+                if value is not None:
+                    formatted_nsr[key] = value
+
+            vnfr_list = full_nsr.get('vnfr')
+            if vnfr_list is not None and isinstance(vnfr_list, list):
+                formatted_vnfr_list = []
+                for vnfr in vnfr_list:
+                    formatted_vnfr = {}
+                    for key in ['name', 'type', 'status']:
+                        value = vnfr.get(key)
+                        if value is not None:
+                            formatted_vnfr[key] = value
+
+                    private_ip_list = []
+                    floating_ip_list = []
+                    vdu_list = vnfr.get('vdu')
+                    if vdu_list is not None and isinstance(vdu_list, list):
+                        for vdu in vdu_list:
+                            vnfc_instance_list = vdu.get('vnfc_instance')
+                            if vnfc_instance_list is not None and isinstance(vnfc_instance_list, list):
+                                for vnfc_instance in vnfc_instance_list:
+                                    if vnfc_instance.get('floatingIps') is not None and isinstance(
+                                            vnfc_instance.get('floatingIps'), list):
+                                        vnfc_floating_ip_list = ['{}:{}'.format(fip.get('netName'), fip.get('ip')) for
+                                                                 fip in vnfc_instance.get('floatingIps')]
+                                        floating_ip_list.extend(vnfc_floating_ip_list)
+                                    if vnfc_instance.get('ips') is not None and isinstance(vnfc_instance.get('ips'),
+                                                                                           list):
+                                        vnfc_private_ip_list = ['{}:{}'.format(fip.get('netName'), fip.get('ip')) for
+                                                                fip in vnfc_instance.get('ips')]
+                                        private_ip_list.extend(vnfc_private_ip_list)
+                    formatted_vnfr['private IPs'] = private_ip_list
+                    formatted_vnfr['floating IPs'] = floating_ip_list
+                    formatted_vnfr_list.append(formatted_vnfr)
+                formatted_nsr['vnfr'] = formatted_vnfr_list
+
+            resource['value'] = json.dumps(formatted_nsr)
+        formatted_experiment.append(resource)
+    return formatted_experiment
 
 
 def setup_app() -> (SessionMiddleware, int, bool):
