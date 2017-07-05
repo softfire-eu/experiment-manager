@@ -47,6 +47,20 @@ def refresh_resources():
     CoreManagers.list_resources()
 
 
+@get('/get_full_status')
+@authorize(role='experimenter')
+def get_full_status():
+    _, experiment_dict = CoreManagers.get_experiment_dict(aaa.current_user.username)
+    # convert string values that represent json into dictionaries so that they are displayed nicely
+    for e in experiment_dict:
+        try:
+            parsed_value = json.loads(e.get('value'))
+            e['value'] = parsed_value
+        except:
+            pass
+    bottle.response.headers['Content-Type'] = 'application/json'
+    return json.dumps(experiment_dict, indent=4, sort_keys=True)
+
 
 @get('/get_status')
 @authorize(role='experimenter')
