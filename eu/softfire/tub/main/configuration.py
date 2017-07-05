@@ -2,14 +2,16 @@ import datetime
 import os
 import socket
 import threading
-import time
+import traceback
 
 from cork import Cork
 
 from eu.softfire.tub.api import Api
+from eu.softfire.tub.core.CoreManagers import get_stub_from_manager_endpoint
 from eu.softfire.tub.entities.entities import ManagerEndpoint
-from eu.softfire.tub.entities.repositories import find
+from eu.softfire.tub.entities.repositories import find, save
 from eu.softfire.tub.messaging import MessagingAgent
+from eu.softfire.tub.messaging.grpc.messages_pb2 import Empty
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
 logger = get_logger(__name__)
@@ -70,19 +72,23 @@ def _is_man__running(man_ip, man_port):
 
 
 def check_endpoint():
-    stop.wait(int(get_config('system', 'manager-check-delay', '20')))
-    while not stop.is_set():
+    while not stop.wait(int(get_config('system', 'manager-check-delay', '20'))):
         for endpoint in find(ManagerEndpoint):
-            man_ip, man_port = endpoint.endpoint.split(':')
-            if not _is_man__running(man_ip, man_port):
-                logger.error("Manager %s on endpoint %s is not running" % (endpoint.name, endpoint.endpoint))
-                MessagingAgent.unregister_endpoint(endpoint.name)
-        stop.wait(int(get_config('system', 'manager-check-delay', '20')))
+            try:
+                get_stub_from_manager_endpoint(endpoint).heartbeat(Empty())
+            except:
+                traceback.print_exc()
+                if endpoint.unavailability >= int(get_config('system', 'manager-unavailable', '5')):
+                    logger.error("Manager %s on endpoint %s is not running" % (endpoint.name, endpoint.endpoint))
+                    MessagingAgent.unregister_endpoint(endpoint.name)
+                else:
+                    endpoint.unavailability += 1
+                    # save(endpoint)
 
 
 def __print_banner(banner_file_path):
     if not os.path.isfile(banner_file_path):
-        logger.error('Not printing banner since the file {} does not exist.'.format(banner_file_path))
+        logger.warning('Not printing banner since the file {} does not exist.'.format(banner_file_path))
         return
     with open(banner_file_path, 'r') as banner_file:
         banner = banner_file.read()

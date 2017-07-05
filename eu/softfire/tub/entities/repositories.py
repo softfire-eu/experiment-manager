@@ -17,7 +17,8 @@ logger = get_logger('eu.softfire.tub.repository')
 lock = threading.RLock()
 
 db_url = get_config('database', 'url', "sqlite:////tmp/experiment-manager.db")
-if db_url.startswith("sqlite:"):
+is_sqlite = db_url.startswith("sqlite:")
+if is_sqlite:
     engine = create_engine(db_url, poolclass=StaticPool, connect_args={'check_same_thread': False})
 else:
     engine = create_engine(db_url)
@@ -25,16 +26,33 @@ debug_echo = (logger.getEffectiveLevel() == logging.DEBUG) and get_config('datab
                                                                           False).lower() == 'true'
 engine.echo = debug_echo
 Base.metadata.create_all(engine)
-session_factory = sessionmaker(bind=engine)
-_session = scoped_session(session_factory)
-session = _session()
+if is_sqlite:
+    session_factory = sessionmaker(bind=engine)
+    _session = scoped_session(session_factory)
+    session = _session()
 
 
 @contextmanager
 def get_db_session():
+    """Provide a transactional scope around a series of operations."""
+    global session
     with lock:
-        with session.no_autoflush:
-            yield session
+        if is_sqlite:
+            with session.no_autoflush:
+                yield session
+        else:
+            try:
+                sx_factory = sessionmaker(bind=engine, expire_on_commit=False)
+                _sx = scoped_session(sx_factory)
+                sx = _sx()
+                yield sx
+                sx.commit()
+            except:
+                sx.rollback()
+                raise
+            finally:
+                sx.expunge_all()
+                sx.close()
 
 
 def rollback():

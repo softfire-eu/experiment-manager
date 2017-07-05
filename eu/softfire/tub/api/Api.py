@@ -10,7 +10,7 @@ from cork import Cork
 import eu.softfire.tub.exceptions.exceptions as exceptions
 from eu.softfire.tub.core import CoreManagers
 from eu.softfire.tub.core.CoreManagers import get_resources_dict, Experiment, \
-    get_experiment_dict, create_user_info, add_resource, get_other_resources
+    get_experiment_dict, add_resource, get_other_resources
 from eu.softfire.tub.core.calendar import CalendarManager
 from eu.softfire.tub.core.certificate import CertificateGenerator
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
@@ -176,7 +176,7 @@ def register():
 
 
 @bottle.post('/certificates')
-#@authorize(role='admin')
+# @authorize(role='admin')
 @authorize(role='portal')
 def get_certificate():
     username = post_get('username')
@@ -201,7 +201,7 @@ def create_user():
     password = postd().password
     role = postd().role
     username = postd().username
-    create_user_info(username=username, password=password, role=role)
+    CoreManagers.create_user(username=username, password=password, role=role)
     aaa.create_user(username, role, password)
     return dict(ok=True, msg='Create user %s' % username)
 
@@ -291,7 +291,6 @@ def sorry_page():
     return '<p>Sorry, you are not authorized to perform this action</p>'
 
 
-
 @bottle.route('/static/<filename:path>')
 # @authorize(role="experimenter", fail_redirect='/sorry_page')
 def server_static(filename):
@@ -372,7 +371,7 @@ def add_authorized_experimenter(username):
 
 def setup_app() -> (SessionMiddleware, int, bool):
     bottle.debug(True)
-    p = get_config(section='api', key='port', default=8080)
+    p = get_config(section='api', key='port', default=5080)
     bottle.install(error_translation)
     session_opts = {
         'session.cookie_expires': True,
@@ -392,4 +391,5 @@ app, port, quiet_bottle = setup_app()
 
 
 def start_listening():
+    logger.info("Running bottle app: quiet=%s, port=%s, host='0.0.0.0'" % (quiet_bottle, port))
     bottle.run(app=app, quiet=quiet_bottle, port=port, host='0.0.0.0')
