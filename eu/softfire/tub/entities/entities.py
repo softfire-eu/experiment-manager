@@ -35,7 +35,7 @@ class Experiment(Base):
     tident = Column(String(250), primary_key=False)
     name = Column(String(250), nullable=False)
     username = Column(String(250), nullable=False)
-    resources = relationship("UsedResource", cascade="all")
+    resources = relationship("UsedResource", cascade="all", lazy="joined")
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
