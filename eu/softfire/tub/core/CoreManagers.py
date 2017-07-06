@@ -29,6 +29,10 @@ REFRESH_RES_NODE_TYPES = [
     "NfvImage"
 ]
 
+keys_to_pass = [
+    "floatingIp"
+]
+
 TESTBED_MAPPING = {
     'fokus': messages_pb2.FOKUS,
     'fokus-dev': messages_pb2.FOKUS_DEV,
@@ -108,7 +112,7 @@ def _create_user_info_from_experimenter(experimenter: Experimenter) -> messages_
 def _start_termination_thread_for_res(res):
     res_end_date = res.end_date
     logger.debug("Type of res.end: %s" % type(res_end_date))
-    days = (res_end_date - datetime.date(datetime.today()).today()).days
+    days = (res_end_date - datetime.today().today()).days
     thread = TimerTerminationThread(abs(days), _terminate_expired_resource, [res])
     logger.debug("Days to the end of experiment: %s" % days)
     logger.debug("Starting thread checking resource: %s " % res.id)
@@ -178,7 +182,7 @@ class Experiment(object):
                 try:
                     tpl = ToscaTemplate(yaml_dict_tpl=yaml.load(zf.read(filename)))
                 except Exception as e:
-                    raise ExperimentValidationError(e)
+                    raise ExperimentValidationError(e.args[0])
                 for node in tpl.nodetemplates:
                     logger.debug("Found node: %s of type %s with properties: %s" % (
                         node.name, node.type, list(node.get_properties().keys())))
@@ -491,25 +495,37 @@ def provide_resources(username):
 
     manager_ordered = get_config('system', 'deployment-order', '').split(';')
     remaining_managers = set(list(get_mapping_managers().keys())) - set(manager_ordered)
+    value_to_pass = {}
+
     for manager_name in manager_ordered:
         if manager_name in involved_managers:
-            _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
-
+            result = _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info, value_to_pass)
+            value_to_pass = {}
+            for ktp in keys_to_pass:
+                if ktp in result.keys():
+                    value_to_pass[ktp] = result.get(ktp)
     for manager_name in remaining_managers:
         if manager_name in involved_managers:
             _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
 
 
-def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info):
+def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info, value_to_pass={}):
     stub = get_stub_from_manager_name(manager_name)
+    ret = ""
     for ur_to_deploy in experiment_to_deploy.resources:
         node_types = get_mapping_managers().get(manager_name)
         if ur_to_deploy.node_type in node_types:
+            if value_to_pass:
+                val = json.loads(ur_to_deploy.value)
+                val.get('properties').update(value_to_pass)
+                yaml_dump = json.dumps(val)
+                ur_to_deploy.value = yaml_dump
             response = stub.execute(messages_pb2.RequestMessage(method=messages_pb2.PROVIDE_RESOURCES,
                                                                 payload=ur_to_deploy.value,
                                                                 user_info=user_info))
             for ur in experiment_to_deploy.resources:
                 if ur.id == ur_to_deploy.id:
+                    ur.value = ""
                     if response.result == messages_pb2.ERROR:
                         logger.error(
                             "provide resources returned %d: %s" % (response.result, response.error_message))
@@ -517,12 +533,14 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
                         #     "provide resources returned %d: %s" % (response.result, response.error_message))
                         ur.status = ResourceStatus.ERROR.value
                         ur.value = response.error_message
-                        continue
-                    ur.value = ""
                     for res in response.provide_resource.resources:
                         logger.debug("Received: %s" % str(res.content))
                         ur.value += res.content
-                    ur.status = ResourceStatus.DEPLOYED.value
+                        ret += ur.value
+                        ur.status = ResourceStatus.DEPLOYED.value
+                    save(ur)
+
+    return json.loads(ret)
 
 
 def release_resources(username):
@@ -570,9 +588,9 @@ def _release_resource_for_manager(manager_name, used_resources, user_info):
                         logger.error("release resources returned %d: %s" % (response.result, response.error_message))
                         raise RpcFailedCall(
                             "provide resources returned %d: %s" % (response.result, response.error_message))
-                    for u in [u for u in used_resources if u.node_type in get_mapping_managers().get(manager_name)]:
-                        logger.info("deleting %s" % u.name)
-                        delete(u)
+                        # for u in [u for u in used_resources if u.node_type in get_mapping_managers().get(manager_name)]:
+                        #     logger.info("deleting %s" % u.name)
+                        #     delete(u)
     except _Rendezvous:
         traceback.print_exc()
         logger.error("Exception while calling gRPC, maybe %s Manager is down?" % manager_name)
@@ -741,7 +759,7 @@ def update_experiment(username, manager_name, resources):
                     ur.value = json.dumps(new_res_dict)
     except:
         traceback.print_exc()
-        logger.warning("error while uploading")
+        logger.warning("error while updating")
 
 
 def list_managers():
@@ -762,6 +780,6 @@ def get_stub_from_manager_name(manager_name):
 
 def get_stub_from_manager_endpoint(manager_endpoint):
     endpoint = manager_endpoint.endpoint
-    logger.debug("looking for endpoint %s" % endpoint)
+    # logger.debug("looking for endpoint %s" % endpoint)
     channel = grpc.insecure_channel(endpoint)
     return messages_pb2_grpc.ManagerAgentStub(channel)
