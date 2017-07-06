@@ -182,7 +182,15 @@ class Experiment(object):
                 try:
                     tpl = ToscaTemplate(yaml_dict_tpl=yaml.load(zf.read(filename)))
                 except Exception as e:
-                    raise ExperimentValidationError(e.args[0])
+                    if hasattr(e, 'message'):
+                        raise ExperimentValidationError(e.message)
+                    elif isinstance(e.args, list):
+                        raise ExperimentValidationError(e.args[0])
+                    elif isinstance(e.args, str):
+                        raise ExperimentValidationError(e.args)
+                    else:
+                        raise ExperimentValidationError("no message available", e)
+
                 for node in tpl.nodetemplates:
                     logger.debug("Found node: %s of type %s with properties: %s" % (
                         node.name, node.type, list(node.get_properties().keys())))
