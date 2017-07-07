@@ -43,7 +43,7 @@ def increase_version(version, file):
     ver_int = [int(x) for x in version.split('.')]
     ver_int[2] = ver_int[2] + 1
     ver_str = [str(x) for x in ver_int]
-    f.write("%sb0\n" % '.'.join(ver_str))
+    f.write('.'.join(ver_str))
     f.close()
 
 

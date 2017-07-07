@@ -35,7 +35,7 @@ class Experiment(Base):
     tident = Column(String(250), primary_key=False)
     name = Column(String(250), nullable=False)
     username = Column(String(250), nullable=False)
-    resources = relationship("UsedResource", cascade="all")
+    resources = relationship("UsedResource", cascade="all", lazy="joined")
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -51,7 +51,7 @@ class UsedResource(Base):
     resource_id = Column(String(250), nullable=False, unique=False)
     parent_id = Column(String(250), ForeignKey('experiment.id'))
     status = Column(Integer, nullable=False)
-    value = Column(String(7500), nullable=True)
+    value = Column(String(15000), nullable=True)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     node_type = Column(String(250), unique=False, nullable=False)
