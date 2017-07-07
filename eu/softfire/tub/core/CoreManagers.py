@@ -58,6 +58,9 @@ def _get_testbed_string(testbed_id):
 
 
 def create_user(username, password, role='experimenter'):
+    for experimenter in find(Experimenter):
+        if experimenter.username == username:
+            raise Exception('Username \'{}\' already exists.'.format(username))
     user_info = messages_pb2.UserInfo(name=username, password=password)
     for man in MANAGERS_CREATE_USER:
         try:

@@ -217,9 +217,15 @@ def create_user():
     password = postd().password
     role = postd().role
     username = postd().username
-    CoreManagers.create_user(username=username, password=password, role=role)
-    aaa.create_user(username, role, password)
-    return dict(ok=True, msg='Create user %s' % username)
+    try:
+        CoreManagers.create_user(username=username, password=password, role=role)
+        aaa.create_user(username, role, password)
+        return dict(ok=True, msg='Created user %s' % username)
+    except Exception as e:
+        error_message = 'Create user \'{}\' failed: {}'.format(username, str(e))
+        logger.error(error_message)
+        traceback.print_exc()
+        return dict(ok=False, msg=error_message)
 
 
 @bottle.post('/delete_user')
