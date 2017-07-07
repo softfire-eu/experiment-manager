@@ -233,7 +233,13 @@ class Experiment(object):
                         '/etc/softfire/experiment-nsd-csar'
                     ).rstrip('/'), username, real_file_name)
                     # get the description
-                    zf = zipfile.ZipFile(tmp_file_location)
+                    try:
+                        zf = zipfile.ZipFile(tmp_file_location)
+                    except FileNotFoundError:
+                        logger.error(
+                            "Please check that the file_name property is correctly set to the file name passed.")
+                        raise ExperimentValidationError(
+                            "Please check that the file_name property is correctly set to the file name passed.")
                     yaml_file = zf.read('tosca-metadata/Metadata.yaml')
                     if yaml_file:
                         yaml_content = yaml.load(yaml_file)
@@ -765,6 +771,7 @@ def update_experiment(username, manager_name, resources):
                 if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get('id') == new_res_dict.get(
                             'id'):
                     ur.value = json.dumps(new_res_dict)
+                    save(experiment)
     except:
         traceback.print_exc()
         logger.warning("error while updating")
