@@ -522,7 +522,7 @@ def provide_resources(username):
             for ktp in keys_to_pass:
                 for v in result:
                     if ktp in v.keys():
-                        value_to_pass[ktp] = result.get(ktp)
+                        value_to_pass[ktp] = v.get(ktp)
     for manager_name in remaining_managers:
         if manager_name in involved_managers:
             _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
