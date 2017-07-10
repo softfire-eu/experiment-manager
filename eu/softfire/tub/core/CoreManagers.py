@@ -785,7 +785,8 @@ def update_experiment(username, manager_name, resources):
             deployed_res = [ur for ur in experiment.resources if ur.status == entities.ResourceStatus.DEPLOYED.value]
             if len(deployed_res) == len(resources):
                 for i in range(len(resources)):
-                    experiment.resources[i].value = resources[i]
+                    new_res_dict = json.loads(resources[i].content)
+                    experiment.resources[i].value = json.dumps(new_res_dict)
         save(experiment)
 
     except:
