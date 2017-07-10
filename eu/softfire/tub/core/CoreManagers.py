@@ -116,7 +116,10 @@ def _create_user_info_from_experimenter(experimenter: Experimenter) -> messages_
 def _start_termination_thread_for_res(res):
     res_end_date = res.end_date
     logger.debug("Type of res.end: %s" % type(res_end_date))
-    days = (res_end_date - datetime.today().today()).days
+    if type(res_end_date) == datetime:
+        days = (res_end_date - datetime.today().today()).days
+    else:
+        days = (res_end_date - datetime.today().date()).days
     thread = TimerTerminationThread(abs(days), _terminate_expired_resource, [res])
     logger.debug("Days to the end of experiment: %s" % days)
     logger.debug("Starting thread checking resource: %s " % res.id)
