@@ -768,15 +768,23 @@ def get_used_resources_by_experimenter(exp_name):
 def update_experiment(username, manager_name, resources):
     experiment = find_by_element_value(entities.Experiment, entities.Experiment.username, username)[0]
     try:
-        for new_res in resources:
-            new_res_dict = json.loads(new_res.content)
-            for ur in experiment.resources:
-                val_dict = json.loads(ur.value)
-                # TODO pass also the id!
-                if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get('id') == new_res_dict.get(
-                            'id'):
-                    ur.value = json.dumps(new_res_dict)
-                    save(experiment)
+        if manager_name == 'nfv-manager':
+            for new_res in resources:
+                new_res_dict = json.loads(new_res.content)
+                for ur in experiment.resources:
+                    val_dict = json.loads(ur.value)
+                    # TODO pass also the id!
+                    if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get(
+                                'id') == new_res_dict.get(
+                                'id'):
+                        ur.value = json.dumps(new_res_dict)
+        else:
+            deployed_res = [ur for ur in experiment.resources if ur.status == entities.ResourceStatus.DEPLOYED.value]
+            if len(deployed_res) == len(resources):
+                for i in range(len(resources)):
+                    experiment.resources[i].value = resources[i]
+        save(experiment)
+
     except:
         traceback.print_exc()
         logger.warning("error while updating")
