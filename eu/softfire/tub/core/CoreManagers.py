@@ -30,7 +30,8 @@ REFRESH_RES_NODE_TYPES = [
 ]
 
 keys_to_pass = [
-    "floatingIp"
+    "floatingIp",
+    "floatingIpIp",
 ]
 
 TESTBED_MAPPING = {
@@ -519,8 +520,9 @@ def provide_resources(username):
             result = _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info, value_to_pass)
             value_to_pass = {}
             for ktp in keys_to_pass:
-                if ktp in result.keys():
-                    value_to_pass[ktp] = result.get(ktp)
+                for v in result:
+                    if ktp in v.keys():
+                        value_to_pass[ktp] = result.get(ktp)
     for manager_name in remaining_managers:
         if manager_name in involved_managers:
             _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
@@ -528,7 +530,7 @@ def provide_resources(username):
 
 def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info, value_to_pass={}):
     stub = get_stub_from_manager_name(manager_name)
-    ret = ""
+    ret = []
     for ur_to_deploy in experiment_to_deploy.resources:
         node_types = get_mapping_managers().get(manager_name)
         if ur_to_deploy.node_type in node_types:
@@ -542,22 +544,22 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
                                                                 user_info=user_info))
             for ur in experiment_to_deploy.resources:
                 if ur.id == ur_to_deploy.id:
-                    ur.value = ""
                     if response.result == messages_pb2.ERROR:
-                        logger.error(
-                            "provide resources returned %d: %s" % (response.result, response.error_message))
-                        # raise RpcFailedCall(
-                        #     "provide resources returned %d: %s" % (response.result, response.error_message))
+                        logger.error("provide resources returned %d: %s" % (response.result, response.error_message))
                         ur.status = ResourceStatus.ERROR.value
                         ur.value = response.error_message
-                    for res in response.provide_resource.resources:
-                        logger.debug("Received: %s" % str(res.content))
-                        ur.value += res.content
-                        ret += ur.value
-                        ur.status = ResourceStatus.DEPLOYED.value
+                    else:
+                        # TODO fix this in the api not here
+                        for res in response.provide_resource.resources:
+                            logger.debug("Received: %s" % str(res.content))
+                            _res_dict = json.loads(res.content)
+                            ur.value = json.dumps(_res_dict)
+                            ret.append(_res_dict)
+                            ur.status = ResourceStatus.DEPLOYED.value
+
                     save(ur)
 
-    return json.loads(ret)
+    return ret
 
 
 def release_resources(username):
