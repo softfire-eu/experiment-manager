@@ -782,11 +782,17 @@ def update_experiment(username, manager_name, resources):
                                 'id'):
                         ur.value = json.dumps(new_res_dict)
         else:
-            deployed_res = [ur for ur in experiment.resources if ur.status == entities.ResourceStatus.DEPLOYED.value]
-            if len(deployed_res) == len(resources):
-                for i in range(len(resources)):
-                    new_res_dict = json.loads(resources[i].content)
-                    experiment.resources[i].value = json.dumps(new_res_dict)
+            # deployed_res = [ur for ur in experiment.resources if ur.status == entities.ResourceStatus.DEPLOYED.value and ur.node_type in get_mapping_managers().get(manager_name)]
+            # if len(deployed_res) == len(resources):
+            #     for i in range(len(resources)):
+            #         new_res_dict = json.loads(resources[i].content)
+            #         experiment.resources[i].value = json.dumps(new_res_dict)
+            for new_res in resources:
+                new_res_dict = json.loads(new_res.content)
+                for ur in experiment.resources:
+                    # TODO pass also the id!
+                    if ur.node_type in get_mapping_managers().get(manager_name):
+                        ur.value = json.dumps(new_res_dict)
         save(experiment)
 
     except:
