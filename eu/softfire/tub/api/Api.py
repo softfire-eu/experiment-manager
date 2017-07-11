@@ -225,6 +225,7 @@ def create_user():
         error_message = 'Create user \'{}\' failed: {}'.format(username, str(e))
         logger.error(error_message)
         traceback.print_exc()
+        bottle.response.status = 400
         return dict(ok=False, msg=error_message)
 
 
@@ -232,9 +233,16 @@ def create_user():
 @authorize(role='portal')
 def delete_user():
     username = post_get('username')
-    CoreManagers.delete_user(username)
-    aaa.delete_user(username)
-    return dict(ok=True, msg='')
+    try:
+        CoreManagers.delete_user(username)
+        aaa.delete_user(username)
+        return dict(ok=True, msg='Deleted {}'.format(username))
+    except Exception as e:
+        error_message = 'Deletion of user {} failed: {}'.format(username, str(e))
+        logger.error(error_message)
+        traceback.print_exc()
+        bottle.response.status = 400
+        return dict(ok=False, msg=error_message)
 
 
 @bottle.post('/create_role')
