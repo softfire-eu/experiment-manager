@@ -769,19 +769,27 @@ def get_used_resources_by_experimenter(exp_name):
 
 
 def update_experiment(username, manager_name, resources):
-    experiment = find_by_element_value(entities.Experiment, entities.Experiment.username, username)[0]
+    experiments = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
+    if experiments:
+        experiment = experiments[0]
+    else:
+        return
     try:
+        # logger.debug("Manager name : '%s'" % manager_name)
         if manager_name == 'nfv-manager':
             for new_res in resources:
                 new_res_dict = json.loads(new_res.content)
                 for ur in experiment.resources:
-                    val_dict = json.loads(ur.value)
-                    # TODO pass also the id!
-                    if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get(
-                                'id') == new_res_dict.get(
-                                'id'):
-                        ur.value = json.dumps(new_res_dict)
+                    if ur.node_type == "NfvResource":
+                        # logger.debug("trying to parse: %s" % ur.value)
+                        val_dict = json.loads(ur.value)
+                        # TODO pass also the id!
+                        if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get(
+                                    'id') == new_res_dict.get(
+                                    'id'):
+                            ur.value = json.dumps(new_res_dict)
         else:
+            # logger.debug("Update from Manager name : %s " % manager_name)
             # deployed_res = [ur for ur in experiment.resources if ur.status == entities.ResourceStatus.DEPLOYED.value and ur.node_type in get_mapping_managers().get(manager_name)]
             # if len(deployed_res) == len(resources):
             #     for i in range(len(resources)):
@@ -789,10 +797,13 @@ def update_experiment(username, manager_name, resources):
             #         experiment.resources[i].value = json.dumps(new_res_dict)
             for new_res in resources:
                 new_res_dict = json.loads(new_res.content)
+                # logger.debug("trying to parse: %s" % new_res_dict)
                 for ur in experiment.resources:
                     # TODO pass also the id!
+                    # logger.debug("%s == %s" % (ur.node_type, get_mapping_managers().get(manager_name)))
                     if ur.node_type in get_mapping_managers().get(manager_name):
                         ur.value = json.dumps(new_res_dict)
+                        # logger.debug("updating value")
         save(experiment)
 
     except:
