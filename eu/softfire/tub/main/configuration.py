@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import socket
 import threading
@@ -72,18 +73,21 @@ def _is_man__running(man_ip, man_port):
 
 
 def check_endpoint():
+    manager_unavailable_times = get_config('system', 'manager-unavailable', '5')
     while not stop.wait(int(get_config('system', 'manager-check-delay', '20'))):
         for endpoint in find(ManagerEndpoint):
             try:
                 get_stub_from_manager_endpoint(endpoint).heartbeat(Empty())
             except:
-                traceback.print_exc()
-                if endpoint.unavailability >= int(get_config('system', 'manager-unavailable', '5')):
+                logger.error("Exception calling heartbeat for manager %s" % endpoint.name)
+                if logger.isEnabledFor(logging.DEBUG):
+                    traceback.print_exc()
+                if endpoint.unavailability >= int(manager_unavailable_times):
                     logger.error("Manager %s on endpoint %s is not running" % (endpoint.name, endpoint.endpoint))
                     MessagingAgent.unregister_endpoint(endpoint.name)
                 else:
                     endpoint.unavailability += 1
-                    # save(endpoint)
+                    save(endpoint)
 
 
 def __print_banner(banner_file_path):
