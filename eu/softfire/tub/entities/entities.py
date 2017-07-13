@@ -1,6 +1,6 @@
 from enum import Enum
 
-from sqlalchemy import Column, Integer, String, PickleType, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, PickleType, ForeignKey, Date, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -51,7 +51,7 @@ class UsedResource(Base):
     resource_id = Column(String(250), nullable=False, unique=False)
     parent_id = Column(String(250), ForeignKey('experiment.id'))
     status = Column(Integer, nullable=False)
-    value = Column(String(15000), nullable=True)
+    value = Column(Text, nullable=True)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     node_type = Column(String(250), unique=False, nullable=False)
