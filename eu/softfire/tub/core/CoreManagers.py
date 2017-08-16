@@ -693,7 +693,8 @@ def get_resources_dict(username=None):
                 if username == rm.user:
                     res.append(_get_resource_dict_from_rm(rm))
             else:
-                res.append(_get_resource_dict_from_rm(rm))
+                if not rm.user:
+                    res.append(_get_resource_dict_from_rm(rm))
     return res
 
 
