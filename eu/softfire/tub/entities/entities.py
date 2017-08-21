@@ -26,6 +26,13 @@ class Experimenter(Base):
     password = Column(String(250), nullable=False)
     testbed_tenants = Column(PickleType)
 
+    def __str__(self) -> str:
+        return "Experimenter : %s" % dict(id=self.id,
+                                          username=self.username,
+                                          role=self.role,
+                                          ob_project_id=self.ob_project_id,
+                                          testbed_tenants=self.testbed_tenants)
+
 
 class Experiment(Base):
     __tablename__ = "experiment"

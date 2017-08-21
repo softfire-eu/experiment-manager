@@ -70,21 +70,28 @@ def create_user(username, password, role='experimenter'):
         except ManagerNotFound:
             traceback.print_exc()
             logger.error("one of the manager is not register and need to create user")
-    logger.info("Created user, project and tenant on the NFV Resource Manager")
+    logger.info("Created user on the Managers")
 
-    experimenter = Experimenter()
-    experimenter.username = username
-    experimenter.password = password
+    experimenter = _save_or_create_experimenter(user_info, role)
+    logger.info("Stored new experimenter: %s" % experimenter.username)
+
+
+def _save_or_create_experimenter(user_info, role="experimenter"):
+    old_experimenter = find_by_element_value(Experimenter, Experimenter.username, user_info.username)
+    if not old_experimenter:
+        experimenter = Experimenter()
+    else:
+        experimenter = old_experimenter
+
+    experimenter.username = user_info.username
+    experimenter.password = user_info.password
     experimenter.role = role
-
     experimenter.testbed_tenants = {}
     experimenter.ob_project_id = user_info.ob_project_id
-
     for k, v in user_info.testbed_tenants.items():
         experimenter.testbed_tenants[k] = v
-
     save(experimenter)
-    logger.info("Stored new experimenter: %s" % experimenter.username)
+    return experimenter
 
 
 def delete_user(username):
@@ -833,3 +840,13 @@ def get_stub_from_manager_endpoint(manager_endpoint):
     # logger.debug("looking for endpoint %s" % endpoint)
     channel = grpc.insecure_channel(endpoint)
     return messages_pb2_grpc.ManagerAgentStub(channel)
+
+
+def refresh_user(username):
+    user_info = get_user_info(username)
+    if not user_info:
+        raise ResourceNotFound("User with username %s not found" % username)
+    user_info = get_stub_from_manager_name("nfv-manager").create_user(user_info)
+    new_experimenter = _save_or_create_experimenter(user_info)
+    logger.debug("Refreshe experimenter %s\n%s" % (new_experimenter.username, new_experimenter))
+    return user_info

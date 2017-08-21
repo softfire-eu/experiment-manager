@@ -14,7 +14,7 @@ from eu.softfire.tub.core import CoreManagers
 from eu.softfire.tub.core.CoreManagers import get_resources_dict, Experiment, \
     get_experiment_dict, add_resource, get_other_resources
 from eu.softfire.tub.core.calendar import CalendarManager
-from eu.softfire.tub.core.certificate import CertificateGenerator
+from eu.softfire.tub.core.certificate import CertificateGenerator, log_certificate_create
 from eu.softfire.tub.utils.static_config import CONFIGURATION_FOLDER
 from eu.softfire.tub.utils.utils import get_config, get_logger
 
@@ -216,6 +216,7 @@ def get_certificate():
     password = post_get('password', default=None)
     days = int(post_get('days', default=None))
     cert_gen = CertificateGenerator()
+    log_certificate_create(username, days)
     cert_gen.generate(password, username, days)
     openvpn_config = cert_gen.get_openvpn_config()
     headers = {
@@ -236,6 +237,15 @@ def create_user():
     if create_user_thread is None or not create_user_thread.is_alive():
         create_user_thread = _CreateUserThread(username, password, role)
         create_user_thread.start()
+    return HTTPResponse("Creating user %s in progress" % username, status=202)
+
+
+@bottle.post('/refresh_user')
+@authorize(role='admin')
+def refresh_user():
+    global create_user_thread
+    username = postd().username
+    CoreManagers.refresh_user(username)
     return HTTPResponse("Creating user %s in progress" % username, status=202)
 
 
@@ -299,7 +309,7 @@ def login_form():
 @bottle.route('/experimenter')
 @bottle.view('experimenter')
 @authorize(role="experimenter", fail_redirect='/sorry_page')
-def login_form():
+def experimenter_form():
     """Serve experimenter form"""
     images, networks, flavours = get_other_resources()
     exp_name, experiment_dict = get_experiment_dict(aaa.current_user.username)

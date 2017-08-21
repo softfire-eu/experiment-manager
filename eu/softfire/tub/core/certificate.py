@@ -37,6 +37,16 @@ def bytes_compat(string, encoding='utf-8'):
         return bytes(string)
 
 
+def log_certificate_create(username, days=DEFAULT_CERT_VALIDITY):
+    cert_file = get_config('system', 'certificate-log-file', '/etc/softfire/certificate-create.log')
+    try:
+        with open(cert_file, 'w+') as f:
+            f.write("common_name: %s, days: %s\n" % (username, days))
+    except:
+        logger.error("Can't write on cert create file, only logging")
+        logger.info("common_name: %s, days: %s\n" % (username, days))
+
+
 class CertificateGenerator(object):
     def __init__(self):
         self.key_length = 2048
@@ -69,7 +79,8 @@ class CertificateGenerator(object):
 
         self.certificate = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         if passphrase:
-            self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k, cipher="DES-EDE3-CBC", passphrase=passphrase.encode())
+            self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k, cipher="DES-EDE3-CBC",
+                                                      passphrase=passphrase.encode())
         else:
             self.private_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, k)
         return self
@@ -129,5 +140,6 @@ if __name__ == '__main__':
     if cert_gen.certificate:
         print("")
         print("")
-        output = subprocess.check_output(['openssl', 'x509', '-noout', '-text'], input=cert_gen.certificate).decode('utf-8')
+        output = subprocess.check_output(['openssl', 'x509', '-noout', '-text'], input=cert_gen.certificate).decode(
+            'utf-8')
         print(output)
