@@ -77,13 +77,13 @@ def create_user(username, password, role='experimenter'):
 
 
 def _save_or_create_experimenter(user_info, role="experimenter"):
-    old_experimenter = find_by_element_value(Experimenter, Experimenter.username, user_info.username)
+    old_experimenter = find_by_element_value(Experimenter, Experimenter.username, user_info.name)
     if not old_experimenter:
         experimenter = Experimenter()
     else:
-        experimenter = old_experimenter
+        experimenter = old_experimenter[0]
 
-    experimenter.username = user_info.username
+    experimenter.username = user_info.name
     experimenter.password = user_info.password
     experimenter.role = role
     experimenter.testbed_tenants = {}

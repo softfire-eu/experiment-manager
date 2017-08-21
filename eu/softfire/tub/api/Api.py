@@ -246,7 +246,7 @@ def refresh_user():
     global create_user_thread
     username = postd().username
     CoreManagers.refresh_user(username)
-    return HTTPResponse("Creating user %s in progress" % username, status=202)
+    return HTTPResponse("Refreshed user %s." % username, status=200)
 
 
 @bottle.post('/delete_user')
