@@ -4,6 +4,7 @@ import traceback
 from threading import Thread
 
 import bottle
+from multiprocessing.dummy import Pool
 import requests
 from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError, HTTPResponse
@@ -23,7 +24,7 @@ bottle.TEMPLATE_PATH = [get_config('api', 'view-path', '/etc/softfire/views')]
 aaa = Cork(get_config("api", "cork-files-path", "/etc/softfire/users"))
 authorize = aaa.make_auth_decorator(fail_redirect="/login")
 create_user_thread = None
-
+create_user_thread_pool = Pool(20)
 
 ######################
 # Experimenters urls #
@@ -230,13 +231,10 @@ def get_certificate():
 @bottle.post('/create_user')
 @authorize(role='portal')
 def create_user():
-    global create_user_thread
     password = postd().password
     role = postd().role
     username = postd().username
-    if create_user_thread is None or not create_user_thread.is_alive():
-        create_user_thread = _CreateUserThread(username, password, role)
-        create_user_thread.start()
+    create_user_thread_pool.apply_async(create_user_thread_function, args=(username, password, role,))
     return HTTPResponse("Creating user %s in progress" % username, status=202)
 
 
@@ -509,35 +507,29 @@ def start_listening():
     bottle.run(app=app, quiet=quiet_bottle, port=port, host='0.0.0.0')
 
 
-class _CreateUserThread(Thread):
-    def __init__(self, username, password, role='experimenter', group=None, target=None, name=None, args=(),
-                 kwargs=None, *, daemon=None):
-        super().__init__(group, target, name, args, kwargs, daemon=daemon)
-        self.username = username
-        self.password = password
-        self.role = role
-
-    def run(self):
+def create_user_thread_function(username, password, role='experimenter'):
+    """
+    This function is expected to be executed in a thread pool and called by the Api's create_user function.
+    :param username: 
+    :param password: 
+    :param role: 
+    :return: 
+    """
+    try:
+        CoreManagers.create_user(username=username, password=password, role=role)
         try:
-            CoreManagers.create_user(username=self.username, password=self.password, role=self.role)
-            requests.post("http://localhost:%s/create_user_local" % port,
-                          json=dict(username=self.username, password=self.password, role=self.role))
-        except Exception as e:
-            error_message = 'Create user \'{}\' failed: {}'.format(self.username, str(e))
-            logger.error(error_message)
-            traceback.print_exc()
-        finally:
-            global create_user_thread
-            create_user_thread = None
-            return
+            aaa.login(username='admin', password=get_config('system', 'admin-password', 'softfire'))
+            aaa.create_user(username, role, password)
+        except Exception as cork_exception:
+            logger.error('Exception while creating cork user {}: {}'.format(username, cork_exception))
+            try:
+                logger.debug('Try to delete user {} for rollback after creation in cork failed'.format(username))
+                CoreManagers.delete_user(username=username)
+            except Exception as e:
+                logger.error('Deletion of user {} for rollback after cork user creation failed did not succeed.'.format(username))
+            raise cork_exception
 
-
-@post("/create_user_local")
-def _create_user_cork():
-    logger.debug("Remote addr: %s" % request.remote_addr)
-    if "localhost" in request.remote_addr or "127.0.0.1" in request.remote_addr:
-        aaa.login(username='admin', password=get_config('system', 'admin-password', 'softfire'))
-        aaa.create_user(request.json.get('username'), request.json.get('role'), request.json.get('password'))
-        return HTTPResponse(status=200)
-    else:
-        return HTTPResponse(status=404)
+    except Exception as e2:
+        error_message = 'Create user \'{}\' failed: {}'.format(username, str(e2))
+        logger.error(error_message)
+        traceback.print_exc()
