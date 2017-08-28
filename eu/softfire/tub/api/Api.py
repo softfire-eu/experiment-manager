@@ -517,19 +517,31 @@ def create_user_thread_function(username, password, role='experimenter'):
     """
     try:
         CoreManagers.create_user(username=username, password=password, role=role)
-        try:
-            aaa.login(username='admin', password=get_config('system', 'admin-password', 'softfire'))
-            aaa.create_user(username, role, password)
-        except Exception as cork_exception:
-            logger.error('Exception while creating cork user {}: {}'.format(username, cork_exception))
+        res = requests.post("http://localhost:%s/create_user_local" % port,
+                      json=dict(username=username, password=password, role=role))
+        if res.status_code != 200:
+            logger.error('Not able to create cork user {}, return status {}: {}'.format(username, res.status_code, str(res.content)))
             try:
                 logger.debug('Try to delete user {} for rollback after creation in cork failed'.format(username))
                 CoreManagers.delete_user(username=username)
             except Exception as e:
-                logger.error('Deletion of user {} for rollback after cork user creation failed did not succeed.'.format(username))
-            raise cork_exception
+                logger.error('Deletion of user {} for rollback after cork user creation failed did not succeed: {}'.format(username, e))
 
-    except Exception as e2:
-        error_message = 'Create user \'{}\' failed: {}'.format(username, str(e2))
+    except Exception as e:
+        error_message = 'Create user \'{}\' failed: {}'.format(username, str(e))
         logger.error(error_message)
         traceback.print_exc()
+
+
+@post("/create_user_local")
+def _create_user_cork():
+    logger.debug("Remote addr: %s" % request.remote_addr)
+    if "localhost" in request.remote_addr or "127.0.0.1" in request.remote_addr:
+        try:
+            aaa.login(username='admin', password=get_config('system', 'admin-password', 'softfire'))
+            aaa.create_user(request.json.get('username'), request.json.get('role'), request.json.get('password'))
+        except Exception as e:
+            return HTTPResponse(status=400, body=str(e))
+        return HTTPResponse(status=200)
+    else:
+        return HTTPResponse(status=404)
