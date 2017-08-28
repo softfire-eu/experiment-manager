@@ -614,9 +614,9 @@ def _release_resource_for_manager(manager_name, used_resources, user_info):
                                                                         payload=ur.value,
                                                                         user_info=user_info))
                     if response.result != 0:
-                        logger.error("release resources returned %d: %s" % (response.result, response.error_message))
+                        logger.error("release resources in manager %s returned %d: %s" % (manager_name, response.result, response.error_message))
                         raise RpcFailedCall(
-                            "provide resources returned %d: %s" % (response.result, response.error_message))
+                            "release resources in manager %s returned %d: %s" % (manager_name, response.result, response.error_message))
                         # for u in [u for u in used_resources if u.node_type in get_mapping_managers().get(manager_name)]:
                         #     logger.info("deleting %s" % u.name)
                         #     delete(u)
