@@ -511,13 +511,13 @@ def provide_resources(username):
         raise ExperimentValidationError(
             "You cannot deploy a resource in error or deployed state. Please delete it first")
     for ur in experiment_to_deploy.resources:
-        today = datetime.datetime.today().date()
+        today = datetime.today().date()
         start_date = ur.start_date
         end_date = ur.end_date
         # to make sure that we don't run into any problems due to the wrong type, even though this should not happen
-        if isinstance(start_date, datetime.datetime):
+        if isinstance(start_date, datetime):
             start_date = start_date.date()
-        if isinstance(end_date, datetime.datetime):
+        if isinstance(end_date, datetime):
             end_date = end_date.date()
         if start_date > today:
             logger.error('The resource {} is reserved for a time period which begins in the future. You cannot use it yet.'.format(ur.name))
