@@ -168,9 +168,9 @@ def add_resource(username, id, node_type, cardinality, description, testbed, fil
             nsd_csar_location = '{}/{}'.format(nsd_csar_location, username)
             if not os.path.exists(nsd_csar_location):
                 os.makedirs(nsd_csar_location)
-            logger.debug('Save file as {}/{}'.format(nsd_csar_location, '%s.csar' % file.name))
-            file.save('{}/{}'.format(nsd_csar_location, '%s.csar' % file.name), overwrite=True)
-            resource_metadata.properties['nsd_file_name'] = file.name
+            logger.debug('Save file as {}/{}'.format(nsd_csar_location, file.filename))
+            file.save('{}/{}'.format(nsd_csar_location, file.filename), overwrite=True)
+            resource_metadata.properties['nsd_file_name'] = file.filename
         elif isinstance(file, str):  # only the file name is provided
             logger.debug('File name is provided')
             resource_metadata.properties['nsd_file_name'] = file
