@@ -168,9 +168,9 @@ def add_resource(username, id, node_type, cardinality, description, testbed, fil
             nsd_csar_location = '{}/{}'.format(nsd_csar_location, username)
             if not os.path.exists(nsd_csar_location):
                 os.makedirs(nsd_csar_location)
-            logger.debug('Save file as {}/{}'.format(nsd_csar_location, '%s.csar' % file.name))
-            file.save('{}/{}'.format(nsd_csar_location, '%s.csar' % file.name), overwrite=True)
-            resource_metadata.properties['nsd_file_name'] = file.name
+            logger.debug('Save file as {}/{}'.format(nsd_csar_location, file.filename))
+            file.save('{}/{}'.format(nsd_csar_location, file.filename), overwrite=True)
+            resource_metadata.properties['nsd_file_name'] = file.filename
         elif isinstance(file, str):  # only the file name is provided
             logger.debug('File name is provided')
             resource_metadata.properties['nsd_file_name'] = file
@@ -517,6 +517,21 @@ def provide_resources(username):
         logger.error("Deploying a resource in error or deployed state....")
         raise ExperimentValidationError(
             "You cannot deploy a resource in error or deployed state. Please delete it first")
+    for ur in experiment_to_deploy.resources:
+        today = datetime.today().date()
+        start_date = ur.start_date
+        end_date = ur.end_date
+        # to make sure that we don't run into any problems due to the wrong type, even though this should not happen
+        if isinstance(start_date, datetime):
+            start_date = start_date.date()
+        if isinstance(end_date, datetime):
+            end_date = end_date.date()
+        if start_date > today:
+            logger.error('The resource {} is reserved for a time period which begins in the future. You cannot use it yet.'.format(ur.name))
+            raise ExperimentValidationError('The resource {} is reserved for a time period which begins in the future. You cannot use it yet.'.format(ur.name))
+        if end_date < today:
+            logger.error('For the resource {} the reserved time period ended already.'.format(ur.name))
+            raise ExperimentValidationError('For the resource {} the reserved time period ended already.'.format(ur.name))
     user_info = get_user_info(username)
     if hasattr(user_info, 'name'):
         un = user_info.name
@@ -621,9 +636,9 @@ def _release_resource_for_manager(manager_name, used_resources, user_info):
                                                                         payload=ur.value,
                                                                         user_info=user_info))
                     if response.result != 0:
-                        logger.error("release resources returned %d: %s" % (response.result, response.error_message))
+                        logger.error("release resources in manager %s returned %d: %s" % (manager_name, response.result, response.error_message))
                         raise RpcFailedCall(
-                            "provide resources returned %d: %s" % (response.result, response.error_message))
+                            "release resources in manager %s returned %d: %s" % (manager_name, response.result, response.error_message))
                         # for u in [u for u in used_resources if u.node_type in get_mapping_managers().get(manager_name)]:
                         #     logger.info("deleting %s" % u.name)
                         #     delete(u)
