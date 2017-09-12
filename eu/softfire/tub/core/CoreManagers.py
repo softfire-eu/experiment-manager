@@ -254,7 +254,14 @@ class Experiment(object):
                             "Please check that the file_name property is correctly set to the file name passed.")
                         raise ExperimentValidationError(
                             "Please check that the file_name property is correctly set to the file name passed.")
-                    yaml_file = zf.read('tosca-metadata/Metadata.yaml')
+                    try:
+                        yaml_file = zf.read('tosca-metadata/Metadata.yaml')
+                    except KeyError as e:
+                        traceback.print_exc()
+                        if hasattr(e, 'message'):
+                            raise ExperimentValidationError(e.message)
+                        else:
+                            raise ExperimentValidationError(e.args)
                     if yaml_file:
                         yaml_content = yaml.load(yaml_file)
                         description = yaml_content.get('description')
