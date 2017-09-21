@@ -1,10 +1,9 @@
 import json
 import os
 import traceback
-from threading import Thread
+from multiprocessing.dummy import Pool
 
 import bottle
-from multiprocessing.dummy import Pool
 import requests
 from beaker.middleware import SessionMiddleware
 from bottle import request, post, get, HTTPError, HTTPResponse
@@ -25,6 +24,7 @@ aaa = Cork(get_config("api", "cork-files-path", "/etc/softfire/users"))
 authorize = aaa.make_auth_decorator(fail_redirect="/login")
 create_user_thread = None
 create_user_thread_pool = Pool(20)
+
 
 ######################
 # Experimenters urls #
@@ -221,9 +221,9 @@ def get_certificate():
     cert_gen.generate(password, username, days)
     openvpn_config = cert_gen.get_openvpn_config()
     headers = {
-        'Content-Type': 'text/plain;charset=UTF-8',
+        'Content-Type':        'text/plain;charset=UTF-8',
         'Content-Disposition': 'attachment; filename="softfire-vpn_%s.ovpn"' % username,
-        "Content-Length": len(openvpn_config)
+        "Content-Length":      len(openvpn_config)
     }
     return bottle.HTTPResponse(openvpn_config, 200, **headers)
 
@@ -359,28 +359,37 @@ def error_translation(func):
             return func(*args, **kwargs)
         except ValueError as e:
             traceback.print_exc()
-            bottle.abort(400, e.args)
+            return HTTPResponse(status=400, body=e.args)
+            # bottle.abort(400, e.args)
         except exceptions.ExperimentNotFound as e:
             traceback.print_exc()
-            bottle.abort(404, e.message)
+            return HTTPResponse(status=404, body=e.message)
+            # bottle.abort(404, e.message)
         except exceptions.ExperimentValidationError as e:
             traceback.print_exc()
-            bottle.abort(400, e.message)
+            return HTTPResponse(status=400, body=e.message)
+            # bottle.abort(400, e.message)
         except exceptions.ManagerNotFound as e:
             traceback.print_exc()
-            bottle.abort(404, e.message)
+            return HTTPResponse(status=404, body=e.message)
+            # bottle.abort(404, e.message)
         except exceptions.ResourceAlreadyBooked as e:
             traceback.print_exc()
-            bottle.abort(400, e.message)
+            return HTTPResponse(status=400, body=e.message)
+            # bottle.abort(400, e.message)
         except exceptions.ResourceNotFound as e:
             traceback.print_exc()
-            bottle.abort(404, e.message)
+            return HTTPResponse(status=404, body=e.message)
+            # bottle.abort(404, e.message)
         except exceptions.RpcFailedCall:
             traceback.print_exc()
-            bottle.abort(500, "Ups, an internal error occurred, please report to us the procedure and we will fix it")
-        except FileNotFoundError:
+            return HTTPResponse(status=500,
+                                body="Ups, an internal error occurred, please report to us the procedure and we will fix it")
+            # bottle.abort(500, "Ups, an internal error occurred, please report to us the procedure and we will fix it")
+        except FileNotFoundError as e:
             traceback.print_exc()
-            bottle.abort(404, "File not found in your request")
+            return HTTPResponse(status=404, body=e.args)
+            # bottle.abort(404, "File not found in your request")
 
     return wrapper
 
@@ -487,11 +496,11 @@ def setup_app() -> (SessionMiddleware, int, bool):
     bottle.install(error_translation)
     session_opts = {
         'session.cookie_expires': True,
-        'session.encrypt_key': get_config('api', 'encrypt_key', 'softfire'),
-        'session.httponly': True,
-        'session.timeout': 3600 * 24,  # 1 day
-        'session.type': 'cookie',
-        'session.validate_key': True,
+        'session.encrypt_key':    get_config('api', 'encrypt_key', 'softfire'),
+        'session.httponly':       True,
+        'session.timeout':        3600 * 24,  # 1 day
+        'session.type':           'cookie',
+        'session.validate_key':   True,
     }
     a = SessionMiddleware(bottle.app(), session_opts)
     qb = get_config('api', 'quiet', 'true').lower() == 'true'
@@ -518,14 +527,17 @@ def create_user_thread_function(username, password, role='experimenter'):
     try:
         CoreManagers.create_user(username=username, password=password, role=role)
         res = requests.post("http://localhost:%s/create_user_local" % port,
-                      json=dict(username=username, password=password, role=role))
+                            json=dict(username=username, password=password, role=role))
         if res.status_code != 200:
-            logger.error('Not able to create cork user {}, return status {}: {}'.format(username, res.status_code, str(res.content)))
+            logger.error('Not able to create cork user {}, return status {}: {}'.format(username, res.status_code,
+                                                                                        str(res.content)))
             try:
                 logger.debug('Try to delete user {} for rollback after creation in cork failed'.format(username))
                 CoreManagers.delete_user(username=username)
             except Exception as e:
-                logger.error('Deletion of user {} for rollback after cork user creation failed did not succeed: {}'.format(username, e))
+                logger.error(
+                    'Deletion of user {} for rollback after cork user creation failed did not succeed: {}'.format(
+                        username, e))
 
     except Exception as e:
         error_message = 'Create user \'{}\' failed: {}'.format(username, str(e))
