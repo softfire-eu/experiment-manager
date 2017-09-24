@@ -255,7 +255,18 @@ class Experiment(object):
                         raise ExperimentValidationError(
                             "Please check that the file_name property is correctly set to the file name passed.")
                     try:
-                        yaml_file = zf.read('tosca-metadata/Metadata.yaml')
+                        filenames = [zipinfo.filename for zipinfo in zf.filelist]
+                        if 'TOSCA-Metadata/Metadata.yaml' in filenames:
+                            logger.debug("Found 'TOSCA-Metadata/Metadata.yaml'")
+                            yaml_file = zf.read('TOSCA-Metadata/Metadata.yaml')
+                        elif 'tosca-metadata/Metadata.yaml' in filenames:
+                            # just for legacy support
+                            # the correct file name following the specification is 'TOSCA-Metadata'
+                            # to support experiments that were created before this fix we still check for 'tosca-metadata' though
+                            logger.warning("'TOSCA-Metadata/Metadata.yaml' not found. Will try 'tosca-metadata/Metadata.yaml' to support older experiments.")
+                            yaml_file = zf.read('tosca-metadata/Metadata.yaml')
+                        else:
+                            raise ExperimentValidationError('The TOSCA-Metadata/Metadata.yaml file is missing in {}.'.format(file_name))
                     except KeyError as e:
                         traceback.print_exc()
                         if hasattr(e, 'message'):
