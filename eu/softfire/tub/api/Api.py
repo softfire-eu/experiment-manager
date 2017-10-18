@@ -462,6 +462,15 @@ def __format_experiment_dict(experiment):
                         if value is not None:
                             formatted_vnfr[key] = value
 
+                    # add error description if lifecycle events failed
+                    vnfr_status = vnfr.get('status')
+                    if vnfr_status is not None and vnfr_status == 'ERROR':
+                        for lifecycle_event in vnfr.get('lifecycle_event_history'):
+                            if lifecycle_event.get('event') == 'ERROR':
+                                if formatted_vnfr.get('failed lifecycle events') is None:
+                                    formatted_vnfr['failed lifecycle events'] = []
+                                formatted_vnfr.get('failed lifecycle events').append('{}: {}'.format(lifecycle_event.get('executedAt'), lifecycle_event.get('description')))
+
                     private_ip_list = []
                     floating_ip_list = []
                     vdu_list = vnfr.get('vdu')
