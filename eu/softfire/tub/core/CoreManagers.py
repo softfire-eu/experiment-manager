@@ -216,6 +216,12 @@ class Experiment(object):
                 self.start_date = self.get_start_date(metadata)
                 # 12/12/12 11:55
                 self.end_date = self.get_end_date(metadata)
+                today = datetime.today().date()
+                logger.info("End date: date: %s" %self.end_date.date())
+                if self.end_date.date() < today:
+                    logger.error('For the experiment {} the end date({}) is in the past.'.format(self.name, self.end_date.date()))
+                    raise ExperimentValidationError(
+                        'For the experiment {} the end date({}) is in the past.'.format(self.name, self.end_date.date()))
                 self.duration = self.end_date - self.start_date
                 logger.debug("Experiment duration %s" % self.duration)
             if filename.startswith("Files/") and filename.endswith('.csar'):
@@ -306,10 +312,12 @@ class Experiment(object):
         for node in self.topology_template.nodetemplates:
             exp.resources.append(self._get_used_resource_by_node(node))
 
-        logger.info("Saving experiment %s" % exp.name)
         element_value = find_by_element_value(entities.Experiment, entities.Experiment.username, self.username)
-        if len(element_value):
-            raise ExperimentValidationError("You cannot have two experiments at the same time!")
+        max_no_experiment = get_config("System","max-number-experiments",3)
+        if len(element_value) >= max_no_experiment:
+            raise ExperimentValidationError("You cannot have more than %s experiments at the same time!" % max_no_experiment)
+
+        logger.info("Saving experiment %s" % exp.name)
         save(exp)
         self.experiment = exp
         for res in exp.resources:
@@ -513,8 +521,8 @@ def _execute_rpc_list_res(manager):
     return response.list_resource.resources
 
 
-def provide_resources(username):
-    experiments_to_deploy = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
+def provide_resources(username, experiment_id):
+    experiments_to_deploy = find_by_element_value(entities.Experiment, entities.Experiment.name, experiment_id)
     if len(experiments_to_deploy) == 0:
         logger.error("No experiment to be deployed....")
         raise ExperimentNotFound("No experiment to be deployed....")
@@ -590,7 +598,7 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
                     if response.result == messages_pb2.ERROR:
                         logger.error("provide resources returned %d: %s" % (response.result, response.error_message))
                         ur.status = ResourceStatus.ERROR.value
-                        ur.value = response.error_message
+                        ur.value = json.dumps(response.error_message)
                     else:
                         # TODO fix this in the api not here
                         for res in response.provide_resource.resources:
@@ -599,20 +607,18 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
                             ur.value = json.dumps(_res_dict)
                             ret.append(_res_dict)
                             ur.status = ResourceStatus.DEPLOYED.value
-
                     save(ur)
 
     return ret
 
 
-def release_resources(username):
-    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
+def release_resources(username, experiment_id):
+    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.name, experiment_id)
     if len(experiments_to_delete) == 0:
         logger.error("No experiment to be deleted....")
         raise ExperimentNotFound("No experiment to be deleted....")
     experiment_to_delete = experiments_to_delete[0]
     _release_all_experiment_resources(experiment_to_delete, username)
-
     logger.info("deleting %s" % experiment_to_delete.name)
     delete(experiment_to_delete)
 
@@ -709,20 +715,25 @@ def get_other_resources():
 
 def get_experiment_dict(username):
     res = []
-    exp_name = "Your Experiment"
+    exp_name = "Your Experiments:"
+    exp_id = ""
+    ids = []
     for ex in find(entities.Experiment):
         if ex.username == username:
-            exp_name += ": %s" % ex.name
+            # exp_name += ": %s" % ex.name
+            exp_id += ": %s" % ex.id
             for ur in ex.resources:
                 tmp = {
                     'resource_id': ur.resource_id,
                     'used_resource_id': ur.id,
                     'node_type': ur.node_type,
                     'status': ResourceStatus.from_int_to_enum(ur.status).name,
-                    'value': ur.value
+                    'value': ur.value,
+                    'experiment_id': ex.name
                 }
+                ids.append(ex.name)
                 res.append(tmp)
-    return exp_name, res
+    return exp_name, exp_id, res, ids
 
 
 def get_resources_dict(username=None):
@@ -811,24 +822,26 @@ def get_used_resources_by_experimenter(exp_name):
 
 def update_experiment(username, manager_name, resources):
     experiments = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
-    if experiments:
-        experiment = experiments[0]
-    else:
-        return
+    # if experiments:
+    #     experiment = experiments[0]
+    # else:
+    #     return
     try:
         # logger.debug("Manager name : '%s'" % manager_name)
         if manager_name == 'nfv-manager':
             for new_res in resources:
                 new_res_dict = json.loads(new_res.content)
-                for ur in experiment.resources:
-                    if ur.node_type == "NfvResource":
-                        # logger.debug("trying to parse: %s" % ur.value)
-                        val_dict = json.loads(ur.value)
-                        # TODO pass also the id!
-                        if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get(
-                                    'id') == new_res_dict.get(
-                                    'id'):
-                            ur.value = json.dumps(new_res_dict)
+                for experiment in experiments:
+                    # logger.info("Experiment name: %s" % experiment.name)
+                    for ur in experiment.resources:
+                        if ur.node_type == "NfvResource":
+                            # logger.debug("trying to parse: %s" % ur.value)
+                            val_dict = json.loads(ur.value)
+                            # TODO pass also the id!
+                            if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get(
+                                        'id') == new_res_dict.get(
+                                        'id'):
+                                ur.value = json.dumps(new_res_dict)
         else:
             # logger.debug("Update from Manager name : %s " % manager_name)
             # deployed_res = [ur for ur in experiment.resources if ur.status == entities.ResourceStatus.DEPLOYED.value and ur.node_type in get_mapping_managers().get(manager_name)]
@@ -839,12 +852,14 @@ def update_experiment(username, manager_name, resources):
             for new_res in resources:
                 new_res_dict = json.loads(new_res.content)
                 # logger.debug("trying to parse: %s" % new_res_dict)
-                for ur in experiment.resources:
-                    # TODO pass also the id!
-                    # logger.debug("%s == %s" % (ur.node_type, get_mapping_managers().get(manager_name)))
-                    if ur.node_type in get_mapping_managers().get(manager_name):
-                        ur.value = json.dumps(new_res_dict)
-                        # logger.debug("updating value")
+                for experiment in experiments:
+                    # logger.info("Experiment name: %s" % experiment.name)
+                    for ur in experiment.resources:
+                        # TODO pass also the id!
+                        # logger.debug("%s == %s" % (ur.node_type, get_mapping_managers().get(manager_name)))
+                        if ur.node_type in get_mapping_managers().get(manager_name):
+                            ur.value = json.dumps(new_res_dict)
+                            # logger.debug("updating value")
         save(experiment)
 
     except:
