@@ -832,7 +832,6 @@ def update_experiment(username, manager_name, resources):
             for new_res in resources:
                 new_res_dict = json.loads(new_res.content)
                 for experiment in experiments:
-                    # logger.info("Experiment name: %s" % experiment.name)
                     for ur in experiment.resources:
                         if ur.node_type == "NfvResource":
                             # logger.debug("trying to parse: %s" % ur.value)
@@ -853,7 +852,6 @@ def update_experiment(username, manager_name, resources):
                 new_res_dict = json.loads(new_res.content)
                 # logger.debug("trying to parse: %s" % new_res_dict)
                 for experiment in experiments:
-                    # logger.info("Experiment name: %s" % experiment.name)
                     for ur in experiment.resources:
                         # TODO pass also the id!
                         # logger.debug("%s == %s" % (ur.node_type, get_mapping_managers().get(manager_name)))
