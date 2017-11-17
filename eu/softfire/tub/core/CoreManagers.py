@@ -97,14 +97,42 @@ def _save_or_create_experimenter(user_info, role="experimenter"):
 def delete_user(username):
     for experimenter in find(Experimenter):
         if experimenter.username == username:
+            try:
+                release_resources(username)
+            except ExperimentNotFound as e:
+                pass
+            except Exception as e:
+                logger.error('Exception while trying to delete experiment of user {}: {}'.format(username, str(e)))
+                traceback.print_exc()
+                logger.warning('Removing the resources and experiments of user {} from the database so they might actually not be removed!'.format(username))
+                try:
+                    for experiment in find(entities.Experiment):
+                        if experiment.username == username:
+                            for ur in find(UsedResource):
+                                if ur.parent_id == experiment.id:
+                                    logger.debug('Removing used resource {} ({}) from the database.'.format(ur.id, ur.name))
+                                    try:
+                                        delete(ur)
+                                    except Exception as e:
+                                        logger.error('Exception while removing used resource {} ({}) from the database: {}'.format(ur.id, ur.name, e))
+                                        traceback.print_exc()
+                            logger.debug('Removing experiment {} from the database.'.format(experiment.id))
+                            try:
+                                delete(experiment)
+                            except Exception as e:
+                                logger.error(
+                                    'Exception while removing experiment {} from the database: {}'.format(experiment.id, e))
+                                traceback.print_exc()
+                except Exception as e:
+                    logger.error('Exception while removing the resources and experiments of user {} from the database.'.format(username))
             user_info = _create_user_info_from_experimenter(experimenter)
             for man in MANAGERS_CREATE_USER:
                 try:
                     get_stub_from_manager_name(man).delete_user(user_info)
-                    logger.info("Manager %s delete user finished")
+                    logger.info("Manager {} delete user {} finished".format(man, experimenter.username))
                 except ManagerNotFound:
                     traceback.print_exc()
-                    logger.error("one of the manager is not register and need to delete user")
+                    logger.error("Manager {} is not register and needs to delete user {}".format(man, experimenter.username))
             delete(experimenter)
 
 
