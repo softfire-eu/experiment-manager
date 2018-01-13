@@ -97,6 +97,34 @@ def _save_or_create_experimenter(user_info, role="experimenter"):
 def delete_user(username):
     for experimenter in find(Experimenter):
         if experimenter.username == username:
+            for experiment in find(entities.Experiment):
+                if experiment.username == username:
+                    try:
+                        release_resources(username, experiment.id)
+                    except ExperimentNotFound as e:
+                        pass
+                    except Exception as e:
+                        logger.error('Exception while trying to delete experiment {} of user {}: {}'.format(experiment.id, username, str(e)))
+                        traceback.print_exc()
+                        logger.warning('Removing the resources and experiment {} of user {} from the database so they might actually not be removed!'.format(experiment.id, username))
+                        try:
+                            for ur in find(UsedResource):
+                                if ur.parent_id == experiment.id:
+                                    logger.debug('Removing used resource {} ({}) from the database.'.format(ur.id, ur.name))
+                                    try:
+                                        delete(ur)
+                                    except Exception as e:
+                                        logger.error('Exception while removing used resource {} ({}) from the database: {}'.format(ur.id, ur.name, e))
+                                        traceback.print_exc()
+                            logger.debug('Removing experiment {} from the database.'.format(experiment.id))
+                            try:
+                                delete(experiment)
+                            except Exception as e:
+                                logger.error(
+                                    'Exception while removing experiment {} from the database: {}'.format(experiment.id, e))
+                                traceback.print_exc()
+                        except Exception as e:
+                            logger.error('Exception while removing the resources and experiment {} of user {} from the database.'.format(experiment.id, username))
             user_info = _create_user_info_from_experimenter(experimenter)
             for man in MANAGERS_CREATE_USER:
                 try:
