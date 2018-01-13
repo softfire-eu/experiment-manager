@@ -212,6 +212,8 @@ class Experiment(object):
             if filename == 'TOSCA-Metadata/Metadata.yaml':
                 metadata = yaml.load(zf.read(filename))
                 self.name = metadata.get('name')
+                if find(entities.Experiment, '{}_{}'.format(self.username, self.name)) is not None:
+                    raise ExperimentValidationError('There is already an experiment with this name, please choose a different one.')
                 # 12/12/12 10:55
                 self.start_date = self.get_start_date(metadata)
                 # 12/12/12 11:55
@@ -302,7 +304,7 @@ class Experiment(object):
             raise ExperimentValidationError(e.args)
 
         exp = entities.Experiment()
-        exp.id = "%s_%s" % (self.username, self.name)
+        exp.id = '{}_{}'.format(self.username, self.name)
         exp.username = self.username
         exp.name = self.name
         exp.start_date = self.start_date
@@ -522,7 +524,7 @@ def _execute_rpc_list_res(manager):
 
 
 def provide_resources(username, experiment_id):
-    experiments_to_deploy = find_by_element_value(entities.Experiment, entities.Experiment.name, experiment_id)
+    experiments_to_deploy = find_by_element_value(entities.Experiment, entities.Experiment.id, experiment_id)
     if len(experiments_to_deploy) == 0:
         logger.error("No experiment to be deployed....")
         raise ExperimentNotFound("No experiment to be deployed....")
@@ -613,7 +615,7 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
 
 
 def release_resources(username, experiment_id):
-    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.name, experiment_id)
+    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.id, experiment_id)
     if len(experiments_to_delete) == 0:
         logger.error("No experiment to be deleted....")
         raise ExperimentNotFound("No experiment to be deleted....")
@@ -715,13 +717,13 @@ def get_other_resources():
 
 def get_experiment_dict(username):
     res = []
-    exp_name = "Your Experiments:"
-    exp_id = ""
+    exp_names = []
+    exp_ids = []
     ids = []
     for ex in find(entities.Experiment):
         if ex.username == username:
-            # exp_name += ": %s" % ex.name
-            exp_id += ": %s" % ex.id
+            exp_ids.append(ex.id)
+            exp_names.append(ex.name)
             for ur in ex.resources:
                 tmp = {
                     'resource_id': ur.resource_id,
@@ -729,11 +731,11 @@ def get_experiment_dict(username):
                     'node_type': ur.node_type,
                     'status': ResourceStatus.from_int_to_enum(ur.status).name,
                     'value': ur.value,
-                    'experiment_id': ex.name
+                    'experiment_name': ex.name,
+                    'experiment_id': ex.id
                 }
-                ids.append(ex.name)
                 res.append(tmp)
-    return exp_name, exp_id, res, ids
+    return exp_names, exp_ids, res
 
 
 def get_resources_dict(username=None):

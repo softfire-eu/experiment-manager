@@ -69,11 +69,11 @@ def save(entity, _clazz=None):
         try:
             if _id:
                 found = find(_clazz, _id)
-                if isinstance(found, list):
-                    for e in found:
-                        delete(e)
-                else:
-                    if found:
+                if found is not None:
+                    if isinstance(found, list):
+                        for e in found:
+                            delete(e)
+                    else:
                         delete(found)
         except NoResultFound:
             pass
@@ -94,7 +94,7 @@ def find(_clazz, _id=None):
         if _id is None:
             res = se.query(_clazz).all()
         else:
-            res = se.query(_clazz).filter(_clazz.id == _id).one()
+            res = se.query(_clazz).filter(_clazz.id == _id).first()
         se.commit()
     return res
 
