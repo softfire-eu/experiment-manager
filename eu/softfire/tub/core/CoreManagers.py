@@ -898,7 +898,6 @@ def get_stub_from_manager_name(manager_name):
 
 def get_stub_from_manager_endpoint(manager_endpoint):
     endpoint = manager_endpoint.endpoint
-    # logger.debug("looking for endpoint %s" % endpoint)
     channel = grpc.insecure_channel(endpoint)
     return messages_pb2_grpc.ManagerAgentStub(channel)
 
@@ -911,3 +910,7 @@ def refresh_user(username):
     new_experimenter = _save_or_create_experimenter(user_info)
     logger.debug("Refreshe experimenter %s\n%s" % (new_experimenter.username, new_experimenter))
     return user_info
+
+
+def get_all_resources():
+    return find(entities.Experiment)

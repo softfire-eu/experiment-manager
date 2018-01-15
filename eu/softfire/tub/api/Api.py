@@ -221,9 +221,9 @@ def get_certificate():
     cert_gen.generate(password, username, days)
     openvpn_config = cert_gen.get_openvpn_config()
     headers = {
-        'Content-Type':        'text/plain;charset=UTF-8',
+        'Content-Type': 'text/plain;charset=UTF-8',
         'Content-Disposition': 'attachment; filename="softfire-vpn_%s.ovpn"' % username,
-        "Content-Length":      len(openvpn_config)
+        "Content-Length": len(openvpn_config)
     }
     return bottle.HTTPResponse(openvpn_config, 200, **headers)
 
@@ -275,6 +275,14 @@ def create_role():
 def delete_role():
     aaa.delete_role(post_get('role'))
     return dict(ok=True, msg='')
+
+
+@get('/get_resources')
+@authorize(role='admin')
+def get_status():
+    resources = CoreManagers.get_all_resources()
+    bottle.response.headers['Content-Type'] = 'application/json'
+    return json.dumps(resources)
 
 
 ################
@@ -469,7 +477,9 @@ def __format_experiment_dict(experiment):
                             if lifecycle_event.get('event') == 'ERROR':
                                 if formatted_vnfr.get('failed lifecycle events') is None:
                                     formatted_vnfr['failed lifecycle events'] = []
-                                formatted_vnfr.get('failed lifecycle events').append('{}: {}'.format(lifecycle_event.get('executedAt'), lifecycle_event.get('description')))
+                                formatted_vnfr.get('failed lifecycle events').append(
+                                    '{}: {}'.format(lifecycle_event.get('executedAt'),
+                                                    lifecycle_event.get('description')))
 
                     private_ip_list = []
                     floating_ip_list = []
@@ -480,7 +490,7 @@ def __format_experiment_dict(experiment):
                             if vnfc_instance_list is not None and isinstance(vnfc_instance_list, list):
                                 for vnfc_instance in vnfc_instance_list:
                                     if vnfc_instance.get('floatingIps') is not None and isinstance(
-                                                vnfc_instance.get('floatingIps'), list):
+                                            vnfc_instance.get('floatingIps'), list):
                                         vnfc_floating_ip_list = ['{}:{}'.format(fip.get('netName'), fip.get('ip')) for
                                                                  fip in vnfc_instance.get('floatingIps')]
                                         floating_ip_list.extend(vnfc_floating_ip_list)
@@ -505,11 +515,11 @@ def setup_app() -> (SessionMiddleware, int, bool):
     bottle.install(error_translation)
     session_opts = {
         'session.cookie_expires': True,
-        'session.encrypt_key':    get_config('api', 'encrypt_key', 'softfire'),
-        'session.httponly':       True,
-        'session.timeout':        3600 * 24,  # 1 day
-        'session.type':           'cookie',
-        'session.validate_key':   True,
+        'session.encrypt_key': get_config('api', 'encrypt_key', 'softfire'),
+        'session.httponly': True,
+        'session.timeout': 3600 * 24,  # 1 day
+        'session.type': 'cookie',
+        'session.validate_key': True,
     }
     a = SessionMiddleware(bottle.app(), session_opts)
     qb = get_config('api', 'quiet', 'true').lower() == 'true'
