@@ -104,27 +104,35 @@ def delete_user(username):
             except Exception as e:
                 logger.error('Exception while trying to delete experiment of user {}: {}'.format(username, str(e)))
                 traceback.print_exc()
-                logger.warning('Removing the resources and experiments of user {} from the database so they might actually not be removed!'.format(username))
+                logger.warning(
+                    'Removing the resources and experiments of user {} from the database so they might actually not be removed!'.format(
+                        username))
                 try:
                     for experiment in find(entities.Experiment):
                         if experiment.username == username:
                             for ur in find(UsedResource):
                                 if ur.parent_id == experiment.id:
-                                    logger.debug('Removing used resource {} ({}) from the database.'.format(ur.id, ur.name))
+                                    logger.debug(
+                                        'Removing used resource {} ({}) from the database.'.format(ur.id, ur.name))
                                     try:
                                         delete(ur)
                                     except Exception as e:
-                                        logger.error('Exception while removing used resource {} ({}) from the database: {}'.format(ur.id, ur.name, e))
+                                        logger.error(
+                                            'Exception while removing used resource {} ({}) from the database: {}'.format(
+                                                ur.id, ur.name, e))
                                         traceback.print_exc()
                             logger.debug('Removing experiment {} from the database.'.format(experiment.id))
                             try:
                                 delete(experiment)
                             except Exception as e:
                                 logger.error(
-                                    'Exception while removing experiment {} from the database: {}'.format(experiment.id, e))
+                                    'Exception while removing experiment {} from the database: {}'.format(experiment.id,
+                                                                                                          e))
                                 traceback.print_exc()
                 except Exception as e:
-                    logger.error('Exception while removing the resources and experiments of user {} from the database.'.format(username))
+                    logger.error(
+                        'Exception while removing the resources and experiments of user {} from the database.'.format(
+                            username))
             user_info = _create_user_info_from_experimenter(experimenter)
             for man in MANAGERS_CREATE_USER:
                 try:
@@ -132,7 +140,8 @@ def delete_user(username):
                     logger.info("Manager {} delete user {} finished".format(man, experimenter.username))
                 except ManagerNotFound:
                     traceback.print_exc()
-                    logger.error("Manager {} is not register and needs to delete user {}".format(man, experimenter.username))
+                    logger.error(
+                        "Manager {} is not register and needs to delete user {}".format(man, experimenter.username))
             delete(experimenter)
 
 
@@ -291,10 +300,12 @@ class Experiment(object):
                             # just for legacy support
                             # the correct file name following the specification is 'TOSCA-Metadata'
                             # to support experiments that were created before this fix we still check for 'tosca-metadata' though
-                            logger.warning("'TOSCA-Metadata/Metadata.yaml' not found. Will try 'tosca-metadata/Metadata.yaml' to support older experiments.")
+                            logger.warning(
+                                "'TOSCA-Metadata/Metadata.yaml' not found. Will try 'tosca-metadata/Metadata.yaml' to support older experiments.")
                             yaml_file = zf.read('tosca-metadata/Metadata.yaml')
                         else:
-                            raise ExperimentValidationError('The TOSCA-Metadata/Metadata.yaml file is missing in {}.'.format(file_name))
+                            raise ExperimentValidationError(
+                                'The TOSCA-Metadata/Metadata.yaml file is missing in {}.'.format(file_name))
                     except KeyError as e:
                         traceback.print_exc()
                         if hasattr(e, 'message'):
@@ -566,11 +577,16 @@ def provide_resources(username):
         if isinstance(end_date, datetime):
             end_date = end_date.date()
         if start_date > today:
-            logger.error('The resource {} is reserved for a time period which begins in the future. You cannot use it yet.'.format(ur.name))
-            raise ExperimentValidationError('The resource {} is reserved for a time period which begins in the future. You cannot use it yet.'.format(ur.name))
+            logger.error(
+                'The resource {} is reserved for a time period which begins in the future. You cannot use it yet.'.format(
+                    ur.name))
+            raise ExperimentValidationError(
+                'The resource {} is reserved for a time period which begins in the future. You cannot use it yet.'.format(
+                    ur.name))
         if end_date < today:
             logger.error('For the resource {} the reserved time period ended already.'.format(ur.name))
-            raise ExperimentValidationError('For the resource {} the reserved time period ended already.'.format(ur.name))
+            raise ExperimentValidationError(
+                'For the resource {} the reserved time period ended already.'.format(ur.name))
     user_info = get_user_info(username)
     if hasattr(user_info, 'name'):
         un = user_info.name
@@ -675,9 +691,11 @@ def _release_resource_for_manager(manager_name, used_resources, user_info):
                                                                         payload=ur.value,
                                                                         user_info=user_info))
                     if response.result != 0:
-                        logger.error("release resources in manager %s returned %d: %s" % (manager_name, response.result, response.error_message))
+                        logger.error("release resources in manager %s returned %d: %s" % (
+                            manager_name, response.result, response.error_message))
                         raise RpcFailedCall(
-                            "release resources in manager %s returned %d: %s" % (manager_name, response.result, response.error_message))
+                            "release resources in manager %s returned %d: %s" % (
+                                manager_name, response.result, response.error_message))
                         # for u in [u for u in used_resources if u.node_type in get_mapping_managers().get(manager_name)]:
                         #     logger.info("deleting %s" % u.name)
                         #     delete(u)
@@ -739,7 +757,7 @@ def get_experiment_dict(username):
     res = []
     exp_name = "Your Experiment"
     for ex in find(entities.Experiment):
-        if ex.username == username:
+        if not username or ex.username == username:
             exp_name += ": %s" % ex.name
             for ur in ex.resources:
                 tmp = {
@@ -854,8 +872,8 @@ def update_experiment(username, manager_name, resources):
                         val_dict = json.loads(ur.value)
                         # TODO pass also the id!
                         if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get(
-                                    'id') == new_res_dict.get(
-                                    'id'):
+                                'id') == new_res_dict.get(
+                            'id'):
                             ur.value = json.dumps(new_res_dict)
         else:
             # logger.debug("Update from Manager name : %s " % manager_name)
@@ -913,4 +931,4 @@ def refresh_user(username):
 
 
 def get_all_resources():
-    return find(entities.Experiment)
+    return get_experiment_dict(None)
