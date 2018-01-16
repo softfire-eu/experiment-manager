@@ -25,6 +25,7 @@ authorize = aaa.make_auth_decorator(fail_redirect="/login")
 create_user_thread = None
 create_user_thread_pool = Pool(20)
 
+
 ######################
 # Experimenters urls #
 ######################
@@ -361,6 +362,11 @@ def server_static(filename):
 #########
 # Utils #
 #########
+
+@bottle.route('/heartbeat')
+def sorry_page():
+    return 'OK'
+
 
 def error_translation(func):
     def wrapper(*args, **kwargs):
