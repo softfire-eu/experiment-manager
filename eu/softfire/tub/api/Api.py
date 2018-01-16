@@ -540,7 +540,7 @@ app, port, quiet_bottle = setup_app()
 
 def start_listening():
     logger.info("Running bottle app: quiet=%s, port=%s, host='0.0.0.0'" % (quiet_bottle, port))
-    bottle.run(app=app, quiet=quiet_bottle, port=port, host='0.0.0.0')
+    bottle.run(app, server='paste', host='0.0.0.0', port=port, quiet=quiet_bottle)
 
 
 def create_user_thread_function(username, password, role='experimenter'):
