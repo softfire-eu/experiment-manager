@@ -885,7 +885,12 @@ def update_experiment(username, manager_name, resources):
                 for experiment in experiments:
                     for ur in experiment.resources:
                         if ur.node_type == "NfvResource":
-                            val_dict = json.loads(ur.value)
+                            try:
+                                val_dict = json.loads(ur.value)
+                            except Exception as e:
+                                logger.warning("Faild parsing of experiment: name: %s, username: %s" % (
+                                    experiment.name, experiment.username))
+                                raise e
                             # TODO pass also the id!
                             if ur.node_type in get_mapping_managers().get(manager_name) \
                                     and val_dict.get('id') == new_res_dict.get('id'):
@@ -902,8 +907,8 @@ def update_experiment(username, manager_name, resources):
                     save(experiment)
 
     except:
-        logger.warning("error while updating: %s" % traceback._cause_message)
-
+        logger.warning(
+            "error while updating resource of manager %s. Error is: %s " % (manager_name, traceback._cause_message))
 
 
 def list_managers():
