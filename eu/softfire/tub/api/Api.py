@@ -25,7 +25,6 @@ authorize = aaa.make_auth_decorator(fail_redirect="/login")
 create_user_thread = None
 create_user_thread_pool = Pool(20)
 
-
 ######################
 # Experimenters urls #
 ######################
@@ -33,14 +32,16 @@ create_user_thread_pool = Pool(20)
 @post('/provide_resources')
 @authorize(role='experimenter')
 def provide_resources():
-    CoreManagers.provide_resources(aaa.current_user.username)
+    experiment_id = post_get('experiment_id')
+    CoreManagers.provide_resources(aaa.current_user.username, experiment_id)
     bottle.redirect('/experimenter')
 
 
 @post('/release_resources')
 @authorize(role='experimenter')
 def delete_resources():
-    CoreManagers.release_resources(aaa.current_user.username)
+    experiment_id = post_get('experiment_id')
+    CoreManagers.release_resources(aaa.current_user.username, experiment_id)
     bottle.redirect('/experimenter')
 
 
@@ -54,7 +55,7 @@ def refresh_resources():
 @get('/get_full_status')
 @authorize(role='experimenter')
 def get_full_status():
-    _, experiment_dict = CoreManagers.get_experiment_dict(aaa.current_user.username)
+    _, _, experiment_dict = CoreManagers.get_experiment_dict(aaa.current_user.username)
     # convert string values that represent json into dictionaries so that they are displayed nicely
     for e in experiment_dict:
         try:
@@ -69,7 +70,7 @@ def get_full_status():
 @get('/get_status')
 @authorize(role='experimenter')
 def get_status():
-    _, experiment_dict = CoreManagers.get_experiment_dict(aaa.current_user.username)
+    _, _, experiment_dict = CoreManagers.get_experiment_dict(aaa.current_user.username)
     experiment_dict = __format_experiment_dict(experiment_dict)
     bottle.response.headers['Content-Type'] = 'application/json'
     return json.dumps(experiment_dict)
@@ -318,7 +319,7 @@ def login_form():
 def experimenter_form():
     """Serve experimenter form"""
     images, networks, flavours = get_other_resources()
-    exp_name, experiment_dict = get_experiment_dict(aaa.current_user.username)
+    exp_names, exp_ids, experiment_dict = get_experiment_dict(aaa.current_user.username)
     experiment_dict = __format_experiment_dict(experiment_dict)
     return dict(
         current_user=aaa.current_user,
@@ -327,8 +328,8 @@ def experimenter_form():
         images=images,
         networks=networks,
         flavours=flavours,
-        experiment_id=exp_name,
         experiment_resources=experiment_dict,
+        ids=exp_ids,
     )
 
 
@@ -366,6 +367,7 @@ def error_translation(func):
         try:
             return func(*args, **kwargs)
         except ValueError as e:
+            pass
             traceback.print_exc()
             return HTTPResponse(status=400, body=e.args)
             # bottle.abort(400, e.args)

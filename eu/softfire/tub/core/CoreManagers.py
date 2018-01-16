@@ -97,19 +97,21 @@ def _save_or_create_experimenter(user_info, role="experimenter"):
 def delete_user(username):
     for experimenter in find(Experimenter):
         if experimenter.username == username:
-            try:
-                release_resources(username)
-            except ExperimentNotFound as e:
-                pass
-            except Exception as e:
-                logger.error('Exception while trying to delete experiment of user {}: {}'.format(username, str(e)))
-                traceback.print_exc()
-                logger.warning(
-                    'Removing the resources and experiments of user {} from the database so they might actually not be removed!'.format(
-                        username))
-                try:
-                    for experiment in find(entities.Experiment):
-                        if experiment.username == username:
+            for experiment in find(entities.Experiment):
+                if experiment.username == username:
+                    try:
+                        release_resources(username, experiment.id)
+                    except ExperimentNotFound as e:
+                        pass
+                    except Exception as e:
+                        logger.error(
+                            'Exception while trying to delete experiment {} of user {}: {}'.format(experiment.id,
+                                                                                                   username, str(e)))
+                        traceback.print_exc()
+                        logger.warning(
+                            'Removing the resources and experiment {} of user {} from the database so they might actually not be removed!'.format(
+                                experiment.id, username))
+                        try:
                             for ur in find(UsedResource):
                                 if ur.parent_id == experiment.id:
                                     logger.debug(
@@ -129,10 +131,10 @@ def delete_user(username):
                                     'Exception while removing experiment {} from the database: {}'.format(experiment.id,
                                                                                                           e))
                                 traceback.print_exc()
-                except Exception as e:
-                    logger.error(
-                        'Exception while removing the resources and experiments of user {} from the database.'.format(
-                            username))
+                        except Exception as e:
+                            logger.error(
+                                'Exception while removing the resources and experiment {} of user {} from the database.'.format(
+                                    experiment.id, username))
             user_info = _create_user_info_from_experimenter(experimenter)
             for man in MANAGERS_CREATE_USER:
                 try:
@@ -249,10 +251,21 @@ class Experiment(object):
             if filename == 'TOSCA-Metadata/Metadata.yaml':
                 metadata = yaml.load(zf.read(filename))
                 self.name = metadata.get('name')
+                if find(entities.Experiment, '{}_{}'.format(self.username, self.name)) is not None:
+                    raise ExperimentValidationError(
+                        'There is already an experiment with this name, please choose a different one.')
                 # 12/12/12 10:55
                 self.start_date = self.get_start_date(metadata)
                 # 12/12/12 11:55
                 self.end_date = self.get_end_date(metadata)
+                today = datetime.today().date()
+                logger.info("End date: date: %s" % self.end_date.date())
+                if self.end_date.date() < today:
+                    logger.error('For the experiment {} the end date({}) is in the past.'.format(self.name,
+                                                                                                 self.end_date.date()))
+                    raise ExperimentValidationError(
+                        'For the experiment {} the end date({}) is in the past.'.format(self.name,
+                                                                                        self.end_date.date()))
                 self.duration = self.end_date - self.start_date
                 logger.debug("Experiment duration %s" % self.duration)
             if filename.startswith("Files/") and filename.endswith('.csar'):
@@ -335,7 +348,7 @@ class Experiment(object):
             raise ExperimentValidationError(e.args)
 
         exp = entities.Experiment()
-        exp.id = "%s_%s" % (self.username, self.name)
+        exp.id = '{}_{}'.format(self.username, self.name)
         exp.username = self.username
         exp.name = self.name
         exp.start_date = self.start_date
@@ -345,10 +358,13 @@ class Experiment(object):
         for node in self.topology_template.nodetemplates:
             exp.resources.append(self._get_used_resource_by_node(node))
 
-        logger.info("Saving experiment %s" % exp.name)
         element_value = find_by_element_value(entities.Experiment, entities.Experiment.username, self.username)
-        if len(element_value):
-            raise ExperimentValidationError("You cannot have two experiments at the same time!")
+        max_no_experiment = get_config("System", "max-number-experiments", 3)
+        if len(element_value) >= max_no_experiment:
+            raise ExperimentValidationError(
+                "You cannot have more than %s experiments at the same time!" % max_no_experiment)
+
+        logger.info("Saving experiment %s" % exp.name)
         save(exp)
         self.experiment = exp
         for res in exp.resources:
@@ -552,8 +568,8 @@ def _execute_rpc_list_res(manager):
     return response.list_resource.resources
 
 
-def provide_resources(username):
-    experiments_to_deploy = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
+def provide_resources(username, experiment_id):
+    experiments_to_deploy = find_by_element_value(entities.Experiment, entities.Experiment.id, experiment_id)
     if len(experiments_to_deploy) == 0:
         logger.error("No experiment to be deployed....")
         raise ExperimentNotFound("No experiment to be deployed....")
@@ -615,7 +631,9 @@ def provide_resources(username):
             _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info)
 
 
-def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info, value_to_pass={}):
+def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_info, value_to_pass=None):
+    if value_to_pass is None:
+        value_to_pass = {}
     stub = get_stub_from_manager_name(manager_name)
     ret = []
     for ur_to_deploy in experiment_to_deploy.resources:
@@ -634,7 +652,7 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
                     if response.result == messages_pb2.ERROR:
                         logger.error("provide resources returned %d: %s" % (response.result, response.error_message))
                         ur.status = ResourceStatus.ERROR.value
-                        ur.value = response.error_message
+                        ur.value = json.dumps(response.error_message)
                     else:
                         # TODO fix this in the api not here
                         for res in response.provide_resource.resources:
@@ -643,20 +661,18 @@ def _provide_all_resources_for_manager(experiment_to_deploy, manager_name, user_
                             ur.value = json.dumps(_res_dict)
                             ret.append(_res_dict)
                             ur.status = ResourceStatus.DEPLOYED.value
-
                     save(ur)
 
     return ret
 
 
-def release_resources(username):
-    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
+def release_resources(username, experiment_id):
+    experiments_to_delete = find_by_element_value(entities.Experiment, entities.Experiment.id, experiment_id)
     if len(experiments_to_delete) == 0:
         logger.error("No experiment to be deleted....")
         raise ExperimentNotFound("No experiment to be deleted....")
     experiment_to_delete = experiments_to_delete[0]
     _release_all_experiment_resources(experiment_to_delete, username)
-
     logger.info("deleting %s" % experiment_to_delete.name)
     delete(experiment_to_delete)
 
@@ -755,20 +771,25 @@ def get_other_resources():
 
 def get_experiment_dict(username):
     res = []
-    exp_name = "Your Experiment"
+    exp_names = []
+    exp_ids = []
+    ids = []
     for ex in find(entities.Experiment):
         if not username or ex.username == username:
-            exp_name += ": %s" % ex.name
+            exp_ids.append(ex.id)
+            exp_names.append(ex.name)
             for ur in ex.resources:
                 tmp = {
                     'resource_id': ur.resource_id,
                     'used_resource_id': ur.id,
                     'node_type': ur.node_type,
                     'status': ResourceStatus.from_int_to_enum(ur.status).name,
-                    'value': ur.value
+                    'value': ur.value,
+                    'experiment_name': ex.name,
+                    'experiment_id': ex.id
                 }
                 res.append(tmp)
-    return exp_name, res
+    return exp_names, exp_ids, res
 
 
 def get_resources_dict(username=None):
@@ -857,45 +878,32 @@ def get_used_resources_by_experimenter(exp_name):
 
 def update_experiment(username, manager_name, resources):
     experiments = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
-    if experiments:
-        experiment = experiments[0]
-    else:
-        return
     try:
-        # logger.debug("Manager name : '%s'" % manager_name)
         if manager_name == 'nfv-manager':
             for new_res in resources:
                 new_res_dict = json.loads(new_res.content)
-                for ur in experiment.resources:
-                    if ur.node_type == "NfvResource":
-                        # logger.debug("trying to parse: %s" % ur.value)
-                        val_dict = json.loads(ur.value)
-                        # TODO pass also the id!
-                        if ur.node_type in get_mapping_managers().get(manager_name) and val_dict.get(
-                                'id') == new_res_dict.get(
-                            'id'):
-                            ur.value = json.dumps(new_res_dict)
+                for experiment in experiments:
+                    for ur in experiment.resources:
+                        if ur.node_type == "NfvResource":
+                            val_dict = json.loads(ur.value)
+                            # TODO pass also the id!
+                            if ur.node_type in get_mapping_managers().get(manager_name) \
+                                    and val_dict.get('id') == new_res_dict.get('id'):
+                                ur.value = json.dumps(new_res_dict)
+                    save(experiment)
         else:
-            # logger.debug("Update from Manager name : %s " % manager_name)
-            # deployed_res = [ur for ur in experiment.resources if ur.status == entities.ResourceStatus.DEPLOYED.value and ur.node_type in get_mapping_managers().get(manager_name)]
-            # if len(deployed_res) == len(resources):
-            #     for i in range(len(resources)):
-            #         new_res_dict = json.loads(resources[i].content)
-            #         experiment.resources[i].value = json.dumps(new_res_dict)
             for new_res in resources:
                 new_res_dict = json.loads(new_res.content)
-                # logger.debug("trying to parse: %s" % new_res_dict)
-                for ur in experiment.resources:
-                    # TODO pass also the id!
-                    # logger.debug("%s == %s" % (ur.node_type, get_mapping_managers().get(manager_name)))
-                    if ur.node_type in get_mapping_managers().get(manager_name):
-                        ur.value = json.dumps(new_res_dict)
-                        # logger.debug("updating value")
-        save(experiment)
+                for experiment in experiments:
+                    for ur in experiment.resources:
+                        # TODO pass also the id!
+                        if ur.node_type in get_mapping_managers().get(manager_name):
+                            ur.value = json.dumps(new_res_dict)
+                    save(experiment)
 
     except:
-        traceback.print_exc()
-        logger.warning("error while updating")
+        logger.warning("error while updating: %s" % traceback._cause_message)
+
 
 
 def list_managers():
