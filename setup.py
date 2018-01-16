@@ -32,6 +32,7 @@ setup(
         'tosca-parser',
         'bottle',
         'beaker',
+        'paste',
         'bottle-cork',
         'sqlalchemy',
         'grpcio',
