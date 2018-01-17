@@ -287,6 +287,13 @@ def get_status():
     return json.dumps(resources)
 
 
+@get('/experimenters')
+@authorize(role='admin')
+def get_status():
+    bottle.response.headers['Content-Type'] = 'application/json'
+    return json.dumps(CoreManagers.list_experimenters())
+
+
 ################
 # Static pages #
 ################
