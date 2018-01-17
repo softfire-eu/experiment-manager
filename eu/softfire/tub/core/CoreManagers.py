@@ -786,7 +786,8 @@ def get_experiment_dict(username):
                     'status': ResourceStatus.from_int_to_enum(ur.status).name,
                     'value': ur.value,
                     'experiment_name': ex.name,
-                    'experiment_id': ex.id
+                    'experiment_id': ex.id,
+                    'username': ex.username
                 }
                 res.append(tmp)
     return exp_names, exp_ids, res

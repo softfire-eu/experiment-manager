@@ -282,7 +282,7 @@ def delete_role():
 @get('/get_resources')
 @authorize(role='admin')
 def get_status():
-    resources = CoreManagers.get_all_resources()
+    _, _, resources = CoreManagers.get_all_resources()
     bottle.response.headers['Content-Type'] = 'application/json'
     return json.dumps(resources)
 
