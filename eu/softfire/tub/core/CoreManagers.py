@@ -773,7 +773,6 @@ def get_experiment_dict(username):
     res = []
     exp_names = []
     exp_ids = []
-    ids = []
     for ex in find(entities.Experiment):
         if not username or ex.username == username:
             exp_ids.append(ex.id)
@@ -945,4 +944,5 @@ def refresh_user(username):
 
 
 def get_all_resources():
-    return get_experiment_dict(None)
+    _, _, resources = get_experiment_dict(None)
+    return resources
