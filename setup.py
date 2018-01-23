@@ -19,7 +19,7 @@ packages = find_packages()
 
 setup(
     name="experiment-manager",
-    version='1.4.4',
+    version=get_version(),
     author="Lorenzo Tomasini",
     author_email="lorenzo.tomasini@gmail.com",
     description="The SoftFIRE Experimenter Manager",
