@@ -50,6 +50,9 @@ TESTBED_MAPPING = {
 
 MANAGERS_CREATE_USER = ['nfv-manager', 'sdn-manager']
 
+# tells the experimenters that SoftFIRE is under maintenance if set to true
+maintenance = False
+
 
 def _get_testbed_string(testbed_id):
     for k, v in TESTBED_MAPPING.items():
