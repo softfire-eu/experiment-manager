@@ -6,7 +6,7 @@ from multiprocessing.dummy import Pool
 import bottle
 import requests
 from beaker.middleware import SessionMiddleware
-from bottle import request, post, get, HTTPError, HTTPResponse
+from bottle import request, post, get, HTTPError, HTTPResponse, hook
 from cork import Cork
 
 import eu.softfire.tub.exceptions.exceptions as exceptions
@@ -25,6 +25,16 @@ authorize = aaa.make_auth_decorator(fail_redirect="/login")
 create_user_thread = None
 create_user_thread_pool = Pool(20)
 
+
+@hook('after_request')
+def maintenance():
+    try:
+        if request.environ.get('bottle.raw_path') == '/login' or aaa.current_user.role == 'admin':
+            return
+    except:
+        return
+    if CoreManagers.maintenance:
+        raise HTTPResponse("Under maintenance. Please try again in a few minutes.")
 
 ######################
 # Experimenters urls #
@@ -292,6 +302,22 @@ def get_status():
 def get_status():
     bottle.response.headers['Content-Type'] = 'application/json'
     return json.dumps(CoreManagers.list_experimenters())
+
+@bottle.post('/enable_maintenance')
+@authorize(role='admin')
+def enable_maintenance():
+    """Enable maintenance mode so that experimenters cannot execute actions anymore."""
+    CoreManagers.maintenance = True
+    bottle.response.status = 200
+    return dict(ok=False, msg='Maintenance enabled')
+
+@bottle.post('/disable_maintenance')
+@authorize(role='admin')
+def disable_maintenance():
+    """Disable maintenance mode."""
+    CoreManagers.maintenance = False
+    bottle.response.status = 200
+    return dict(ok=False, msg='Maintenance disabled')
 
 
 ################
