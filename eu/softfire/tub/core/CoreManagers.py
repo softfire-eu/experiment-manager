@@ -882,33 +882,33 @@ def get_used_resources_by_experimenter(exp_name):
 def update_experiment(username, manager_name, resources):
     experiments = find_by_element_value(entities.Experiment, entities.Experiment.username, username)
     try:
-        if manager_name == 'nfv-manager':
-            for new_res in resources:
-                new_res_dict = json.loads(new_res.content)
-                for experiment in experiments:
-                    for ur in experiment.resources:
-                        if ur.node_type == "NfvResource":
-                            try:
-                                val_dict = json.loads(ur.value)
-                            except Exception as e:
-                                logger.warning("Faild parsing of experiment: name: %s, username: %s" % (
-                                    experiment.name, experiment.username))
-                                raise e
-                            # TODO pass also the id!
-                            if ur.node_type in get_mapping_managers().get(manager_name) \
-                                    and val_dict.get('id') == new_res_dict.get('id'):
-                                ur.value = json.dumps(new_res_dict)
-                    save(experiment)
-        else:
-            for new_res in resources:
-                new_res_dict = json.loads(new_res.content)
-                for experiment in experiments:
-                    for ur in experiment.resources:
-                        # TODO pass also the id!
+        for new_res in resources:
+            new_res_dict = json.loads(new_res.content)
+            for experiment in experiments:
+                for ur in experiment.resources:
+                    if manager_name == 'nfv-manager' and ur.node_type == 'NfvResource':
+                        try:
+                            val_dict = json.loads(ur.value)
+                        except Exception as e:
+                            logger.warning("Failed parsing of experiment: name: %s, username: %s" % (
+                                experiment.name, experiment.username))
+                            raise e
+                        if ur.node_type in get_mapping_managers().get(manager_name) \
+                                and val_dict.get('id') == new_res_dict.get('id'):
+                            ur.value = json.dumps(new_res_dict)
+                    elif manager_name == 'security-manager' and ur.node_type == 'SecurityResource':
+                        try:
+                            val_dict = json.loads(ur.value)
+                        except Exception as e:
+                            logger.warning("Failed parsing of experiment: name: %s, username: %s" % (
+                                experiment.name, experiment.username))
+                            raise e
+                        if val_dict.get('random_id') == new_res_dict.get('random_id'):
+                            ur.value = json.dumps(new_res_dict)
+                    else:
                         if ur.node_type in get_mapping_managers().get(manager_name):
                             ur.value = json.dumps(new_res_dict)
-                    save(experiment)
-
+                save(experiment)
     except:
         logger.warning(
             "error while updating resource of manager %s. Error is: %s " % (manager_name, traceback._cause_message))
